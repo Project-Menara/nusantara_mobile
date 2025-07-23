@@ -16,6 +16,7 @@ class InitialRoutes {
 
   // Rute Autentikasi
   static const loginScreen = '/login';
+  static const registerScreen = '/register';
 
   // Rute Utama di dalam MainScreen (Shell)
   static const home = '/home';

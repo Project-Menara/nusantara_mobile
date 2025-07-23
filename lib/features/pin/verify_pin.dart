@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class VerifyPinPage extends StatefulWidget {
   const VerifyPinPage({super.key});
@@ -37,7 +38,16 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            // Cek dulu apakah bisa kembali atau tidak
+            if (context.canPop()) {
+              // Jika bisa, maka kembali
+              context.pop();
+            } else {
+              // Jika tidak, arahkan ke halaman login/home
+              context.go('/login'); // Sesuaikan rute Anda
+            }
+          },
         ),
         title: const Text(
           'Verify PIN',
@@ -114,8 +124,10 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
                     child: RichText(
                       text: TextSpan(
                         text: 'Forgot your PIN ? ',
-                        style:
-                            const TextStyle(color: Colors.black54, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
                         children: <TextSpan>[
                           TextSpan(
                             text: 'Reset PIN',
@@ -142,27 +154,43 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
   }
 
   /// Widget untuk menampilkan indikator PIN (angka atau titik)
+  /// Widget untuk menampilkan indikator PIN (angka atau titik)
   Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
+      // Widget yang akan ditambahkan ke list
+      Widget pinWidget;
+
       if (i < _pin.length) {
-        // Tampilkan angka jika sudah diinput
-        displayWidgets.add(
-          Text(
-            _pin[i],
-            style: const TextStyle(
-                fontSize: 32, fontWeight: FontWeight.w600, color: Colors.black),
+        // Buat widget Text untuk angka yang sudah diinput
+        final numberText = Text(
+          _pin[i],
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         );
+
+        // Cek apakah ini adalah digit TERAKHIR yang dimasukkan
+        if (i == _pin.length - 1) {
+          // Jika ya, bungkus dengan GestureDetector agar bisa diketuk untuk menghapus
+          pinWidget = GestureDetector(
+            onTap: _onBackspaceTapped, // Panggil fungsi hapus saat diketuk
+            child: numberText,
+          );
+        } else {
+          // Jika bukan digit terakhir, tampilkan seperti biasa
+          pinWidget = numberText;
+        }
       } else {
         // Tampilkan titik besar jika belum diinput
-        displayWidgets.add(
-          const Text(
-            '●',
-            style: TextStyle(fontSize: 32, color: Colors.black),
-          ),
+        pinWidget = const Text(
+          '●',
+          style: TextStyle(fontSize: 32, color: Colors.black),
         );
       }
+      displayWidgets.add(pinWidget);
     }
 
     return Row(
@@ -220,7 +248,11 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
   }
 
   /// Widget helper untuk membuat setiap tombol pada numpad
-  Widget _buildNumpadButton(String number, String letters, {bool isBackspace = false}) {
+  Widget _buildNumpadButton(
+    String number,
+    String letters, {
+    bool isBackspace = false,
+  }) {
     return SizedBox(
       width: 90,
       height: 60,
