@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         // PERBAIKAN DI SINI: Navigasi ke HomePage
-                        context.go(InitialRoutes.home);
+                        context.go(InitialRoutes.verifyPin);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,

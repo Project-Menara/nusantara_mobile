@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/core/presentation/main_screen.dart'; // Impor MainScreen
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/pin/verify_pin.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 // Impor semua halaman yang Anda butuhkan
@@ -44,6 +45,10 @@ final GoRouter appRoute = GoRouter(
     GoRoute(
       path: InitialRoutes.loginScreen,
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: InitialRoutes.verifyPin,
+      builder: (context, state) => const VerifyPinPage(),
     ),
 
     // --- RUTE DI DALAM CANGKANG (SHELL) ---

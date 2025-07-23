@@ -11,6 +11,9 @@ class InitialRoutes {
   static const onboarding2 = '/onboarding2';
   static const onboarding3 = '/onboarding3';
 
+  //Rute Verifikasi PIN
+  static const verifyPin = '/verify-pin';
+
   // Rute Autentikasi
   static const loginScreen = '/login';
 
