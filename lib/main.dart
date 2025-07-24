@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:nusantara_mobile/routes/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/injection_container.dart' as di;
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
+import 'package:nusantara_mobile/routes/app_router.dart';
 
 void main() async {
-  // Pastikan binding siap sebelum memanggil kode native
+  // Pastikan Flutter binding sudah siap
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Panggil dan TUNGGU (await) sampai semua dependensi selesai didaftarkan
-   di.init(); 
+  // Panggil fungsi init untuk mendaftarkan semua dependensi
+  await di.init(); 
   
   runApp(const MyApp());
 }
@@ -17,14 +19,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: appRoute,
-      title: 'Nusantara Oleh Oleh',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-        useMaterial3: true,
+    // PERBAIKAN DI SINI: Bungkus MaterialApp.router dengan BlocProvider
+    return BlocProvider(
+      // 'create' akan mengambil instance AuthBloc dari service locator (GetIt)
+      create: (_) => di.sl<AuthBloc>(),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'Nusantara Oleh-Oleh',
+        theme: ThemeData(
+          primarySwatch: Colors.orange,
+          scaffoldBackgroundColor: Colors.white,
+        ),
+        // Gunakan router yang sudah Anda buat
+        routerConfig: appRoute,
       ),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

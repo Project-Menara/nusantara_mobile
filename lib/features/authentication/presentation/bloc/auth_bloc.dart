@@ -1,58 +1,104 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_state.dart';
-
-// Impor use case Anda
-// import 'package:menara/features/auth/domain/usecases/login_user_usecase.dart';
-// import 'package:menara/features/auth/domain/usecases/logout_user_usecase.dart';
+// import 'package:nusantara_mobile/core/usecase/usecase.dart'; // Impor untuk NoParams
+import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
+// import 'package:nusantara_mobile/features/authentication/domain/usecases/logout_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
+import 'auth_event.dart';
+import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  // Deklarasikan use case yang akan di-inject
-  // final LoginUserUsecase loginUserUsecase;
-  // final LogoutUserUsecase logoutUserUsecase;
+  final CheckPhoneUseCase checkPhoneUseCase;
+  final VerifyPinAndLoginUseCase verifyPinAndLoginUseCase;
+  final RegisterUseCase registerUseCase;
+  // final LogoutUseCase logoutUseCase; // LogoutUseCase diaktifkan kembali
 
-  AuthBloc(
-    // Terima use case melalui constructor
-    // {
-    //   required this.loginUserUsecase,
-    //   required this.logoutUserUsecase,
-    // }
-  ) : super(AuthInitial()) {
-    
-    // Handler untuk LoginEvent
-    on<LoginEvent>((event, emit) async {
-      // 1. Keluarkan state loading agar UI bisa menampilkan progres
-      emit(AuthLoading());
-
-      // 2. Logika dummy (tanpa backend)
-      // Tunggu 2 detik untuk simulasi panggilan jaringan
-      await Future.delayed(const Duration(seconds: 2));
-
-      // 3. Cek data dummy
-      if (event.email == 'test@gmail.com' && event.password == '123456') {
-        // Jika berhasil, keluarkan state success
-        emit(AuthSuccess());
-      } else {
-        // Jika gagal, keluarkan state failure dengan pesan error
-        emit(const AuthFailure(message: 'Email atau password salah!'));
-      }
-
-      /* // CONTOH JIKA SUDAH TERHUBUNG KE BACKEND (gunakan ini nanti)
-      final result = await loginUserUsecase(event.email, event.password);
-      result.fold(
-        (failure) => emit(AuthFailure(message: failure.message)),
-        (user) => emit(AuthSuccess(user: user)),
-      );
-      */
-    });
-
-    // Handler untuk LogoutEvent
-    on<LogoutEvent>((event, emit) async {
-      emit(AuthLoading());
-      // Logika untuk logout (misalnya, hapus token dari SharedPreferences)
-      // await logoutUserUsecase();
-      await Future.delayed(const Duration(seconds: 1)); // Simulasi
-      emit(AuthInitial()); // Kembali ke state awal
-    });
+  AuthBloc({
+    required this.checkPhoneUseCase,
+    required this.verifyPinAndLoginUseCase,
+    required this.registerUseCase,
+    // required this.logoutUseCase, // Diaktifkan kembali
+  }) : super(AuthInitial()) {
+    on<AuthCheckPhonePressed>(_onCheckPhone);
+    on<AuthVerifyPinPressed>(_onVerifyPin);
+    on<AuthRegisterPressed>(_onRegister);
+    // on<AuthLogoutPressed>(_onLogout);
   }
+
+  Future<void> _onCheckPhone(
+    AuthCheckPhonePressed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final result = await checkPhoneUseCase(event.phoneNumber);
+      result.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (checkResult) => emit(AuthCheckPhoneSuccess(checkResult)),
+      );
+    } catch (e) {
+      // Menambahkan try-catch untuk menangani error tak terduga
+      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onVerifyPin(
+    AuthVerifyPinPressed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final params = VerifyPinParams(phoneNumber: event.phoneNumber, pin: event.pin);
+      final result = await verifyPinAndLoginUseCase(params);
+      result.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (user) => emit(AuthLoginSuccess(user)),
+      );
+    } catch (e) {
+      // Menambahkan try-catch untuk menangani error tak terduga
+      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onRegister(
+    AuthRegisterPressed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final params = RegisterParams(
+        fullName: event.fullName,
+        email: event.email,
+        phoneNumber: event.phoneNumber,
+        gender: event.gender,
+        pin: event.pin,
+      );
+      final result = await registerUseCase(params);
+      result.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (_) => emit(AuthRegisterSuccess()),
+      );
+    } catch (e) {
+      // Menambahkan try-catch untuk menangani error tak terduga
+      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  // Future<void> _onLogout(
+  //   AuthLogoutPressed event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
+  //   try {
+  //     // Memanggil use case dengan parameter yang benar (asumsi NoParams)
+  //     final result = await logoutUseCase(NoParams());
+  //     result.fold(
+  //       (failure) => emit(AuthFailure(failure.message)),
+  //       (_) => emit(AuthLogoutSuccess()),
+  //     );
+  //   } catch (e) {
+  //     // Menambahkan try-catch untuk menangani error tak terduga
+  //     emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+  //   }
+  // }
 }
