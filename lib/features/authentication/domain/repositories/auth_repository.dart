@@ -19,11 +19,11 @@ abstract class AuthRepository {
   /// Method untuk mendaftarkan pengguna baru.
   /// Mengembalikan [Unit] (mirip void) jika registrasi berhasil.
   Future<Either<Failures, Unit>> register({
-    required String fullName,
+    required String name,
+    required String username,
     required String email,
-    required String phoneNumber,
+    required String phone,
     required String gender,
-    required String pin,
   });
 
   /// Method untuk logout.

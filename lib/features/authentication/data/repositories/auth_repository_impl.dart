@@ -30,7 +30,6 @@ class AuthRepositoryImpl implements AuthRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        // Menambahkan catch-all untuk error yang tidak terduga
         return Left(ServerFailure('Unexpected error: ${e.toString()}'));
       }
     } else {
@@ -51,15 +50,12 @@ class AuthRepositoryImpl implements AuthRepository {
         );
         // PENTING: Simpan token dan role ke local storage setelah login berhasil
         await localDatasource.cacheAuthToken(userModel.token);
-        // Asumsi UserModel memiliki properti 'role', sesuaikan jika namanya berbeda
-        // await localDatasource.saveRole(userModel.role);
         return Right(userModel);
       } on AuthException catch (e) {
         return Left(AuthFailure(e.message));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        // Menambahkan catch-all untuk error yang tidak terduga
         return Left(ServerFailure('Unexpected error: ${e.toString()}'));
       }
     } else {
@@ -69,26 +65,25 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failures, Unit>> register({
-    required String fullName,
+    required String name,
+    required String username,
     required String email,
-    required String phoneNumber,
+    required String phone,
     required String gender,
-    required String pin,
   }) async {
     if (await networkInfo.isConnected) {
       try {
         await authRemoteDatasource.register(
-          fullName: fullName,
+          name: name,
+          username: username,
           email: email,
-          phoneNumber: phoneNumber,
+          phone: phone,
           gender: gender,
-          pin: pin,
         );
         return const Right(unit);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        // Menambahkan catch-all untuk error yang tidak terduga
         return Left(ServerFailure('Unexpected error: ${e.toString()}'));
       }
     } else {
@@ -105,8 +100,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
         await authRemoteDatasource.logout(token);
         await localDatasource.clearAuthToken();
-        // Hapus juga role jika ada
-        // await localDatasource.clearRole();
         return const Right(unit);
       } on AuthException catch (e) {
         return Left(AuthFailure(e.message));

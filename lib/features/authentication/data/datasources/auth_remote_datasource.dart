@@ -8,13 +8,13 @@ abstract class AuthRemoteDataSource {
   // Method untuk verifikasi PIN, mengembalikan data user
   Future<UserModel> verifyPin({required String phoneNumber, required String pin});
 
-  // Method register disesuaikan dengan kebutuhan
+  // Method register disesuaikan dengan JSON
   Future<void> register({
-    required String fullName,
+    required String name,
+    required String username,
     required String email,
-    required String phoneNumber,
+    required String phone,
     required String gender,
-    required String pin,
   });
 
   // Method logout

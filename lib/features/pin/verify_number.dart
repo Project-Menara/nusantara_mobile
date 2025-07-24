@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class VerifyPinPage extends StatefulWidget {
-  const VerifyPinPage({super.key});
+class VerifyNumberPage extends StatefulWidget {
+  const VerifyNumberPage({super.key, required String phoneNumber});
 
   @override
-  State<VerifyPinPage> createState() => _VerifyPinPageState();
+  State<VerifyNumberPage> createState() => _VerifyNumberPageState();
 }
 
-class _VerifyPinPageState extends State<VerifyPinPage> {
+class _VerifyNumberPageState extends State<VerifyNumberPage> {
   // Variabel untuk menyimpan PIN yang dimasukkan
   String _pin = '';
   final int _pinLength = 6;
@@ -50,8 +50,12 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
           },
         ),
         title: const Text(
-          'Verify PIN',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          'Verify Number',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 16, // ⬅️ Tambahkan atau ubah ini
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -59,6 +63,7 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
       ),
       body: Column(
         children: [
+          const SizedBox(height: 30),
           // Konten Utama (Input & Tombol)
           Expanded(
             child: Padding(
@@ -68,16 +73,17 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
                 children: [
                   const Spacer(),
                   const Text(
-                    'INPUT PIN',
+                    'Verify Your Number',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Input 6 Digits PIN Number to logging in to\nNusantara Oleh Oleh',
+                    // 'Input 6 Digits PIN Number to logging in to\nNusantara Oleh Oleh',
+                    'Enter your OTP code below',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -85,10 +91,10 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
                       height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 100),
                   // Tampilan Indikator PIN (Angka dan Titik)
                   _buildPinDisplay(),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 60),
                   // Tombol Next
                   SizedBox(
                     width: double.infinity,
@@ -297,175 +303,3 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
     );
   }
 }
-
-// import 'package:flutter/material.dart';
-// import 'package:pinput/pinput.dart'; // Impor package pinput
-
-// class VerifyPinPage extends StatefulWidget {
-//   const VerifyPinPage({super.key});
-
-//   @override
-//   State<VerifyPinPage> createState() => _VerifyPinPageState();
-// }
-
-// class _VerifyPinPageState extends State<VerifyPinPage> {
-//   // Gunakan TextEditingController untuk mengelola input dari pinput
-//   final pinController = TextEditingController();
-//   final focusNode = FocusNode();
-
-//   // Variabel untuk mengontrol status tombol Next
-//   bool isPinComplete = false;
-
-//   @override
-//   void dispose() {
-//     // Selalu dispose controller saat widget tidak lagi digunakan
-//     pinController.dispose();
-//     focusNode.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // Definisikan tema untuk kotak PIN
-//     final defaultPinTheme = PinTheme(
-//       width: 56,
-//       height: 60,
-//       textStyle: const TextStyle(
-//         fontSize: 22,
-//         fontWeight: FontWeight.bold,
-//         color: Colors.black,
-//       ),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(8),
-//         border: Border.all(color: Colors.grey.shade400),
-//       ),
-//     );
-
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       appBar: AppBar(
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.black),
-//           onPressed: () => Navigator.of(context).pop(),
-//         ),
-//         title: const Text(
-//           'Verify PIN',
-//           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-//         ),
-//         backgroundColor: Colors.white,
-//         elevation: 0,
-//         centerTitle: true,
-//       ),
-//       body: SafeArea(
-//         child: Center(
-//           child: Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 32.0),
-//             child: Column(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 const Text(
-//                   'INPUT PIN',
-//                   style: TextStyle(
-//                     fontSize: 24,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
-//                 const Text(
-//                   'Input 6 Digits PIN Number to logging in to\nNusantara Oleh Oleh',
-//                   textAlign: TextAlign.center,
-//                   style: TextStyle(
-//                     fontSize: 14,
-//                     color: Colors.grey,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 48),
-
-//                 // GANTI TAMPILAN PIN DENGAN WIDGET PINPUT
-//                 Pinput(
-//                   length: 6,
-//                   controller: pinController,
-//                   focusNode: focusNode,
-//                   keyboardType: TextInputType.number,
-//                   defaultPinTheme: defaultPinTheme,
-//                   focusedPinTheme: defaultPinTheme.copyWith(
-//                     decoration: defaultPinTheme.decoration!.copyWith(
-//                       border: Border.all(color: Colors.orange),
-//                     ),
-//                   ),
-//                   submittedPinTheme: defaultPinTheme.copyWith(
-//                      decoration: defaultPinTheme.decoration!.copyWith(
-//                       border: Border.all(color: Colors.green),
-//                     ),
-//                   ),
-//                   onChanged: (value) {
-//                     setState(() {
-//                       isPinComplete = value.length == 6;
-//                     });
-//                   },
-//                   onCompleted: (pin) {
-//                     // Otomatis trigger aksi saat pin selesai diisi
-//                     print('PIN selesai diisi: $pin');
-//                   },
-//                 ),
-
-//                 const SizedBox(height: 48),
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: ElevatedButton(
-//                     onPressed: isPinComplete
-//                         ? () {
-//                             // Logika verifikasi PIN
-//                             print('PIN yang dimasukkan: ${pinController.text}');
-//                           }
-//                         : null, // Tombol nonaktif jika PIN belum 6 digit
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: Colors.orange,
-//                       disabledBackgroundColor: Colors.orange.withOpacity(0.5),
-//                       padding: const EdgeInsets.symmetric(vertical: 16),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(12),
-//                       ),
-//                     ),
-//                     child: const Text(
-//                       'Next',
-//                       style: TextStyle(
-//                         fontSize: 18,
-//                         color: Colors.white,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 24),
-//                 TextButton(
-//                   onPressed: () {
-//                     // Logika untuk reset PIN
-//                   },
-//                   child: RichText(
-//                     text: const TextSpan(
-//                       text: 'Forgot your PIN ? ',
-//                       style: TextStyle(color: Colors.black54, fontSize: 14),
-//                       children: <TextSpan>[
-//                         TextSpan(
-//                           text: 'Reset PIN',
-//                           style: TextStyle(
-//                             color: Colors.orange,
-//                             fontWeight: FontWeight.bold,
-//                             fontSize: 14,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//                 const Spacer(), // Mendorong konten ke tengah jika keyboard tidak muncul
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

@@ -25,13 +25,11 @@ Future<void> init() async {
         checkPhoneUseCase: sl<CheckPhoneUseCase>(),
         verifyPinAndLoginUseCase: sl<VerifyPinAndLoginUseCase>(),
         registerUseCase: sl<RegisterUseCase>(),
-        // logoutUseCase: sl<LogoutUseCase>(), // Uncomment if needed
       ));
 
   sl.registerLazySingleton(() => CheckPhoneUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => VerifyPinAndLoginUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => RegisterUseCase(sl<AuthRepository>()));
-  // sl.registerLazySingleton(() => LogoutUseCase(sl<AuthRepository>())); // Uncomment if needed
 
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(

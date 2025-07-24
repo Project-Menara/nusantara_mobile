@@ -99,24 +99,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> register({
-    required String fullName,
+    required String name,
+    required String username,
     required String email,
-    required String phoneNumber,
+    required String phone,
     required String gender,
-    required String pin,
   }) async {
-    // ASUMSI: Endpoint untuk registrasi
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/register');
     try {
       final response = await client.post(
         uri,
         headers: _headers(),
         body: jsonEncode({
-          'full_name': fullName,
+          'name': name,
+          'username': username,
           'email': email,
-          'phone': phoneNumber,
+          'phone': phone,
           'gender': gender,
-          'pin': pin,
         }),
       );
 

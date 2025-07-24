@@ -25,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onLanjutkanPressed() {
-    // Cek validasi form sebelum mengirim event BLoC
     if (_formKey.currentState!.validate()) {
       final phoneNumber = '+62${_phoneController.text}';
       context.read<AuthBloc>().add(AuthCheckPhonePressed(phoneNumber));
@@ -39,11 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           } else if (state is AuthCheckPhoneSuccess) {
             final phoneNumber = '+62${_phoneController.text}';
             // Navigasi berdasarkan action dari API
             if (state.result.action == 'register') {
+              // TAMBAHKAN PRINT DI SINI
+              print('MENGIRIM KE REGISTER, extra: [$phoneNumber]');
               context.push(InitialRoutes.registerScreen, extra: phoneNumber);
             } else if (state.result.action == 'login') {
               context.push(InitialRoutes.verifyPin, extra: phoneNumber);
@@ -74,19 +77,32 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Pastikan path logo Anda benar
-                Image.asset('assets/images/logo.png', height: 40),
+                // Ganti dengan Image.asset('assets/images/logo.png', height: 40) jika ada
+                const Icon(Icons.store, color: Colors.white, size: 40),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
                     children: [
-                      Text("ID", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                      Text(
+                        "ID",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                       SizedBox(width: 2),
-                      Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.black87),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 20,
+                        color: Colors.black87,
+                      ),
                     ],
                   ),
                 ),
@@ -160,7 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   hintText: "81234567890",
                   prefixText: "+62 ",
-                  prefixStyle: const TextStyle(color: Colors.black, fontSize: 16),
+                  prefixStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                  ),
                   hintStyle: TextStyle(color: Colors.grey.shade400),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 14,

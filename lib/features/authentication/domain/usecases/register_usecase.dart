@@ -8,34 +8,32 @@ class RegisterUseCase {
 
   RegisterUseCase(this.repository);
 
-  // 'call' akan mengembalikan Future<Either<Failure, Unit>>
   Future<Either<Failures, Unit>> call(RegisterParams params) {
     return repository.register(
-      fullName: params.fullName,
+      name: params.name,
+      username: params.username,
       email: params.email,
-      phoneNumber: params.phoneNumber,
+      phone: params.phone,
       gender: params.gender,
-      pin: params.pin, // pin ditambahkan
     );
   }
 }
 
-// Kelas untuk membungkus parameter registrasi
 class RegisterParams extends Equatable {
-  final String fullName;
+  final String name;
+  final String username;
   final String email;
-  final String phoneNumber;
+  final String phone;
   final String gender;
-  final String pin;
 
   const RegisterParams({
-    required this.fullName,
+    required this.name,
+    required this.username,
     required this.email,
-    required this.phoneNumber,
+    required this.phone,
     required this.gender,
-    required this.pin,
   });
 
   @override
-  List<Object?> get props => [fullName, email, phoneNumber, gender, pin];
+  List<Object?> get props => [name, username, email, phone, gender];
 }

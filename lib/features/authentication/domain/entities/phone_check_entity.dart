@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class PhoneCheckEntity extends Equatable {
-  final String action; // Berisi 'login' atau 'register'
+  final String action; 
 
   const PhoneCheckEntity({required this.action});
 

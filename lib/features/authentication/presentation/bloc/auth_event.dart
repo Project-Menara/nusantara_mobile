@@ -26,23 +26,21 @@ class AuthVerifyPinPressed extends AuthEvent {
 
 /// Event saat pengguna menekan tombol 'Create Account' di halaman registrasi.
 class AuthRegisterPressed extends AuthEvent {
-  final String fullName;
+  final String name;
+  final String username;
   final String email;
-  final String phoneNumber;
+  final String phone;
   final String gender;
-  final String pin;
-  
-  const AuthRegisterPressed({
-    required this.fullName,
-    required this.email,
-    required this.phoneNumber,
-    required this.gender,
-    required this.pin,
-  });
-  
-  @override
-  List<Object> get props => [fullName, email, phoneNumber, gender, pin];
-}
 
+  AuthRegisterPressed({
+    required this.name,
+    required this.username,
+    required this.email,
+    required this.phone,
+    required this.gender,
+  });
+  @override
+  List<Object> get props => [name, username, email, phone, gender];
+}
 /// Event saat pengguna menekan tombol logout.
 class AuthLogoutPressed extends AuthEvent {}

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/core/presentation/main_screen.dart'; // Impor MainScreen
-import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
+import 'package:nusantara_mobile/core/presentation/main_screen.dart';
+// Perbaiki path import jika nama file sebenarnya adalah 'register_page.dart'
+import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart'; 
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
-import 'package:nusantara_mobile/features/pin/verify_pin.dart';
+// Perbaiki path import jika nama file sebenarnya adalah 'verify_pin_page.dart'
+import 'package:nusantara_mobile/features/pin/verify_number.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 // Impor semua halaman yang Anda butuhkan
@@ -15,6 +17,7 @@ import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.dart';
+// Perbaiki path import jika nama file sebenarnya adalah 'login_page.dart'
 import 'package:nusantara_mobile/features/authentication/presentation/pages/login_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 
@@ -47,13 +50,29 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.loginScreen,
       builder: (context, state) => const LoginScreen(),
     ),
+
+    // ========================================================
+    // == PERBAIKANNYA ADA DI SINI ==
+    // ========================================================
     GoRoute(
       path: InitialRoutes.registerScreen,
-      builder: (context, state) => const RegisterScreen(phoneNumber: ''),
+      builder: (context, state) {
+        // 1. Ambil data yang dikirim dari LoginScreen melalui 'extra'
+        final phoneNumber = state.extra as String? ?? '';
+
+        // 2. Masukkan data tersebut ke dalam RegisterScreen
+        return RegisterScreen(phoneNumber: phoneNumber);
+      },
     ),
+    // ========================================================
+    
     GoRoute(
       path: InitialRoutes.verifyPin,
-      builder: (context, state) => const VerifyPinPage(),
+      builder: (context, state) {
+         // Lakukan hal yang sama untuk VerifyPin jika perlu mengirim nomor telepon
+         final phoneNumber = state.extra as String? ?? '';
+         return VerifyNumberPage(phoneNumber: phoneNumber); // Asumsi VerifyPinPage menerima phoneNumber
+      }
     ),
 
     // --- RUTE DI DALAM CANGKANG (SHELL) ---
@@ -61,7 +80,6 @@ final GoRouter appRoute = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
         return BlocProvider(
-          // PERUBAHAN DI SINI: Ambil BLoC dari GetIt, bukan membuat baru.
           create: (context) => sl<HomeBloc>(),
           child: MainScreen(child: child),
         );
