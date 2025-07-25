@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/core/presentation/main_screen.dart';
 // Perbaiki path import jika nama file sebenarnya adalah 'register_page.dart'
-import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart'; 
+import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/pin/confirm_pin_page.dart';
+import 'package:nusantara_mobile/features/pin/create_pin_page.dart';
 // Perbaiki path import jika nama file sebenarnya adalah 'verify_pin_page.dart'
 import 'package:nusantara_mobile/features/pin/verify_number.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
@@ -64,17 +66,34 @@ final GoRouter appRoute = GoRouter(
         return RegisterScreen(phoneNumber: phoneNumber);
       },
     ),
-    // ========================================================
-    
-    GoRoute(
-      path: InitialRoutes.verifyPin,
-      builder: (context, state) {
-         // Lakukan hal yang sama untuk VerifyPin jika perlu mengirim nomor telepon
-         final phoneNumber = state.extra as String? ?? '';
-         return VerifyNumberPage(phoneNumber: phoneNumber); // Asumsi VerifyPinPage menerima phoneNumber
-      }
-    ),
 
+    // ========================================================
+    GoRoute(
+      path: InitialRoutes.verifyNumber,
+      builder: (context, state) {
+        // Lakukan hal yang sama untuk VerifyPin jika perlu mengirim nomor telepon
+        final phoneNumber = state.extra as String? ?? '';
+        return VerifyNumberPage(
+          phoneNumber: phoneNumber,
+        ); // Asumsi VerifyPinPage menerima phoneNumber
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.createPin,
+      builder: (context, state) {
+        // Ambil data yang dikirim dari VerifyNumberPage melalui 'extra'
+        final phoneNumber = state.extra as String? ?? '';
+        return const CreatePinPage(); // Asumsi CreatePinPage menerima phoneNumber
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.confirmPin,
+      builder: (context, state) {
+        // Ambil data yang dikirim dari CreatePinPage melalui 'extra'
+        final phoneNumber = state.extra as String? ?? '';
+        return ConfirmPinPage(firstPin: '');
+      },
+    ),
     // --- RUTE DI DALAM CANGKANG (SHELL) ---
     ShellRoute(
       navigatorKey: _shellNavigatorKey,

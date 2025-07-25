@@ -5,10 +5,10 @@ abstract class AuthRemoteDataSource {
   // Method untuk langkah awal, cek nomor telepon
   Future<PhoneCheckResponseModel> checkPhone(String phoneNumber);
 
-  // Method untuk verifikasi PIN, mengembalikan data user
-  Future<UserModel> verifyPin({required String phoneNumber, required String pin});
+  // Method untuk verifikasi kode OTP
+  Future<void> verifyCode({required String phoneNumber, required String code});
 
-  // Method register disesuaikan dengan JSON
+  // Method register
   Future<void> register({
     required String name,
     required String username,
@@ -16,6 +16,12 @@ abstract class AuthRemoteDataSource {
     required String phone,
     required String gender,
   });
+
+  // Method untuk membuat PIN baru
+  Future<void> createPin({required String phoneNumber, required String pin});
+
+  // Method untuk verifikasi PIN, mengembalikan data user
+  Future<UserModel> verifyPin({required String phoneNumber, required String pin});
 
   // Method logout
   Future<void> logout(String token);

@@ -1,22 +1,42 @@
 import 'package:equatable/equatable.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/role_entity.dart';
 
 class UserEntity extends Equatable {
-  final int id;
-  final String fullName;
+  final String id;
+  final String name;
+  final String username;
   final String email;
-  final String phoneNumber;
-  final String? gender; // Bisa null jika tidak wajib
-  final String token; // Token untuk otentikasi sesi
+  final String phone;
+  final String gender;
+  final String? dateOfBirth;
+  final String? photo;
+  final RoleEntity role;
+  final int status;
 
   const UserEntity({
     required this.id,
-    required this.fullName,
+    required this.name,
+    required this.username,
     required this.email,
-    required this.phoneNumber,
-    this.gender,
-    required this.token, required String name,
+    required this.phone,
+    required this.gender,
+    this.dateOfBirth,
+    this.photo,
+    required this.role,
+    required this.status,
   });
 
   @override
-  List<Object?> get props => [id, fullName, email, phoneNumber, gender, token];
+  List<Object?> get props => [
+        id,
+        name,
+        username,
+        email,
+        phone,
+        gender,
+        dateOfBirth,
+        photo,
+        role,
+        status,
+      ];
 }

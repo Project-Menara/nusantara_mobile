@@ -26,37 +26,31 @@ class AuthRepositoryImpl implements AuthRepository {
     if (await networkInfo.isConnected) {
       try {
         final resultModel = await authRemoteDatasource.checkPhone(phoneNumber);
+        // Diasumsikan PhoneCheckResponseModel memiliki method toEntity()
         return Right(resultModel.toEntity());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('Unexpected error: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure('No Internet Connection'));
     }
   }
 
+  // PENAMBAHAN: Implementasi verifyCode
   @override
-  Future<Either<Failures, UserEntity>> verifyPinAndLogin({
+  Future<Either<Failures, Unit>> verifyCode({
     required String phoneNumber,
-    required String pin,
+    required String code,
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        final userModel = await authRemoteDatasource.verifyPin(
+        await authRemoteDatasource.verifyCode(
           phoneNumber: phoneNumber,
-          pin: pin,
+          code: code,
         );
-        // PENTING: Simpan token dan role ke local storage setelah login berhasil
-        await localDatasource.cacheAuthToken(userModel.token);
-        return Right(userModel);
-      } on AuthException catch (e) {
-        return Left(AuthFailure(e.message));
+        return const Right(unit);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('Unexpected error: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure('No Internet Connection'));
@@ -83,8 +77,52 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(unit);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  // PENAMBAHAN: Implementasi createPin
+  @override
+  Future<Either<Failures, Unit>> createPin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await authRemoteDatasource.createPin(
+          phoneNumber: phoneNumber,
+          pin: pin,
+        );
+        return const Right(unit);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  // PENAMBAHAN: Implementasi verifyPinAndLogin (sebelumnya di-comment)
+  @override
+  Future<Either<Failures, UserEntity>> verifyPinAndLogin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final userModel = await authRemoteDatasource.verifyPin(
+          phoneNumber: phoneNumber,
+          pin: pin,
+        );
+        // Anda mungkin perlu menyimpan token atau data sesi di sini
+        // await localDatasource.cacheAuthToken(userModel.token);
+        return Right(userModel);
+      } on AuthException catch (e) {
+        return Left(AuthFailure(e.message));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
       }
     } else {
       return const Left(NetworkFailure('No Internet Connection'));
@@ -93,16 +131,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failures, Unit>> logout() async {
+    // Implementasi logout tetap sama
     if (await networkInfo.isConnected) {
       try {
         final token = await localDatasource.getAuthToken();
         if (token == null) return const Right(unit);
-
         await authRemoteDatasource.logout(token);
         await localDatasource.clearAuthToken();
         return const Right(unit);
-      } on AuthException catch (e) {
-        return Left(AuthFailure(e.message));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on CacheException {

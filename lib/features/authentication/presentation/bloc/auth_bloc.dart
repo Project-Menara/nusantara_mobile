@@ -16,7 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.registerUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckPhonePressed>(_onCheckPhone);
-    on<AuthVerifyPinPressed>(_onVerifyPin);
+    // on<AuthVerifyPinPressed>(_onVerifyPin);
     on<AuthRegisterPressed>(_onRegister);
   }
 
@@ -28,33 +28,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final result = await checkPhoneUseCase(event.phoneNumber);
       result.fold(
-        (failure) => emit(AuthFailure(failure.message)),
+        (failure) => emit(AuthCheckPhoneFailure(failure.message)),
         (checkResult) => emit(AuthCheckPhoneSuccess(checkResult)),
       );
     } catch (e) {
-      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+      emit(AuthCheckPhoneFailure('An unexpected error occurred: ${e.toString()}'));
     }
   }
 
-  Future<void> _onVerifyPin(
-    AuthVerifyPinPressed event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-    try {
-      final params = VerifyPinParams(
-        phoneNumber: event.phoneNumber,
-        pin: event.pin,
-      );
-      final result = await verifyPinAndLoginUseCase(params);
-      result.fold(
-        (failure) => emit(AuthFailure(failure.message)),
-        (user) => emit(AuthLoginSuccess(user)),
-      );
-    } catch (e) {
-      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
-    }
-  }
+  // Future<void> _onVerifyPin(
+  //   AuthVerifyPinPressed event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
+  //   try {
+  //     final params = VerifyPinParams(
+  //       phoneNumber: event.phoneNumber,
+  //       pin: event.pin,
+  //     );
+  //     final result = await verifyPinAndLoginUseCase(params);
+  //     result.fold(
+  //       (failure) => emit(AuthLoginFailure(failure.message)),
+  //       (user) => emit(AuthLoginSuccess(user)),
+  //     );
+  //   } catch (e) {
+  //     emit(AuthLoginFailure('An unexpected error occurred: ${e.toString()}'));
+  //   }
+  // }
 
   Future<void> _onRegister(
     AuthRegisterPressed event,
@@ -71,11 +71,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       final result = await registerUseCase(params);
       result.fold(
-        (failure) => emit(AuthFailure(failure.message)),
+        (failure) => emit(AuthRegisterFailure(failure.message)),
         (_) => emit(AuthRegisterSuccess()),
       );
     } catch (e) {
-      emit(AuthFailure('An unexpected error occurred: ${e.toString()}'));
+      emit(AuthRegisterFailure('An unexpected error occurred: ${e.toString()}'));
     }
   }
 }

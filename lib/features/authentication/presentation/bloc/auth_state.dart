@@ -15,16 +15,6 @@ class AuthInitial extends AuthState {}
 /// State saat proses asynchronous sedang berjalan (menampilkan loading indicator).
 class AuthLoading extends AuthState {}
 
-/// State jika terjadi kegagalan pada salah satu proses otentikasi.
-class AuthFailure extends AuthState {
-  final String message;
-
-  const AuthFailure(this.message);
-
-  @override
-  List<Object> get props => [message];
-}
-
 // ========================================================
 // SPESIFIC SUCCESS STATES (State Sukses yang Lebih Spesifik)
 // ========================================================
@@ -40,6 +30,16 @@ class AuthCheckPhoneSuccess extends AuthState {
   List<Object> get props => [result];
 }
 
+/// State gagal saat mengecek nomor telepon.
+class AuthCheckPhoneFailure extends AuthState {
+  final String message;
+
+  const AuthCheckPhoneFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 /// State sukses setelah verifikasi PIN berhasil.
 /// Membawa data lengkap pengguna.
 class AuthLoginSuccess extends AuthState {
@@ -51,8 +51,38 @@ class AuthLoginSuccess extends AuthState {
   List<Object> get props => [user];
 }
 
+/// State gagal saat login.
+class AuthLoginFailure extends AuthState {
+  final String message;
+
+  const AuthLoginFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 /// State sukses setelah registrasi berhasil.
 class AuthRegisterSuccess extends AuthState {}
 
+/// State gagal saat registrasi.
+class AuthRegisterFailure extends AuthState {
+  final String message;
+
+  const AuthRegisterFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 /// State sukses setelah logout berhasil.
 class AuthLogoutSuccess extends AuthState {}
+
+/// State gagal saat logout.
+class AuthLogoutFailure extends AuthState {
+  final String message;
+
+  const AuthLogoutFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+}

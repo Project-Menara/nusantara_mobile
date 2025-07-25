@@ -37,19 +37,44 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: primaryOrange,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthFailure) {
+          if (state is AuthCheckPhoneFailure) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
           } else if (state is AuthCheckPhoneSuccess) {
             final phoneNumber = '+62${_phoneController.text}';
-            // Navigasi berdasarkan action dari API
-            if (state.result.action == 'register') {
-              // TAMBAHKAN PRINT DI SINI
-              print('MENGIRIM KE REGISTER, extra: [$phoneNumber]');
-              context.push(InitialRoutes.registerScreen, extra: phoneNumber);
-            } else if (state.result.action == 'login') {
-              context.push(InitialRoutes.verifyPin, extra: phoneNumber);
+            final action = state.result.action; // Ambil nilai action
+
+            // Gunakan switch untuk navigasi berdasarkan nilai action dari API
+            switch (action) {
+              case 'register':
+                print('ACTION: register -> Navigasi ke Halaman Registrasi');
+                context.push(InitialRoutes.registerScreen, extra: phoneNumber);
+                break;
+
+              case 'verify_otp':
+                print('ACTION: verify_otp -> Navigasi ke Halaman Verifikasi OTP');
+                context.push(InitialRoutes.verifyNumber, extra: phoneNumber);
+                break;
+
+              case 'verify_otp_and_create_pin':
+                print('ACTION: verify_otp_and_create_pin -> Navigasi ke Halaman Buat PIN');
+                // Anda mungkin perlu rute baru untuk membuat PIN pertama kali
+                context.push(InitialRoutes.createPin, extra: phoneNumber);
+                break;
+
+              case 'login':
+                print('ACTION: login -> Navigasi ke Halaman Masukkan PIN');
+                // Rute untuk memasukkan PIN yang sudah ada
+                context.push('/pinScreen', extra: phoneNumber);
+                break;
+
+              default:
+                // Penanganan jika ada nilai action yang tidak dikenal
+                print('ACTION: Aksi tidak dikenal -> $action');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Terjadi kesalahan: Aksi tidak dikenal')),
+                );
             }
           }
         },
@@ -77,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Ganti dengan Image.asset('assets/images/logo.png', height: 40) jika ada
                 const Icon(Icons.store, color: Colors.white, size: 40),
                 Container(
                   padding: const EdgeInsets.symmetric(

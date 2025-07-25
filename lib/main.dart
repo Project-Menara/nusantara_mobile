@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/injection_container.dart' as di;
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart'; // Impor BLoC lain yang dibutuhkan
 import 'package:nusantara_mobile/routes/app_router.dart';
 
 void main() async {
@@ -19,10 +20,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // PERBAIKAN DI SINI: Bungkus MaterialApp.router dengan BlocProvider
-    return BlocProvider(
-      // 'create' akan mengambil instance AuthBloc dari service locator (GetIt)
-      create: (_) => di.sl<AuthBloc>(),
+    // Menggunakan MultiBlocProvider untuk menyediakan lebih dari satu BLoC
+    return MultiBlocProvider(
+      providers: [
+        // 1. Provider untuk AuthBloc yang sudah ada
+        BlocProvider(
+          create: (_) => di.sl<AuthBloc>(),
+        ),
+        // 2. Tambahkan BLoC lain di sini, contoh: HomeBloc
+        BlocProvider(
+          create: (_) => di.sl<HomeBloc>(),
+        ),
+        // Anda bisa menambahkan provider lain sebanyak yang dibutuhkan
+        // BlocProvider(create: (_) => di.sl<ProfileBloc>()),
+      ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Nusantara Oleh-Oleh',
