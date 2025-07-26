@@ -104,6 +104,26 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<Either<Failures, Unit>> confirmPin({
+    required String phone,
+    required String confirmPin,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await authRemoteDatasource.confirmPin(
+          phone: phone,
+          confirmPin: confirmPin,
+        );
+        return const Right(unit);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
   // PENAMBAHAN: Implementasi verifyPinAndLogin (sebelumnya di-comment)
   @override
   Future<Either<Failures, UserEntity>> verifyPinAndLogin({

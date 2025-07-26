@@ -12,6 +12,7 @@ class UserEntity extends Equatable {
   final String? photo;
   final RoleEntity role;
   final int status;
+  final String? token;
 
   const UserEntity({
     required this.id,
@@ -24,6 +25,7 @@ class UserEntity extends Equatable {
     this.photo,
     required this.role,
     required this.status,
+    this.token,
   });
 
   @override
@@ -38,5 +40,6 @@ class UserEntity extends Equatable {
         photo,
         role,
         status,
+        token,  
       ];
 }

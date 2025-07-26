@@ -20,6 +20,9 @@ abstract class AuthRemoteDataSource {
   // Method untuk membuat PIN baru
   Future<void> createPin({required String phoneNumber, required String pin});
 
+  // Method untuk konfirmasi PIN
+  Future<void> confirmPin({required String phone, required String confirmPin});
+
   // Method untuk verifikasi PIN, mengembalikan data user
   Future<UserModel> verifyPin({required String phoneNumber, required String pin});
 

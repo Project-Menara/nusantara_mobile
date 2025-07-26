@@ -9,13 +9,15 @@ class VerifyPinAndLoginUseCase {
 
   VerifyPinAndLoginUseCase(this.repository);
 
-  // 'call' akan menerima parameter dan mengembalikan data User
-  // Future<Either<Failures, UserEntity>> call(VerifyPinParams params) async {
-  //   return await repository.verifyPinAndLogin(
-  //     phoneNumber: params.phoneNumber,
-  //     pin: params.pin,
-  //   );
-  // }
+  // =========================================================
+  // HAPUS TANDA KOMENTAR DI BAWAH INI UNTUK MENGAKTIFKANNYA
+  // =========================================================
+  Future<Either<Failures, UserEntity>> call(VerifyPinParams params) async {
+    return await repository.verifyPinAndLogin(
+      phoneNumber: params.phoneNumber,
+      pin: params.pin,
+    );
+  }
 }
 
 // Kelas untuk membungkus parameter agar lebih rapi

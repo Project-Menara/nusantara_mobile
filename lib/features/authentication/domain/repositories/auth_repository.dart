@@ -29,6 +29,11 @@ abstract class AuthRepository {
     required String pin,
   });
 
+  Future<Either<Failures, void>> confirmPin({
+    required String phone,
+    required String confirmPin,
+  });
+
   /// Method untuk verifikasi PIN dan melakukan login.
   Future<Either<Failures, UserEntity>> verifyPinAndLogin({
     required String phoneNumber,

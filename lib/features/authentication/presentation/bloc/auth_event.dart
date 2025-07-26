@@ -42,5 +42,19 @@ class AuthRegisterPressed extends AuthEvent {
   @override
   List<Object> get props => [name, username, email, phone, gender];
 }
+
 /// Event saat pengguna menekan tombol logout.
 class AuthLogoutPressed extends AuthEvent {}
+
+class AuthLoginWithPinSubmitted extends AuthEvent {
+  final String phoneNumber;
+  final String pin;
+
+  const AuthLoginWithPinSubmitted({
+    required this.phoneNumber,
+    required this.pin,
+  });
+
+  @override
+  List<Object> get props => [phoneNumber, pin];
+}

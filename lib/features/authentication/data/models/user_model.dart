@@ -13,6 +13,7 @@ class UserModel extends UserEntity {
     super.photo,
     required super.role,
     required super.status,
+    super.token,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +28,7 @@ class UserModel extends UserEntity {
       photo: json['photo'],
       role: RoleModel.fromJson(json['role']), // Parsing objek role
       status: json['status'],
+      token: json['token'],
     );
   }
 }

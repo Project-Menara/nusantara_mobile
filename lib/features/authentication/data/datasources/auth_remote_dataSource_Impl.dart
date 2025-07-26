@@ -41,7 +41,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return PhoneCheckResponseModel.fromJson(json.decode(response.body));
       } else {
         throw ServerException(
-            json.decode(response.body)['message'] ?? 'Failed to check phone');
+          json.decode(response.body)['message'] ?? 'Failed to check phone',
+        );
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');
@@ -50,7 +51,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   // PENAMBAHAN: Implementasi untuk verifikasi kode OTP
   @override
-  Future<void> verifyCode({required String phoneNumber, required String code}) async {
+  Future<void> verifyCode({
+    required String phoneNumber,
+    required String code,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/code-verify');
     try {
       final response = await client.post(
@@ -62,7 +66,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // Berdasarkan screenshot, 200 adalah sukses
       if (response.statusCode != 200) {
         throw ServerException(
-            json.decode(response.body)['message'] ?? 'OTP Verification Failed');
+          json.decode(response.body)['message'] ?? 'OTP Verification Failed',
+        );
       }
       // Tidak perlu return apa-apa jika sukses
     } on SocketException {
@@ -71,12 +76,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> register(
-      {required String name,
-      required String username,
-      required String email,
-      required String phone,
-      required String gender}) async {
+  Future<void> register({
+    required String name,
+    required String username,
+    required String email,
+    required String phone,
+    required String gender,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/register');
     try {
       final response = await client.post(
@@ -93,7 +99,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (response.statusCode != 201) {
         throw ServerException(
-            json.decode(response.body)['message'] ?? 'Registration failed');
+          json.decode(response.body)['message'] ?? 'Registration failed',
+        );
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');
@@ -102,7 +109,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   // PENAMBAHAN: Implementasi untuk membuat PIN baru
   @override
-  Future<void> createPin({required String phoneNumber, required String pin}) async {
+  Future<void> createPin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
     // ASUMSI: Endpointnya adalah /customer/new-pin
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin');
     try {
@@ -113,7 +123,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       if (response.statusCode != 200) {
         throw ServerException(
-            json.decode(response.body)['message'] ?? 'Failed to create PIN');
+          json.decode(response.body)['message'] ?? 'Failed to create PIN',
+        );
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');
@@ -121,8 +132,33 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> verifyPin(
-      {required String phoneNumber, required String pin}) async {
+  Future<void> confirmPin({
+    required String phone,
+    required String confirmPin,
+  }) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/confirm-pin');
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phone, 'confirmPin': confirmPin}),
+      );
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          json.decode(response.body)['message'] ?? 'PIN confirmation failed',
+        );
+      }
+    } on SocketException {
+      throw const ServerException('No Internet Connection');
+    }
+  }
+
+  @override
+  Future<UserModel> verifyPin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
     // Ganti nama endpoint agar lebih jelas
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
     try {
@@ -138,7 +174,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return UserModel.fromJson(jsonResponse['data']);
       } else {
         throw AuthException(
-            jsonResponse['message'] ?? 'Invalid PIN or phone number');
+          jsonResponse['message'] ?? 'Invalid PIN or phone number',
+        );
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');
@@ -153,7 +190,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (response.statusCode != 200) {
         throw ServerException(
-            json.decode(response.body)['message'] ?? 'Logout failed');
+          json.decode(response.body)['message'] ?? 'Logout failed',
+        );
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');

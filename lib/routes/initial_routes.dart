@@ -15,6 +15,7 @@ class InitialRoutes {
   static const verifyNumber = '/verify-number';
   static const createPin = '/create-pin';
   static const confirmPin = '/confirm-pin';
+  static const pinLogin = '/pin-login';
 
   // Rute Autentikasi
   static const loginScreen = '/login';

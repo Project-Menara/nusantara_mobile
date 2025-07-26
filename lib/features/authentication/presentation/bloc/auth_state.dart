@@ -4,7 +4,7 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 
 abstract class AuthState extends Equatable {
   const AuthState();
-  
+
   @override
   List<Object> get props => [];
 }

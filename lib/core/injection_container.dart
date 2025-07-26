@@ -8,9 +8,14 @@ import 'package:nusantara_mobile/features/authentication/data/datasources/local_
 import 'package:nusantara_mobile/features/authentication/data/repositories/auth_repository_impl.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/confirm_pin_use_case.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin_bloc.dart'; // <-- Impor PinBloc
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -21,16 +26,48 @@ Future<void> init() async {
   // =================================================================
   // FITUR: OTENTIKASI (Authentication)
   // =================================================================
-  sl.registerFactory(() => AuthBloc(
-        checkPhoneUseCase: sl<CheckPhoneUseCase>(),
-        verifyPinAndLoginUseCase: sl<VerifyPinAndLoginUseCase>(),
-        registerUseCase: sl<RegisterUseCase>(),
-      ));
 
+  // BLoCs
+  sl.registerFactory(
+    () => AuthBloc(
+      checkPhoneUseCase: sl<CheckPhoneUseCase>(),
+      verifyPinAndLoginUseCase: sl<VerifyPinAndLoginUseCase>(),
+      registerUseCase: sl<RegisterUseCase>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => OtpBloc(
+      verifyCodeUseCase: sl<VerifyCodeUseCase>(),
+    ),
+  );
+  
+  // =================================================================
+  // FITUR: PIN
+  // =================================================================
+  
+  // BLoC
+  sl.registerFactory(
+    () => PinBloc(
+      createPinUseCase: sl<CreatePinUseCase>(),
+      confirmPinUseCase: sl<ConfirmPinUseCase>(),
+    ),
+  );
+
+  // =================================================================
+  // UseCases (untuk semua fitur)
+  // =================================================================
   sl.registerLazySingleton(() => CheckPhoneUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => VerifyPinAndLoginUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => RegisterUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => VerifyCodeUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => CreatePinUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => ConfirmPinUseCase(sl<AuthRepository>()));
 
+
+  // =================================================================
+  // Repositories & DataSources (untuk semua fitur)
+  // =================================================================
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       authRemoteDatasource: sl<AuthRemoteDataSource>(),
@@ -40,10 +77,13 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
+    () =>
+        AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
   );
 
-  sl.registerLazySingleton<LocalDatasource>(() => LocalDatasourceImpl(sl<SharedPreferences>()));
+  sl.registerLazySingleton<LocalDatasource>(
+    () => LocalDatasourceImpl(sl<SharedPreferences>()),
+  );
 
   // =================================================================
   // FITUR: HOME
@@ -53,7 +93,9 @@ Future<void> init() async {
   // =================================================================
   // CORE & EXTERNAL
   // =================================================================
-  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl<Connectivity>()));
+  sl.registerLazySingleton<NetworkInfo>(
+    () => NetworkInfoImpl(sl<Connectivity>()),
+  );
 
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
