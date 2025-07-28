@@ -25,3 +25,12 @@ class CacheFailure extends Failures {
 class NetworkFailure extends Failures {
   const NetworkFailure(String message) : super(message);
 }
+
+class RateLimitFailure extends Failures {
+  final int retryAfterSeconds;
+
+  const RateLimitFailure(super.message, this.retryAfterSeconds);
+
+  @override
+  List<Object> get props => [message, retryAfterSeconds];
+}

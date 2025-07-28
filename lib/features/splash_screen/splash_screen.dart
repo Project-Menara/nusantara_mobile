@@ -15,13 +15,9 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
-      // HAPUS PERINTAH LAMA INI:
-      // Navigator.of(context).pushReplacement(
-      //   MaterialPageRoute(builder: (context) => const OnboardingScreen1()),
-      // );
-
-      // PERBAIKAN: Gunakan context.go() untuk navigasi pertama
-      if (mounted) { // Pastikan widget masih ada di tree
+      // Setelah 3 detik, arahkan ke halaman onboarding pertama
+      if (mounted) {
+        // Pastikan widget masih ada di tree
         context.go(InitialRoutes.onboarding1);
       }
     });

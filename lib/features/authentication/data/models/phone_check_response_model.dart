@@ -19,6 +19,13 @@ class PhoneCheckResponseModel {
       action: json['data']['action'], // Mengambil 'action' dari dalam 'data'
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'status_code': statusCode,
+      'message': message,
+      'data': {'action': action},
+    };
+  }
 
   // Method untuk mengonversi Model (Data Layer) ke Entity (Domain Layer)
   PhoneCheckEntity toEntity() {

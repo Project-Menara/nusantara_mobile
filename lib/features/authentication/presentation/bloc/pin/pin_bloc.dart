@@ -27,7 +27,7 @@ class PinBloc extends Bloc<PinEvent, PinState> {
     );
 
     result.fold(
-      (failure) => emit(PinCreationFailure(failure.message)),
+      (failure) => emit(PinCreationError(failure.message)),
       (_) => emit(PinCreationSuccess()),
     );
   }

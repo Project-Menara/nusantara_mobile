@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:nusantara_mobile/core/constant/api_constant.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
-import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/phone_check_response_model.dart';
@@ -12,10 +12,8 @@ import 'package:nusantara_mobile/features/authentication/data/models/user_model.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final http.Client client;
 
-  // NetworkInfo networkInfo, PERBAIKAN: Constructor disederhanakan.
   AuthRemoteDataSourceImpl(NetworkInfo networkInfo, {required this.client});
 
-  // Helper untuk membuat headers, mengurangi duplikasi
   Map<String, String> _headers({String? token}) {
     final headers = {
       'Content-Type': 'application/json',
@@ -49,7 +47,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  // PENAMBAHAN: Implementasi untuk verifikasi kode OTP
   @override
   Future<void> verifyCode({
     required String phoneNumber,
@@ -63,13 +60,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         body: jsonEncode({'phone': phoneNumber, 'code': code}),
       );
 
-      // Berdasarkan screenshot, 200 adalah sukses
       if (response.statusCode != 200) {
         throw ServerException(
           json.decode(response.body)['message'] ?? 'OTP Verification Failed',
         );
       }
-      // Tidak perlu return apa-apa jika sukses
     } on SocketException {
       throw const ServerException('No Internet Connection');
     }
@@ -107,13 +102,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  // PENAMBAHAN: Implementasi untuk membuat PIN baru
   @override
   Future<void> createPin({
     required String phoneNumber,
     required String pin,
   }) async {
-    // ASUMSI: Endpointnya adalah /customer/new-pin
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin');
     try {
       final response = await client.post(
@@ -132,7 +125,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> confirmPin({
+  Future<UserModel> confirmPin({
     required String phone,
     required String confirmPin,
   }) async {
@@ -141,12 +134,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final response = await client.post(
         uri,
         headers: _headers(),
-        body: jsonEncode({'phone': phone, 'confirmPin': confirmPin}),
+        body: jsonEncode({'phone': phone, 'confirm_pin': confirmPin}),
       );
 
-      if (response.statusCode != 200) {
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // Ambil objek 'data' dari respons
+        final data = jsonResponse['data'];
+        // Buat UserModel dari 'user' dan 'token' di dalam 'data'
+        return UserModel.fromJson(data['user'], token: data['token']);
+      } else {
         throw ServerException(
-          json.decode(response.body)['message'] ?? 'PIN confirmation failed',
+          jsonResponse['message'] ?? 'PIN confirmation failed',
         );
       }
     } on SocketException {
@@ -159,7 +159,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String phoneNumber,
     required String pin,
   }) async {
-    // Ganti nama endpoint agar lebih jelas
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
     try {
       final response = await client.post(
@@ -169,11 +168,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
+  print('DEBUG: Respons /login -> $jsonResponse'); // <-- LETAK PRINT DI SINI
+
       if (response.statusCode == 200) {
-        // Asumsi API mengembalikan data user di dalam field 'data'
-        return UserModel.fromJson(jsonResponse['data']);
+        final String token = jsonResponse['data'];
+        Map<String, dynamic> decodedPayload = JwtDecoder.decode(token);
+        return UserModel.fromJson(decodedPayload, token: token);
+      } else if (response.statusCode == 429) {
+        final int retrySeconds =
+            jsonResponse['error']['retry_after_seconds'] ?? 60;
+        throw RateLimitException(jsonResponse['message'], retrySeconds);
       } else {
-        throw AuthException(
+        throw ServerException(
           jsonResponse['message'] ?? 'Invalid PIN or phone number',
         );
       }
@@ -195,6 +201,44 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } on SocketException {
       throw const ServerException('No Internet Connection');
+    }
+  }
+
+  @override
+  Future<String> loginAndGetToken({required String phoneNumber, required String pin}) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
+    final response = await client.post(
+      uri,
+      headers: _headers(),
+      body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
+    );
+
+    if (response.statusCode == 200) {
+      // Kembalikan HANYA TOKEN (String) dari field "data"
+      return json.decode(response.body)['data'];
+    } else {
+      // Handle error seperti PIN salah
+      throw AuthException(json.decode(response.body)['message'] ?? 'Login Gagal');
+    }
+  }
+
+  @override
+  Future<UserModel> getUserProfile({required String token}) async {
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/me',
+    ); // Endpoint profil
+    final response = await client.get(
+      // Gunakan method GET
+      uri,
+      headers: _headers(token: token), // Sertakan token di sini
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body)['data'];
+      // Parsing UserModel dari data profil, sambil meneruskan token
+      return UserModel.fromJson(data, token: token);
+    } else {
+      throw ServerException('Gagal mengambil data profil');
     }
   }
 }

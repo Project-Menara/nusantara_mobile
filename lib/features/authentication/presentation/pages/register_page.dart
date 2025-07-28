@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_state.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -186,7 +186,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
                       return ElevatedButton(
-                        onPressed: isLoading ? null : _onCreateAccountPressed,
+                        // onPressed: isLoading ? null : _onCreateAccountPressed,
+                        onPressed: context.read<AuthBloc>().state is AuthLoading
+                            ? null
+                            : _onCreateAccountPressed,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryOrange,
                           padding: const EdgeInsets.symmetric(vertical: 16),

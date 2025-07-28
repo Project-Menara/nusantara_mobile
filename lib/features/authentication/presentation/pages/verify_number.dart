@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_state.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_state.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/otp_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 

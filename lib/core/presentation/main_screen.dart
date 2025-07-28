@@ -33,7 +33,13 @@ class MainScreen extends StatelessWidget {
               icon: Icons.list_alt,
               onTap: () => _onItemTapped(1, context),
             ),
-            // HAPUS: Placeholder SizedBox untuk FAB
+            _buildNavItem(
+              context: context,
+              index: 2,
+              activeIndex: activeIndex,
+              icon: Icons.favorite_border,
+              onTap: () => _onItemTapped(2, context),
+            ),
             _buildNavItem(
               context: context,
               index: 3,
@@ -74,6 +80,7 @@ class MainScreen extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.toString();
     if (location == InitialRoutes.home) return 0;
     if (location == InitialRoutes.orders) return 1;
+    if (location == InitialRoutes.favorites) return 2;
     if (location == InitialRoutes.vouchers) return 3;
     if (location == InitialRoutes.profile) return 4;
     return 0;
@@ -88,6 +95,7 @@ class MainScreen extends StatelessWidget {
         context.go(InitialRoutes.orders);
         break;
       case 2:
+        context.go(InitialRoutes.favorites);
         break; // Dulu untuk FAB, sekarang tidak digunakan
       case 3:
         context.go(InitialRoutes.vouchers);

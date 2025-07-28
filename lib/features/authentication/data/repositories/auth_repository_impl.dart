@@ -4,6 +4,7 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
@@ -132,13 +133,22 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        final userModel = await authRemoteDatasource.verifyPin(
+        // Langkah 1: Panggil login untuk dapat TOKEN
+        final String token = await authRemoteDatasource.loginAndGetToken(
           phoneNumber: phoneNumber,
           pin: pin,
         );
-        // Anda mungkin perlu menyimpan token atau data sesi di sini
-        // await localDatasource.cacheAuthToken(userModel.token);
+        await localDatasource.cacheAuthToken(token);
+
+        // Langkah 2: Panggil /me untuk dapat PROFIL USER
+        final UserModel userModel = await authRemoteDatasource.getUserProfile(
+          token: token,
+        );
+
         return Right(userModel);
+      } on RateLimitException catch (e) {
+        // TANGKAP EXCEPTION KHUSUS UNTUK RATE LIMIT
+        return Left(RateLimitFailure(e.message, e.retryAfterSeconds));
       } on AuthException catch (e) {
         return Left(AuthFailure(e.message));
       } on ServerException catch (e) {

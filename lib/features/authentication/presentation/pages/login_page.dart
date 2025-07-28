@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_state.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_header_widget.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_form_widget.dart';
@@ -42,6 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: primaryOrange, // Background utama menjadi oranye
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (state is AuthLoading) {
+            const Center(child: CircularProgressIndicator());
+          }
           if (state is AuthCheckPhoneFailure) {
             ScaffoldMessenger.of(
               context,
@@ -55,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 context.push(InitialRoutes.registerScreen, extra: phoneNumber);
                 break;
               case 'verify_otp':
-                context.push(InitialRoutes.createPin, extra: phoneNumber);
+                context.push(InitialRoutes.verifyNumber, extra: phoneNumber);
                 break;
               case 'verify_otp_and_create_pin':
                 context.push(InitialRoutes.createPin, extra: phoneNumber);

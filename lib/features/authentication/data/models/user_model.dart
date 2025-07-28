@@ -12,23 +12,29 @@ class UserModel extends UserEntity {
     super.dateOfBirth,
     super.photo,
     required super.role,
-    required super.status,
+    required super.status, // UserEntity mengharapkan 'int' di sini
     super.token,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  factory UserModel.fromJson(
+    Map<String, dynamic> json, {
+    String? token,
+  }) {
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      username: json['username'],
-      email: json['email'],
-      phone: json['phone'],
-      gender: json['gender'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      username: json['username'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      gender: json['gender'] ?? '',
       dateOfBirth: json['date_of_birth'],
       photo: json['photo'],
-      role: RoleModel.fromJson(json['role']), // Parsing objek role
-      status: json['status'],
-      token: json['token'],
+      role: RoleModel.fromJson(json['role']),
+
+      // ✅ FIX: Hapus .toString() agar tipe data tetap int sesuai permintaan UserEntity
+      status: json['status'] ?? 0,
+
+      token: token,
     );
   }
 }

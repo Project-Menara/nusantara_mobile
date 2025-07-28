@@ -28,7 +28,8 @@ abstract class AuthRepository {
     required String phoneNumber,
     required String pin,
   });
-
+  
+  /// Method untuk konfirmasi PIN.
   Future<Either<Failures, void>> confirmPin({
     required String phone,
     required String confirmPin,

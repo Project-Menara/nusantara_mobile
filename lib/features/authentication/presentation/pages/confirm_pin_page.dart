@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
@@ -24,7 +24,6 @@ class ConfirmPinPage extends StatefulWidget {
 class _ConfirmPinPageState extends State<ConfirmPinPage> {
   String _pin = '';
   final int _pinLength = 6;
-  // State baru untuk mengatur visibilitas PIN
   bool _isPinVisible = false;
 
   void _onNumpadTapped(String value) {
@@ -39,14 +38,21 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
     }
   }
 
-  // Method baru untuk mengubah visibilitas PIN
   void _togglePinVisibility() {
     setState(() {
       _isPinVisible = !_isPinVisible;
     });
   }
 
-  void _confirmAndSavePin() {
+  void _confirmAndSavePin(BuildContext blocContext) {
+    if (widget.firstPin.isEmpty) {
+      showAppFlashbar(context,
+          title: 'Error',
+          message: 'Terjadi kesalahan, PIN awal tidak ditemukan.',
+          isSuccess: false);
+      return;
+    }
+
     if (_pin != widget.firstPin) {
       showAppFlashbar(
         context,
@@ -57,9 +63,10 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
       setState(() => _pin = '');
       return;
     }
-    context.read<PinBloc>().add(
-      CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
-    );
+
+    blocContext.read<PinBloc>().add(
+          CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+        );
   }
 
   @override
@@ -75,8 +82,9 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
               message: 'PIN Anda berhasil dibuat.',
               isSuccess: true,
             );
-            context.go(InitialRoutes.home);
-          } else if (state is PinCreationFailure) {
+            // Arahkan ke halaman login PIN setelah sukses membuat PIN
+            context.go(InitialRoutes.pinLogin, extra: widget.phoneNumber);
+          } else if (state is PinCreationError) {
             showAppFlashbar(
               context,
               title: 'Gagal',
@@ -125,12 +133,10 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 60),
-                      // Menggunakan Stack untuk menumpuk display PIN dan tombol visibility
                       Stack(
                         alignment: Alignment.center,
                         children: [
                           _buildPinDisplay(),
-                          // Tombol untuk toggle visibility PIN
                           Align(
                             alignment: Alignment.centerRight,
                             child: IconButton(
@@ -154,15 +160,14 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                             child: ElevatedButton(
                               onPressed:
                                   (_pin.length == _pinLength && !isLoading)
-                                  ? _confirmAndSavePin
-                                  : null,
+                                      ? () => _confirmAndSavePin(context)
+                                      : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange
-                                    .withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
+                                disabledBackgroundColor:
+                                    Colors.orange.withOpacity(0.4),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -204,7 +209,6 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
     );
   }
 
-  // Logika di dalam _buildPinDisplay diubah total
   Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
@@ -217,22 +221,22 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                        ? Text(
-                            _pin[i],
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          )
-                        : Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              color: Colors.orange,
-                              shape: BoxShape.circle,
-                            ),
-                          ))
+                      ? Text(
+                          _pin[i],
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        )
+                      : Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ))
                   : Container(
                       width: 20,
                       height: 20,

@@ -15,3 +15,10 @@ class AuthException implements Exception {
   final String message;
   const AuthException(this.message);
 }
+
+class RateLimitException implements Exception {
+  final String message;
+  final int retryAfterSeconds;
+
+  const RateLimitException(this.message, this.retryAfterSeconds);
+}

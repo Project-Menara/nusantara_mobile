@@ -14,7 +14,6 @@ class CreatePinPage extends StatefulWidget {
 class _CreatePinPageState extends State<CreatePinPage> {
   String _pin = '';
   final int _pinLength = 6;
-  // State baru untuk mengatur visibilitas PIN
   bool _isPinVisible = false;
 
   void _onNumpadTapped(String value) {
@@ -29,7 +28,6 @@ class _CreatePinPageState extends State<CreatePinPage> {
     }
   }
 
-  // Method baru untuk mengubah visibilitas PIN
   void _togglePinVisibility() {
     setState(() {
       _isPinVisible = !_isPinVisible;
@@ -46,7 +44,11 @@ class _CreatePinPageState extends State<CreatePinPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Create New PIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: const Text('Create New PIN',
+            style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -59,21 +61,27 @@ class _CreatePinPageState extends State<CreatePinPage> {
               child: Column(
                 children: [
                   const Spacer(),
-                  const Text('Create Your New PIN', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Text('Create Your New PIN',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  const Text('Add a PIN number to make your account\nmore secure.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  const Text(
+                      'Add a PIN number to make your account\nmore secure.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey)),
                   const SizedBox(height: 60),
-                  // Menggunakan Stack untuk menumpuk display PIN dan tombol visibility
                   Stack(
                     alignment: Alignment.center,
                     children: [
                       _buildPinDisplay(),
-                      // Tombol untuk toggle visibility PIN
                       Align(
                         alignment: Alignment.centerRight,
                         child: IconButton(
                           icon: Icon(
-                            _isPinVisible ? Icons.visibility_off : Icons.visibility,
+                            _isPinVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: Colors.grey,
                           ),
                           onPressed: _togglePinVisibility,
@@ -85,14 +93,20 @@ class _CreatePinPageState extends State<CreatePinPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _pin.length == _pinLength ? _goToConfirmPage : null,
+                      onPressed:
+                          _pin.length == _pinLength ? _goToConfirmPage : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
                         disabledBackgroundColor: Colors.orange.withOpacity(0.4),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Continue', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Continue',
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const Spacer(flex: 2),
@@ -109,21 +123,18 @@ class _CreatePinPageState extends State<CreatePinPage> {
     );
   }
 
-  // Logika di dalam _buildPinDisplay diubah total
   Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
       displayWidgets.add(
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          // Diberi SizedBox agar ukuran konsisten antara angka dan bulatan
           child: SizedBox(
             width: 24,
-            height: 32, // Tinggi disesuaikan untuk angka
+            height: 32,
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                      // Tampilkan angka jika _isPinVisible true
                       ? Text(
                           _pin[i],
                           style: const TextStyle(
@@ -132,7 +143,6 @@ class _CreatePinPageState extends State<CreatePinPage> {
                             color: Colors.black,
                           ),
                         )
-                      // Tampilkan bulatan oranye jika false
                       : Container(
                           width: 20,
                           height: 20,
@@ -141,7 +151,6 @@ class _CreatePinPageState extends State<CreatePinPage> {
                             shape: BoxShape.circle,
                           ),
                         ))
-                  // Tampilkan bulatan abu-abu untuk placeholder
                   : Container(
                       width: 20,
                       height: 20,
@@ -155,6 +164,7 @@ class _CreatePinPageState extends State<CreatePinPage> {
         ),
       );
     }
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
   }
 }

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/injection_container.dart' as di;
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart'; // Impor BLoC lain yang dibutuhkan
 import 'package:nusantara_mobile/routes/app_router.dart';
 
 void main() async {
   // Pastikan Flutter binding sudah siap
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Panggil fungsi init untuk mendaftarkan semua dependensi
-  await di.init(); 
-  
+  await di.init();
+
   runApp(const MyApp());
 }
 
@@ -24,13 +24,9 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         // 1. Provider untuk AuthBloc yang sudah ada
-        BlocProvider(
-          create: (_) => di.sl<AuthBloc>(),
-        ),
+        BlocProvider(create: (_) => di.sl<AuthBloc>()),
         // 2. Tambahkan BLoC lain di sini, contoh: HomeBloc
-        BlocProvider(
-          create: (_) => di.sl<HomeBloc>(),
-        ),
+        BlocProvider(create: (_) => di.sl<HomeBloc>()),
         // Anda bisa menambahkan provider lain sebanyak yang dibutuhkan
         // BlocProvider(create: (_) => di.sl<ProfileBloc>()),
       ],

@@ -13,10 +13,10 @@ class PinCreationLoading extends PinState {}
 
 class PinCreationSuccess extends PinState {}
 
-class PinCreationFailure extends PinState {
+class PinCreationError extends PinState {
   final String message;
 
-  const PinCreationFailure(this.message);
+  const PinCreationError(this.message);
 
   @override
   List<Object> get props => [message];

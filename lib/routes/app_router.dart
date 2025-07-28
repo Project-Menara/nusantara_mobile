@@ -13,6 +13,8 @@ import 'package:nusantara_mobile/features/authentication/presentation/pages/conf
 import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin_page.dart';
 // Perbaiki path import jika nama file sebenarnya adalah 'verify_pin_page.dart'
 import 'package:nusantara_mobile/features/authentication/presentation/pages/verify_number.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 // Impor semua halaman yang Anda butuhkan
@@ -90,20 +92,30 @@ final GoRouter appRoute = GoRouter(
     GoRoute(
       path: InitialRoutes.confirmPin,
       builder: (context, state) {
-        // Ambil data yang dikirim dari CreatePinPage melalui 'extra'
-        // final phoneNumber = state.extra as String? ?? '';
-        return const ConfirmPinPage(firstPin: '', phoneNumber: '');
+        final args = state.extra as Map<String, dynamic>?;
+        final phoneNumber = args?['phoneNumber'] as String? ?? '';
+        final firstPin = args?['firstPin'] as String? ?? '';
+
+        return ConfirmPinPage(phoneNumber: phoneNumber, firstPin: firstPin);
       },
     ),
     GoRoute(
       path: InitialRoutes.pinLogin,
       builder: (context, state) {
         final phoneNumber = state.extra as String;
-
         // Jika perlu, bisa mengirim data ke PinLoginPage
         return PinLoginPage(phoneNumber: phoneNumber);
       },
     ),
+    GoRoute(
+      path: InitialRoutes.profile,
+      builder: (context, state) => const ProfilePage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.personalData,
+      builder: (context, state) => const PersonalDataPage(),
+    ),
+
     // --- RUTE DI DALAM CANGKANG (SHELL) ---
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
@@ -135,8 +147,7 @@ final GoRouter appRoute = GoRouter(
         ),
         GoRoute(
           path: InitialRoutes.profile,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Profil')),
+          builder: (context, state) => const ProfilePage(),
         ),
       ],
     ),

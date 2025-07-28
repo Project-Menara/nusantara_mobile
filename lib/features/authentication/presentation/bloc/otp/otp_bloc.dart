@@ -1,9 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code_use_case.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp_state.dart';
-
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_state.dart';
 
 class OtpBloc extends Bloc<OtpEvent, OtpState> {
   final VerifyCodeUseCase verifyCodeUseCase;

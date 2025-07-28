@@ -1,13 +1,12 @@
-// pin_login_page.dart
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth_state.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
@@ -39,21 +38,45 @@ class _PinLoginViewState extends State<PinLoginView> {
   final int _pinLength = 6;
   bool _isPinVisible = false;
 
+  Timer? _timer;
+  int _countdownSeconds = 0;
+  bool get _isRateLimited => _timer?.isActive ?? false;
+
   @override
-  void initState() {
-    super.initState();
-    // Jika Anda ingin menampilkan info user, bisa panggil event di sini
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
-  // Method ini diubah untuk otomatis submit
+  void _startCountdown(int seconds) {
+    // Memastikan timer sebelumnya dibatalkan jika ada
+    _timer?.cancel(); 
+    setState(() {
+      _countdownSeconds = seconds;
+      _pin = '';
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { // Pengecekan keamanan jika widget sudah di-dispose
+        timer.cancel();
+        return;
+      }
+
+      if (_countdownSeconds > 0) {
+        setState(() => _countdownSeconds--);
+      } else {
+        timer.cancel();
+        setState(() {});
+      }
+    });
+  }
+
   void _onNumpadTapped(String value) {
-    // Jangan izinkan input jika sedang loading
-    if (context.read<AuthBloc>().state is AuthLoading) return;
+    if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
 
     if (_pin.length < _pinLength) {
       setState(() {
         _pin += value;
-        // Jika PIN sudah lengkap, langsung trigger proses login
         if (_pin.length == _pinLength) {
           _submitLogin();
         }
@@ -62,25 +85,21 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _onBackspaceTapped() {
-    if (context.read<AuthBloc>().state is AuthLoading) return;
+    if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
 
     if (_pin.isNotEmpty) {
-      setState(() {
-        _pin = _pin.substring(0, _pin.length - 1);
-      });
+      setState(() => _pin = _pin.substring(0, _pin.length - 1));
     }
   }
 
   void _togglePinVisibility() {
-    setState(() {
-      _isPinVisible = !_isPinVisible;
-    });
+    setState(() => _isPinVisible = !_isPinVisible);
   }
 
   void _submitLogin() {
     context.read<AuthBloc>().add(
-      AuthLoginWithPinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
-    );
+          AuthLoginWithPinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+        );
   }
 
   @override
@@ -88,38 +107,41 @@ class _PinLoginViewState extends State<PinLoginView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoginSuccess) {
-          // Jika login sukses, navigasi ke halaman utama
           context.go(InitialRoutes.home);
+        } else if (state is AuthLoginRateLimited) {
+          showAppFlashbar(
+            context,
+            title: "Terlalu Banyak Percobaan",
+            message: state.message,
+            isSuccess: false,
+          );
+          _startCountdown(state.retryAfterSeconds);
         } else if (state is AuthLoginFailure) {
-          // Jika gagal, tampilkan pesan error dan reset PIN
           showAppFlashbar(
             context,
             title: "Login Gagal",
             message: state.message,
             isSuccess: false,
           );
-          setState(() {
-            _pin = '';
-          });
+          setState(() => _pin = '');
         }
       },
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          title: const Text(
-            'Masukkan PIN',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
+          title: const Text('Masukkan PIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(InitialRoutes.loginScreen);
+              }
+            },
           ),
         ),
         body: Column(
@@ -130,47 +152,27 @@ class _PinLoginViewState extends State<PinLoginView> {
                 child: Column(
                   children: [
                     const Spacer(),
-                    // Anda bisa menambahkan info user di sini jika perlu
-                    const Text(
-                      'Selamat Datang Kembali!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Selamat Datang Kembali!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    Text(
-                      'Masukkan 6-digit PIN Anda untuk melanjutkan.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+                    Text('Masukkan 6-digit PIN Anda untuk melanjutkan.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
                     const SizedBox(height: 60),
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
+                        if (_isRateLimited) {
+                          return Text('Coba lagi dalam $_countdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
+                        }
                         return Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Tampilkan indikator loading atau display PIN
-                            state is AuthLoading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.orange,
-                                  )
-                                : _buildPinDisplay(),
-                            // Tombol visibility tetap ada
+                            if (state is AuthLoading)
+                              const CircularProgressIndicator(color: Colors.orange)
+                            else
+                              _buildPinDisplay(),
                             if (state is! AuthLoading)
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: IconButton(
-                                  icon: Icon(
-                                    _isPinVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
-                                  ),
+                                  icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
                                   onPressed: _togglePinVisibility,
                                 ),
                               ),
@@ -179,7 +181,6 @@ class _PinLoginViewState extends State<PinLoginView> {
                       },
                     ),
                     const Spacer(flex: 2),
-                    // Tidak ada tombol "Continue" di sini
                   ],
                 ),
               ),
@@ -195,7 +196,6 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   Widget _buildPinDisplay() {
-    // Logika display PIN sama seperti sebelumnya
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
       displayWidgets.add(
@@ -207,29 +207,16 @@ class _PinLoginViewState extends State<PinLoginView> {
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                        ? Text(
-                            _pin[i],
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          )
-                        : Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              color: Colors.orange,
-                              shape: BoxShape.circle,
-                            ),
-                          ))
+                      ? Text(_pin[i], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black))
+                      : Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                        ))
                   : Container(
                       width: 20,
                       height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: BoxDecoration(color: Colors.grey[300], shape: BoxShape.circle),
                     ),
             ),
           ),
