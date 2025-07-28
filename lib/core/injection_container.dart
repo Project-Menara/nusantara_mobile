@@ -10,12 +10,13 @@ import 'package:nusantara_mobile/features/authentication/domain/repositories/aut
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/confirm_pin_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin_use_case.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart'; // <-- Impor PinBloc
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -33,26 +34,25 @@ Future<void> init() async {
       checkPhoneUseCase: sl<CheckPhoneUseCase>(),
       verifyPinAndLoginUseCase: sl<VerifyPinAndLoginUseCase>(),
       registerUseCase: sl<RegisterUseCase>(),
+      getLoggedInUserUseCase: sl<GetLoggedInUserUseCase>(),
     ),
   );
-
   sl.registerFactory(() => OtpBloc(verifyCodeUseCase: sl<VerifyCodeUseCase>()));
-
-  // =================================================================
-  // FITUR: PIN
-  // =================================================================
-
-  // BLoC
   sl.registerFactory(
     () => PinBloc(
       createPinUseCase: sl<CreatePinUseCase>(),
       confirmPinUseCase: sl<ConfirmPinUseCase>(),
     ),
   );
+  sl.registerFactory(() => HomeBloc());
 
   // =================================================================
-  // UseCases (untuk semua fitur)
+  // UseCases
   // =================================================================
+
+  // ✅ TAMBAHKAN PENDAFTARAN YANG HILANG DI SINI
+  sl.registerLazySingleton(() => GetLoggedInUserUseCase(sl<AuthRepository>()));
+
   sl.registerLazySingleton(() => CheckPhoneUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(
     () => VerifyPinAndLoginUseCase(sl<AuthRepository>()),
@@ -63,7 +63,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ConfirmPinUseCase(sl<AuthRepository>()));
 
   // =================================================================
-  // Repositories & DataSources (untuk semua fitur)
+  // Repositories & DataSources
   // =================================================================
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
@@ -73,21 +73,13 @@ Future<void> init() async {
     ),
   );
 
-  // sl.registerLazySingleton<AuthRemoteDataSource>(
-  //   () =>
-  //       AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
-  // );
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
+    () =>
+        AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
   );
   sl.registerLazySingleton<LocalDatasource>(
     () => LocalDatasourceImpl(sl<SharedPreferences>()),
   );
-
-  // =================================================================
-  // FITUR: HOME
-  // =================================================================
-  sl.registerFactory(() => HomeBloc());
 
   // =================================================================
   // CORE & EXTERNAL

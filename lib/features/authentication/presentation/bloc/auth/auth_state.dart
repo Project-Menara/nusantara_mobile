@@ -43,22 +43,18 @@ class AuthLoginFailure extends AuthState {
   List<Object> get props => [message];
 }
 
-// ✅ State khusus untuk Rate Limit, mewarisi dari AuthLoginFailure
 class AuthLoginRateLimited extends AuthLoginFailure {
   final int retryAfterSeconds;
-  
-  // 'super(message)' meneruskan pesan error ke parent class (AuthLoginFailure)
+
   const AuthLoginRateLimited({
     required String message,
     required this.retryAfterSeconds,
   }) : super(message);
-  
+
   @override
   List<Object> get props => [message, retryAfterSeconds];
 }
 
-
-//--- Register States ---//
 class AuthRegisterSuccess extends AuthState {}
 
 class AuthRegisterFailure extends AuthState {
@@ -68,7 +64,6 @@ class AuthRegisterFailure extends AuthState {
   List<Object> get props => [message];
 }
 
-//--- Logout States ---//
 class AuthLogoutSuccess extends AuthState {}
 
 class AuthLogoutFailure extends AuthState {
@@ -77,3 +72,20 @@ class AuthLogoutFailure extends AuthState {
   @override
   List<Object> get props => [message];
 }
+
+class AuthGetUserSuccess extends AuthState {
+  final UserEntity user;
+  const AuthGetUserSuccess(this.user);
+  @override
+  List<Object> get props => [user];
+}
+
+class AuthGetUserFailure extends AuthState {
+  final String message;
+  const AuthGetUserFailure(this.message);
+  @override
+  List<Object> get props => [message];
+}
+
+class AuthUnauthenticated extends AuthState {}
+

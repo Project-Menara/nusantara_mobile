@@ -1,25 +1,41 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Pastikan path impor ini benar
-import 'package:nusantara_mobile/core/error/failures.dart'; 
+import 'package:nusantara_mobile/core/error/failures.dart';
+import 'package:nusantara_mobile/core/usecase/usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final GetLoggedInUserUseCase getLoggedInUserUseCase;
   final CheckPhoneUseCase checkPhoneUseCase;
   final VerifyPinAndLoginUseCase verifyPinAndLoginUseCase;
   final RegisterUseCase registerUseCase;
 
   AuthBloc({
+    required this.getLoggedInUserUseCase,
     required this.checkPhoneUseCase,
     required this.verifyPinAndLoginUseCase,
     required this.registerUseCase,
   }) : super(AuthInitial()) {
+    on<AuthCheckStatusRequested>(_onCheckStatus);
+    
     on<AuthCheckPhonePressed>(_onCheckPhone);
     on<AuthLoginWithPinSubmitted>(_onVerifyPin);
     on<AuthRegisterPressed>(_onRegister);
+  }
+
+  Future<void> _onCheckStatus(
+    AuthCheckStatusRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final result = await getLoggedInUserUseCase(NoParams());
+    result.fold(
+      (failure) => emit(AuthUnauthenticated()),
+      (user) => emit(AuthLoginSuccess(user)),
+    );
   }
 
   Future<void> _onCheckPhone(
@@ -44,22 +60,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       pin: event.pin,
     );
     final result = await verifyPinAndLoginUseCase(params);
-    result.fold(
-      (failure) {
-        // ✅ PERBAIKAN UTAMA: Periksa tipe Failure secara spesifik
-        if (failure is RateLimitFailure) {
-          // Jika failure adalah RateLimitFailure, emit state khusus
-          emit(AuthLoginRateLimited(
+    result.fold((failure) {
+      if (failure is RateLimitFailure) {
+        emit(
+          AuthLoginRateLimited(
             message: failure.message,
             retryAfterSeconds: failure.retryAfterSeconds,
-          ));
-        } else {
-          // Untuk semua jenis failure lainnya, emit state kegagalan umum
-          emit(AuthLoginFailure(failure.message));
-        }
-      },
-      (user) => emit(AuthLoginSuccess(user)),
-    );
+          ),
+        );
+      } else {
+        emit(AuthLoginFailure(failure.message));
+      }
+    }, (user) => emit(AuthLoginSuccess(user)));
   }
 
   Future<void> _onRegister(

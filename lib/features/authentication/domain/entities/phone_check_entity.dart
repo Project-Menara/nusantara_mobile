@@ -4,7 +4,7 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 
 class PhoneCheckEntity extends Equatable {
   final String action;
-  final UserEntity? user; // Gunakan tipe yang jelas dan bisa null
+  final UserEntity? user;
 
   const PhoneCheckEntity({required this.action, this.user});
 

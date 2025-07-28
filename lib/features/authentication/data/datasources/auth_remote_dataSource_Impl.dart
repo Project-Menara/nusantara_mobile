@@ -168,7 +168,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
-  print('DEBUG: Respons /login -> $jsonResponse'); // <-- LETAK PRINT DI SINI
+      print(
+        'DEBUG: Respons /login -> $jsonResponse',
+      ); // <-- LETAK PRINT DI SINI
 
       if (response.statusCode == 200) {
         final String token = jsonResponse['data'];
@@ -205,40 +207,47 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<String> loginAndGetToken({required String phoneNumber, required String pin}) async {
+  Future<String> loginAndGetToken({
+    required String phoneNumber,
+    required String pin,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
-    final response = await client.post(
-      uri,
-      headers: _headers(),
-      body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
-    );
-
-    if (response.statusCode == 200) {
-      // Kembalikan HANYA TOKEN (String) dari field "data"
-      return json.decode(response.body)['data'];
-    } else {
-      // Handle error seperti PIN salah
-      throw AuthException(json.decode(response.body)['message'] ?? 'Login Gagal');
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
+      );
+      final jsonResponse = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return jsonResponse['data']; // Mengembalikan String TOKEN
+      } else if (response.statusCode == 429) {
+        final retrySeconds =
+            jsonResponse['error']?['retry_after_seconds'] ?? 60;
+        throw RateLimitException(jsonResponse['message'], retrySeconds);
+      } else {
+        throw AuthException(jsonResponse['message'] ?? 'Login Gagal');
+      }
+    } on SocketException {
+      throw const ServerException('No Internet Connection');
     }
   }
 
   @override
   Future<UserModel> getUserProfile({required String token}) async {
-    final uri = Uri.parse(
-      '${ApiConstant.baseUrl}/customer/me',
-    ); // Endpoint profil
-    final response = await client.get(
-      // Gunakan method GET
-      uri,
-      headers: _headers(token: token), // Sertakan token di sini
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body)['data'];
-      // Parsing UserModel dari data profil, sambil meneruskan token
-      return UserModel.fromJson(data, token: token);
-    } else {
-      throw ServerException('Gagal mengambil data profil');
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
+    try {
+      final response = await client.get(uri, headers: _headers(token: token));
+      final jsonResponse = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(jsonResponse['data'], token: token);
+      } else {
+        throw ServerException(
+          'Gagal mengambil profil: ${jsonResponse['message']}',
+        );
+      }
+    } on SocketException {
+      throw const ServerException('No Internet Connection');
     }
   }
 }

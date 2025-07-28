@@ -28,7 +28,7 @@ abstract class AuthRepository {
     required String phoneNumber,
     required String pin,
   });
-  
+
   /// Method untuk konfirmasi PIN.
   Future<Either<Failures, void>> confirmPin({
     required String phone,
@@ -40,6 +40,7 @@ abstract class AuthRepository {
     required String phoneNumber,
     required String pin,
   });
+  Future<Either<Failures, UserEntity>> getLoggedInUser();
 
   /// Method untuk logout.
   Future<Either<Failures, Unit>> logout();

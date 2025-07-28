@@ -37,7 +37,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  // PENAMBAHAN: Implementasi verifyCode
   @override
   Future<Either<Failures, Unit>> verifyCode({
     required String phoneNumber,
@@ -133,21 +132,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        // Langkah 1: Panggil login untuk dapat TOKEN
+        // Langkah 1: Panggil API login untuk dapat TOKEN
         final String token = await authRemoteDatasource.loginAndGetToken(
           phoneNumber: phoneNumber,
           pin: pin,
         );
         await localDatasource.cacheAuthToken(token);
 
-        // Langkah 2: Panggil /me untuk dapat PROFIL USER
-        final UserModel userModel = await authRemoteDatasource.getUserProfile(
+        // Langkah 2: Panggil API profil untuk dapat DATA USER LENGKAP
+        final userModel = await authRemoteDatasource.getUserProfile(
           token: token,
         );
 
         return Right(userModel);
       } on RateLimitException catch (e) {
-        // TANGKAP EXCEPTION KHUSUS UNTUK RATE LIMIT
         return Left(RateLimitFailure(e.message, e.retryAfterSeconds));
       } on AuthException catch (e) {
         return Left(AuthFailure(e.message));
@@ -156,6 +154,23 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } else {
       return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failures, UserEntity>> getLoggedInUser() async {
+    try {
+      final token = await localDatasource.getAuthToken();
+      if (token == null) {
+        return const Left(AuthFailure('No token found'));
+      }
+      // Jika ada token, ambil profil user
+      final user = await authRemoteDatasource.getUserProfile(token: token);
+      return Right(user);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     }
   }
 

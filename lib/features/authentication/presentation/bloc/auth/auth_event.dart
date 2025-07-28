@@ -28,6 +28,11 @@ class AuthLoginWithPinSubmitted extends AuthEvent {
   List<Object> get props => [phoneNumber, pin];
 }
 
+class GetUserEvent extends AuthEvent {
+  @override
+  List<Object> get props => [];
+}
+
 /// Event saat pengguna menekan tombol 'Create Account' di halaman registrasi.
 class AuthRegisterPressed extends AuthEvent {
   final String name;
@@ -49,3 +54,5 @@ class AuthRegisterPressed extends AuthEvent {
 
 /// Event saat pengguna menekan tombol logout.
 class AuthLogoutPressed extends AuthEvent {}
+
+class AuthCheckStatusRequested extends AuthEvent {}
