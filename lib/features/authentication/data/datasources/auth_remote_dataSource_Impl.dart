@@ -7,6 +7,8 @@ import 'package:nusantara_mobile/core/error/exceptions.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/phone_check_response_model.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -35,6 +37,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         body: jsonEncode({'phone': phoneNumber}),
       );
 
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print("data check phone: $jsonResponse");
+
       if (response.statusCode == 200) {
         return PhoneCheckResponseModel.fromJson(json.decode(response.body));
       } else {
@@ -60,6 +65,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         body: jsonEncode({'phone': phoneNumber, 'code': code}),
       );
 
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print("data verify otp: $jsonResponse");
+
       if (response.statusCode != 200) {
         throw ServerException(
           json.decode(response.body)['message'] ?? 'OTP Verification Failed',
@@ -71,28 +79,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> register({
-    required String name,
-    required String username,
-    required String email,
-    required String phone,
-    required String gender,
-  }) async {
+  Future<RegisterResponseModel> register(RegisterModel register) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/register');
     try {
       final response = await client.post(
         uri,
         headers: _headers(),
-        body: jsonEncode({
-          'name': name,
-          'username': username,
-          'email': email,
-          'phone': phone,
-          'gender': gender,
-        }),
+        body: jsonEncode(register.toJson()),
       );
 
-      if (response.statusCode != 201) {
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print("data register: $jsonResponse");
+
+      if (response.statusCode == 201) {
+        try {
+          final registerData = jsonResponse['data'];
+          return RegisterResponseModel.fromJson(registerData);
+        } catch (e) {
+          throw ServerException(e.toString());
+        }
+      } else {
         throw ServerException(
           json.decode(response.body)['message'] ?? 'Registration failed',
         );
@@ -168,9 +174,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
-      print(
-        'DEBUG: Respons /login -> $jsonResponse',
-      ); 
+      print('DEBUG: Respons /login -> $jsonResponse');
 
       if (response.statusCode == 200) {
         final String token = jsonResponse['data'];

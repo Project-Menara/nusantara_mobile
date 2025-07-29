@@ -51,7 +51,7 @@ class _LoginHeaderWidgetState extends State<LoginHeaderWidget> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 80),
             Text(
               titleTexts[selectedLanguage] ?? '',
               textAlign: TextAlign.center,

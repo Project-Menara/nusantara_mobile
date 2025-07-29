@@ -1,18 +1,14 @@
 // lib/features/authentication/data/datasources/auth_remote_datasource.dart
 
 import 'package:nusantara_mobile/features/authentication/data/models/phone_check_response_model.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<PhoneCheckResponseModel> checkPhone(String phoneNumber);
   Future<void> verifyCode({required String phoneNumber, required String code});
-  Future<void> register({
-    required String name,
-    required String username,
-    required String email,
-    required String phone,
-    required String gender,
-  });
+  Future<RegisterResponseModel> register(RegisterModel register);
   Future<void> createPin({required String phoneNumber, required String pin});
   Future<UserModel> confirmPin({
     required String phone,

@@ -75,12 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
             return Stack(
               children: [
                 // Header: tetap di tengah atas
-                Positioned(
-                  top: 60,
-                  left: 0,
-                  right: 0,
-                  child: const LoginHeaderWidget(),
-                ),
+                const Positioned(left: 0, right: 0, child: LoginHeaderWidget()),
 
                 // Form seperti bottom sheet
                 Align(

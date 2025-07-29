@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
@@ -79,17 +80,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final params = RegisterParams(
-      name: event.name,
-      username: event.username,
-      email: event.email,
-      phone: event.phone,
-      gender: event.gender,
+    final result = await registerUseCase(
+      RegisterParams(registerEntity: event.registerEntity),
     );
-    final result = await registerUseCase(params);
     result.fold(
       (failure) => emit(AuthRegisterFailure(failure.message)),
-      (_) => emit(AuthRegisterSuccess()),
+      (user) => emit(AuthRegisterSuccess(user)),
     );
   }
 }

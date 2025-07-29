@@ -1,39 +1,30 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
+import 'package:nusantara_mobile/core/usecase/usecase.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
 
-class RegisterUseCase {
+class RegisterUseCase
+    implements Usecase<RegisterResponseModel, RegisterParams> {
   final AuthRepository repository;
 
   RegisterUseCase(this.repository);
 
-  Future<Either<Failures, Unit>> call(RegisterParams params) {
-    return repository.register(
-      name: params.name,
-      username: params.username,
-      email: params.email,
-      phone: params.phone,
-      gender: params.gender,
-    );
+  @override
+  Future<Either<Failures, RegisterResponseModel>> call(
+    RegisterParams params,
+  ) async {
+    return await repository.register(params.registerEntity);
   }
 }
 
 class RegisterParams extends Equatable {
-  final String name;
-  final String username;
-  final String email;
-  final String phone;
-  final String gender;
+  final RegisterEntity registerEntity;
 
-  const RegisterParams({
-    required this.name,
-    required this.username,
-    required this.email,
-    required this.phone,
-    required this.gender,
-  });
+  const RegisterParams({required this.registerEntity});
 
   @override
-  List<Object?> get props => [name, username, email, phone, gender];
+  List<Object?> get props => [registerEntity];
 }

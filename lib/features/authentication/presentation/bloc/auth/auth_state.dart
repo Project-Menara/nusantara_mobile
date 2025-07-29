@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 
@@ -55,7 +56,14 @@ class AuthLoginRateLimited extends AuthLoginFailure {
   List<Object> get props => [message, retryAfterSeconds];
 }
 
-class AuthRegisterSuccess extends AuthState {}
+class AuthRegisterSuccess extends AuthState {
+  final RegisterResponseModel user;
+
+  const AuthRegisterSuccess(this.user);
+
+  @override
+  List<Object> get props => [user];
+}
 
 class AuthRegisterFailure extends AuthState {
   final String message;
@@ -88,4 +96,3 @@ class AuthGetUserFailure extends AuthState {
 }
 
 class AuthUnauthenticated extends AuthState {}
-

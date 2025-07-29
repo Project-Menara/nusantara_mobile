@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -35,21 +37,11 @@ class GetUserEvent extends AuthEvent {
 
 /// Event saat pengguna menekan tombol 'Create Account' di halaman registrasi.
 class AuthRegisterPressed extends AuthEvent {
-  final String name;
-  final String username;
-  final String email;
-  final String phone;
-  final String gender;
+  final RegisterEntity registerEntity;
 
-  const AuthRegisterPressed({
-    required this.name,
-    required this.username,
-    required this.email,
-    required this.phone,
-    required this.gender,
-  });
+  const AuthRegisterPressed(this.registerEntity);
   @override
-  List<Object> get props => [name, username, email, phone, gender];
+  List<Object> get props => [registerEntity];
 }
 
 /// Event saat pengguna menekan tombol logout.

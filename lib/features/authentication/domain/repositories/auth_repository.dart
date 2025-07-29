@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 
 // Kontrak/Blueprint untuk repository otentikasi
@@ -15,13 +17,7 @@ abstract class AuthRepository {
   });
 
   /// Method untuk mendaftarkan pengguna baru.
-  Future<Either<Failures, Unit>> register({
-    required String name,
-    required String username,
-    required String email,
-    required String phone,
-    required String gender,
-  });
+  Future<Either<Failures, RegisterResponseModel>> register(RegisterEntity user);
 
   /// Method untuk membuat PIN baru.
   Future<Either<Failures, Unit>> createPin({

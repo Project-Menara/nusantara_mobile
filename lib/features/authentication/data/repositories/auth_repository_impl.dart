@@ -4,7 +4,10 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
 
@@ -57,23 +60,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failures, Unit>> register({
-    required String name,
-    required String username,
-    required String email,
-    required String phone,
-    required String gender,
-  }) async {
+  Future<Either<Failures, RegisterResponseModel>> register(
+    RegisterEntity user,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
-        await authRemoteDatasource.register(
-          name: name,
-          username: username,
-          email: email,
-          phone: phone,
-          gender: gender,
-        );
-        return const Right(unit);
+        final formEntity = RegisterModel.fromEntity(user);
+        final created = await authRemoteDatasource.register(formEntity);
+        return Right(created);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }

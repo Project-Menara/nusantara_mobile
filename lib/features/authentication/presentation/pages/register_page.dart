@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/core/constant/path_constant.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
@@ -63,15 +67,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final phone = widget.phoneNumber.startsWith('+62')
           ? widget.phoneNumber
           : '+62${_phoneController.text}';
-      context.read<AuthBloc>().add(
-        AuthRegisterPressed(
-          name: _fullNameController.text,
-          username: _usernameController.text,
-          email: _emailController.text,
-          phone: phone,
-          gender: _selectedGender ?? '',
-        ),
+      final register = RegisterModel(
+        name: _fullNameController.text,
+        username: _usernameController.text,
+        email: _emailController.text,
+        phone: phone,
+        gender: _selectedGender ?? '',
       );
+      context.read<AuthBloc>().add(AuthRegisterPressed(register));
     }
   }
 
@@ -97,7 +100,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Registrasi Berhasil!")),
             );
-            context.push(InitialRoutes.verifyNumber, extra: widget.phoneNumber);
+            final extraData = RegisterExtra(
+              phoneNumber: state.user.user.phone,
+              ttl: state.user.ttl,
+            );
+            context.go(InitialRoutes.verifyNumber, extra: extraData);
           }
         },
         child: SingleChildScrollView(
@@ -108,10 +115,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.store, color: primaryOrange, size: 100),
-                  const SizedBox(height: 24),
+                  Image.asset(PathConstant.logo, width: 150, height: 200),
+                  const SizedBox(height: 10),
                   const Text(
-                    'Buat Akun',
+                    'Daftar Akun',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,

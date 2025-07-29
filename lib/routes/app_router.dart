@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/core/presentation/main_screen.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/pin_login_page.dart';
 // Perbaiki path import jika nama file sebenarnya adalah 'register_page.dart'
 import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
@@ -75,10 +76,9 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.verifyNumber,
       builder: (context, state) {
         // Lakukan hal yang sama untuk VerifyPin jika perlu mengirim nomor telepon
-        final phoneNumber = state.extra as String? ?? '';
-        return VerifyNumberPage(
-          phoneNumber: phoneNumber,
-        ); // Asumsi VerifyPinPage menerima phoneNumber
+        final extra =
+            state.extra as RegisterExtra; // cast langsung ke RegisterExtra
+        return VerifyNumberPage(ttl: extra.ttl, phoneNumber: extra.phoneNumber);
       },
     ),
     GoRoute(
