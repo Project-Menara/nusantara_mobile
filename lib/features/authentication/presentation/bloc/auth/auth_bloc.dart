@@ -21,7 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.registerUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
-    
+
     on<AuthCheckPhonePressed>(_onCheckPhone);
     on<AuthLoginWithPinSubmitted>(_onVerifyPin);
     on<AuthRegisterPressed>(_onRegister);
