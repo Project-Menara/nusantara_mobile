@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
+import 'package:nusantara_mobile/features/onBoarding_screen/repositories/onBoarding_repository.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class OnboardingScreen3 extends StatelessWidget {
@@ -95,7 +96,9 @@ class OnboardingScreen3 extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          final onBoardRepo = OnboardingRepository();
+                          await onBoardRepo.setSession();
                           // PERBAIKAN: Gunakan context.go() untuk ke login
                           context.go(InitialRoutes.loginScreen);
                         },

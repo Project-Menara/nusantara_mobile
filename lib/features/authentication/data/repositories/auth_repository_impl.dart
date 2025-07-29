@@ -4,7 +4,6 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource.dart';
-import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';

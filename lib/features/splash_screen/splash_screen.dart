@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/features/onBoarding_screen/repositories/onBoarding_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Ganti dengan path impor BLoC dan Rute Anda
@@ -25,17 +26,15 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkOnboardingStatusAndNavigate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool onboardingCompleted =
-        prefs.getBool('onboarding_completed') ?? false;
+    if (mounted) {
+      final onBoarRepo = OnboardingRepository();
+      final hasSeenOnboard = await onBoarRepo.hasSeenOnBoarding;
 
-    // Pastikan widget masih ada di tree sebelum navigasi
-    if (!mounted) return;
-
-    if (onboardingCompleted) {
-      context.go(InitialRoutes.loginScreen);
-    } else {
-      context.go(InitialRoutes.onboarding1);
+      if (!hasSeenOnboard) {
+        context.go(InitialRoutes.onboarding1);
+      } else {
+        context.go(InitialRoutes.loginScreen);
+      }
     }
   }
 

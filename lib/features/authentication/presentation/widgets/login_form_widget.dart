@@ -23,17 +23,26 @@ class LoginFormWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
+      decoration: BoxDecoration(
+        color: Colors.white, // The background color of the form itself
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Shadow color and opacity
+            spreadRadius: 0,
+            blurRadius: 10, // Adjust blur to make it appear softer
+            offset: const Offset(0, -3), // Negative Y for shadow on top edge
+          ),
+        ],
       ),
-      // Properti 'transform' sudah tidak diperlukan lagi di sini
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
         child: Form(
           key: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize
+                .min, // Keep this! It's important for the column to take only the space it needs.
             children: [
               const Text(
                 "MASUKKAN NOMOR TELEPON ANDA",
@@ -80,6 +89,9 @@ class LoginFormWidget extends StatelessWidget {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300, // Light grey border
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -94,12 +106,19 @@ class LoginFormWidget extends StatelessWidget {
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Nomor telepon tidak boleh kosong';
-                        if (value.length < 10 || value.length > 13)
+                        }
+                        // Check if value starts with '0' (common mistake in Indonesia)
+                        if (value.startsWith('0')) {
+                          return 'Nomor telepon tidak boleh diawali 0';
+                        }
+                        if (value.length < 10 || value.length > 13) {
                           return 'Nomor telepon harus 10 sampai 13 digit';
-                        if (!RegExp(r'^[0-9]+$').hasMatch(value))
+                        }
+                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                           return 'Hanya boleh berisi angka';
+                        }
                         return null;
                       },
                     ),

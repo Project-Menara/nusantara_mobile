@@ -1,8 +1,7 @@
-// login_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/core/constant/color_constant.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
@@ -20,8 +19,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  // Warna oranye sekarang hanya digunakan di sini sebagai background utama
-  static const Color primaryOrange = Color(0xFFF57C00);
 
   @override
   void dispose() {
@@ -39,12 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryOrange, // Background utama menjadi oranye
+      backgroundColor: ColorConstant.whiteColor, // warna latar belakang oranye
+      resizeToAvoidBottomInset: false,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthLoading) {
-            const Center(child: CircularProgressIndicator());
-          }
           if (state is AuthCheckPhoneFailure) {
             ScaffoldMessenger.of(
               context,
@@ -75,30 +70,37 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
         },
-        // Widget utama sekarang adalah SingleChildScrollView
-        child: SingleChildScrollView(
-          // Menggunakan LayoutBuilder untuk mendapatkan tinggi layar
-          child: ConstrainedBox(
-            // Memberi tinggi minimal pada konten sebesar tinggi layar
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height,
-            ),
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  const LoginHeaderWidget(),
-                  // Expanded akan memaksa LoginFormWidget mengisi sisa ruang
-                  Expanded(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              children: [
+                // Header: tetap di tengah atas
+                Positioned(
+                  top: 60,
+                  left: 0,
+                  right: 0,
+                  child: const LoginHeaderWidget(),
+                ),
+
+                // Form seperti bottom sheet
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
                     child: LoginFormWidget(
                       formKey: _formKey,
                       phoneController: _phoneController,
                       onLanjutkanPressed: _onLanjutkanPressed,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
