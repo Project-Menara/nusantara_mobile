@@ -1,30 +1,24 @@
-// lib/routes/app_router.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/core/presentation/main_screen.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/pin_login_page.dart';
-// Perbaiki path import jika nama file sebenarnya adalah 'register_page.dart'
-import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
-import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/confirm_pin_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin_page.dart';
-// Perbaiki path import jika nama file sebenarnya adalah 'verify_pin_page.dart'
+import 'package:nusantara_mobile/features/authentication/presentation/pages/login_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/pin_login_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/verify_number.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/profile_page.dart';
-import 'package:nusantara_mobile/routes/initial_routes.dart';
-
-// Impor semua halaman yang Anda butuhkan
-import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
+import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/login_page.dart';
-import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/profile_page.dart';
+import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
+import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -33,6 +27,7 @@ final GoRouter appRoute = GoRouter(
   initialLocation: InitialRoutes.splashScreen,
   navigatorKey: _rootNavigatorKey,
   routes: [
+    // --- RUTE-RUTE TANPA NAVBAR ---
     GoRoute(
       path: InitialRoutes.splashScreen,
       builder: (context, state) => const SplashScreen(),
@@ -56,20 +51,13 @@ final GoRouter appRoute = GoRouter(
     GoRoute(
       path: InitialRoutes.registerScreen,
       builder: (context, state) {
-        // 1. Ambil data yang dikirim dari LoginScreen melalui 'extra'
         final phoneNumber = state.extra as String? ?? '';
-
         return RegisterScreen(phoneNumber: phoneNumber);
       },
     ),
-
-    // ========================================================
     GoRoute(
       path: InitialRoutes.verifyNumber,
       builder: (context, state) {
-        // THE ERROR IS HERE:
-        // You are casting state.extra to RegisterExtra,
-        // but the screen that navigates here is sending a String.
         final extra = state.extra as RegisterExtra;
         return VerifyNumberPage(ttl: extra.ttl, phoneNumber: extra.phoneNumber);
       },
@@ -84,10 +72,9 @@ final GoRouter appRoute = GoRouter(
     GoRoute(
       path: InitialRoutes.confirmPin,
       builder: (context, state) {
-        final args = state.extra as Map<String, dynamic>?;
-        final phoneNumber = args?['phoneNumber'] as String? ?? '';
-        final firstPin = args?['firstPin'] as String? ?? '';
-
+        final args = state.extra as Map<String, dynamic>;
+        final phoneNumber = args['phoneNumber'] as String;
+        // final firstPin = args['firstPin'] as String; // Anda mungkin tidak butuh ini lagi
         return ConfirmPinPage(phoneNumber: phoneNumber);
       },
     ),
@@ -99,20 +86,26 @@ final GoRouter appRoute = GoRouter(
       },
     ),
     GoRoute(
-      path: InitialRoutes.profile,
-      builder: (context, state) => const ProfilePage(),
-    ),
-    GoRoute(
       path: InitialRoutes.personalData,
       builder: (context, state) => const PersonalDataPage(),
     ),
 
-    // --- RUTE DI DALAM CANGKANG (SHELL) ---
+    // =======================================================
+    // PERHATIKAN: Rute /profile di bawah ini TELAH DIHAPUS
+    // =======================================================
+    // GoRoute(
+    //   path: InitialRoutes.profile,
+    //   builder: (context, state) => const ProfilePage(),
+    // ),
+
+    // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
-        return BlocProvider(
-          create: (context) => sl<HomeBloc>(),
+        // AuthBloc harus disediakan di atas MaterialApp.router
+        // agar bisa diakses oleh semua halaman di dalam shell
+        return BlocProvider.value(
+          value: sl<AuthBloc>(),
           child: MainScreen(child: child),
         );
       },
@@ -123,21 +116,18 @@ final GoRouter appRoute = GoRouter(
         ),
         GoRoute(
           path: InitialRoutes.orders,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Pesanan')),
+          builder: (context, state) => const Center(child: Text('Halaman Pesanan')),
         ),
         GoRoute(
           path: InitialRoutes.favorites,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Favorit')),
+          builder: (context, state) => const Center(child: Text('Halaman Favorit')),
         ),
         GoRoute(
           path: InitialRoutes.vouchers,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Voucher')),
+          builder: (context, state) => const Center(child: Text('Halaman Voucher')),
         ),
         GoRoute(
-          path: InitialRoutes.profile,
+          path: InitialRoutes.profile, // <-- DEFINISI /profile HANYA ADA DI SINI
           builder: (context, state) => const ProfilePage(),
         ),
       ],

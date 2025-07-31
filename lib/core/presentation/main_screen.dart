@@ -12,9 +12,7 @@ class MainScreen extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      // HAPUS: FloatingActionButton dan lokasinya tidak ada lagi di sini
       bottomNavigationBar: BottomAppBar(
-        // HAPUS: Properti shape, notchMargin, dan clipBehavior untuk menghilangkan lekukan
         height: 60,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -23,14 +21,16 @@ class MainScreen extends StatelessWidget {
               context: context,
               index: 0,
               activeIndex: activeIndex,
-              icon: Icons.home,
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
               onTap: () => _onItemTapped(0, context),
             ),
             _buildNavItem(
               context: context,
               index: 1,
               activeIndex: activeIndex,
-              icon: Icons.list_alt,
+              icon: Icons.list_alt_outlined,
+              activeIcon: Icons.list_alt,
               onTap: () => _onItemTapped(1, context),
             ),
             _buildNavItem(
@@ -38,13 +38,15 @@ class MainScreen extends StatelessWidget {
               index: 2,
               activeIndex: activeIndex,
               icon: Icons.favorite_border,
+              activeIcon: Icons.favorite,
               onTap: () => _onItemTapped(2, context),
             ),
             _buildNavItem(
               context: context,
               index: 3,
               activeIndex: activeIndex,
-              icon: Icons.card_giftcard,
+              icon: Icons.card_giftcard_outlined,
+              activeIcon: Icons.card_giftcard,
               onTap: () => _onItemTapped(3, context),
             ),
             _buildNavItem(
@@ -52,6 +54,7 @@ class MainScreen extends StatelessWidget {
               index: 4,
               activeIndex: activeIndex,
               icon: Icons.person_outline,
+              activeIcon: Icons.person,
               onTap: () => _onItemTapped(4, context),
             ),
           ],
@@ -60,18 +63,19 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  // Widget helper dan fungsi lainnya tetap sama
   Widget _buildNavItem({
     required BuildContext context,
     required int index,
     required int activeIndex,
     required IconData icon,
+    required IconData activeIcon,
     required VoidCallback onTap,
   }) {
+    final bool isActive = activeIndex == index;
     return IconButton(
-      icon: Icon(icon),
+      icon: Icon(isActive ? activeIcon : icon),
       onPressed: onTap,
-      color: activeIndex == index ? Colors.orange : Colors.grey,
+      color: isActive ? Colors.orange : Colors.grey,
       tooltip: null,
     );
   }
@@ -83,7 +87,7 @@ class MainScreen extends StatelessWidget {
     if (location == InitialRoutes.favorites) return 2;
     if (location == InitialRoutes.vouchers) return 3;
     if (location == InitialRoutes.profile) return 4;
-    return 0;
+    return 0; // Default ke home
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -96,7 +100,7 @@ class MainScreen extends StatelessWidget {
         break;
       case 2:
         context.go(InitialRoutes.favorites);
-        break; // Dulu untuk FAB, sekarang tidak digunakan
+        break;
       case 3:
         context.go(InitialRoutes.vouchers);
         break;

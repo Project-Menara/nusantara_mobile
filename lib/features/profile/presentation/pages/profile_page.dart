@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // <-- PASTIKAN IMPOR INI ADA
-import 'package:nusantara_mobile/routes/initial_routes.dart'; // <-- DAN INI JUGA
+import 'package:flutter_bloc/flutter_bloc.dart'; // --- PERUBAHAN: Tambah import BLoC ---
+import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // --- PERUBAHAN: Tambah import AuthBloc ---
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
+import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -10,29 +14,65 @@ class ProfilePage extends StatelessWidget {
     final double headerHeight = 150.0;
     const double avatarRadius = 60.0;
 
-    return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: headerHeight + avatarRadius),
-                _buildUserInfo(),
-                const SizedBox(height: 24),
-                _buildProfileCard(context), // Berikan context
-                const SizedBox(height: 30),
-              ],
+    // --- PERUBAHAN: Bungkus dengan BlocListener untuk handle navigasi logout ---
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          // Jika state menjadi Unauthenticated (setelah logout), kembali ke login
+          context.go(InitialRoutes.loginScreen);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade200,
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(height: headerHeight + avatarRadius),
+                  // --- PERUBAHAN: Gunakan BlocBuilder untuk menampilkan data user ---
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      if (state is AuthLoginSuccess) {
+                        // Jika login berhasil, tampilkan data user
+                        return _buildUserInfo(
+                          name: state.user.name,
+                          email: state.user.email,
+                        );
+                      }
+                      // Tampilkan placeholder atau loading jika data belum siap
+                      return _buildUserInfo(name: 'Loading...', email: '...');
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  _buildProfileCard(context),
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
-          ),
-          _buildHeader(headerHeight),
-          _buildProfileAvatar(headerHeight, avatarRadius),
-        ],
+            _buildHeader(headerHeight),
+            // --- PERUBAHAN: Gunakan BlocBuilder untuk menampilkan foto profil ---
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                String? photoUrl;
+                if (state is AuthLoginSuccess) {
+                  photoUrl = state.user.photo;
+                }
+                return _buildProfileAvatar(
+                  headerHeight,
+                  avatarRadius,
+                  photoUrl,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(double height) {
+    // ... (kode ini tidak berubah)
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       child: Container(
@@ -59,12 +99,14 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Widget untuk avatar profil yang tumpang tindih
-  Widget _buildProfileAvatar(double headerHeight, double avatarRadius) {
+  // --- PERUBAHAN: Terima URL foto sebagai parameter ---
+  Widget _buildProfileAvatar(
+    double headerHeight,
+    double avatarRadius,
+    String? photoUrl,
+  ) {
     return Positioned(
-      // Posisi top: tinggi header dikurangi radius avatar agar setengahnya tumpang tindih
       top: headerHeight - avatarRadius,
-      // Centered horizontally
       left: 0,
       right: 0,
       child: Align(
@@ -72,15 +114,18 @@ class ProfilePage extends StatelessWidget {
         child: Stack(
           children: [
             CircleAvatar(
-              radius: avatarRadius + 3, // Border putih
+              radius: avatarRadius + 3,
               backgroundColor: Colors.white,
               child: CircleAvatar(
                 radius: avatarRadius,
-                backgroundImage: const NetworkImage(
-                  'https://i.pravatar.cc/150?img=56',
-                ), // Ganti dengan gambar profil Anda
+                // --- PERUBAHAN: Gunakan gambar dari network jika ada, jika tidak, gunakan default ---
+                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                    ? NetworkImage(photoUrl)
+                    : const NetworkImage('https://i.pravatar.cc/150?img=56')
+                          as ImageProvider,
               ),
             ),
+            // ... (Ikon kamera tetap sama)
             Positioned(
               bottom: 5,
               right: 5,
@@ -110,25 +155,21 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Widget untuk menampilkan nama dan email
-  Widget _buildUserInfo() {
-    return const Column(
+  // --- PERUBAHAN: Terima nama dan email sebagai parameter ---
+  Widget _buildUserInfo({required String name, required String email}) {
+    return Column(
       children: [
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
-          'Albert Stevano Bajefski',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 4),
-        Text(
-          'albertstevano@gmail.com',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
+        const SizedBox(height: 4),
+        Text(email, style: const TextStyle(fontSize: 14, color: Colors.grey)),
       ],
     );
   }
 
-  // Widget untuk kartu putih yang berisi menu-menu
   Widget _buildProfileCard(BuildContext context) {
     // Terima context
     return Container(
@@ -157,7 +198,7 @@ class ProfilePage extends StatelessWidget {
             icon: Icons.person_outline,
             title: 'Personal Data',
             onTap: () {
-              context.go(InitialRoutes.personalData);
+              context.push(InitialRoutes.personalData); 
             },
           ),
           _buildListTile(
@@ -229,17 +270,17 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Helper widget untuk membuat ListTile agar tidak berulang
   Widget _buildListTile({
     required IconData icon,
     required String title,
-    VoidCallback? onTap, // <-- PERUBAHAN
+    VoidCallback? onTap,
   }) {
+    // ... (kode ini tidak berubah)
     return ListTile(
       leading: Icon(icon, color: Colors.grey.shade700),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: onTap, // <-- PERUBAHAN
+      onTap: onTap,
     );
   }
 }

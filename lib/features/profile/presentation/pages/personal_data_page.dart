@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 
 class PersonalDataPage extends StatefulWidget {
   const PersonalDataPage({super.key});
@@ -9,20 +13,32 @@ class PersonalDataPage extends StatefulWidget {
 }
 
 class _PersonalDataPageState extends State<PersonalDataPage> {
-  // Controller untuk setiap input field
-  final _fullNameController = TextEditingController(
-    text: 'Albert Stevano Bajefski',
-  );
-  final _dobController = TextEditingController(text: '19/06/1999');
-  final _phoneController = TextEditingController(text: '+1 325-433-7656');
-  final _emailController = TextEditingController(
-    text: 'albertstevano@gmail.com',
-  );
+  final _fullNameController = TextEditingController();
+  final _dobController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
 
-  String? _selectedGender = 'Male';
-  final List<String> _genders = ['Male', 'Female', 'Other'];
+  String? _selectedGender;
+  final List<String> _genders = ['Laki-laki', 'Perempuan'];
+  bool _isEditMode = false;
 
-  // Fungsi untuk menampilkan date picker
+  @override
+  void initState() {
+    super.initState();
+    _populateControllersFromBloc();
+  }
+
+  void _populateControllersFromBloc() {
+    final currentState = context.read<AuthBloc>().state;
+    if (currentState is AuthLoginSuccess) {
+      final user = currentState.user;
+      _fullNameController.text = user.name;
+      _emailController.text = user.email;
+      _phoneController.text = user.phone;
+      _selectedGender = user.gender;
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -53,28 +69,35 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
-      body: Stack(
-        children: [
-          // Lapis 1: Konten Form yang bisa di-scroll
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: headerHeight + avatarRadius / 1.5),
-                  _buildForm(),
-                  const SizedBox(height: 30),
-                  _buildSaveButton(),
-                  const SizedBox(height: 30),
-                ],
+      body: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          if (state is! AuthLoginSuccess) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final user = state.user;
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+
+                      const SizedBox(height: headerHeight + avatarRadius + 24),
+                      _buildForm(),
+                      const SizedBox(height: 30),
+                      _buildActionButtons(),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          // Lapis 2: Header Merah
-          _buildHeader(context, headerHeight),
-          // Lapis 3: Avatar Profil yang tumpang tindih
-          _buildProfileAvatar(headerHeight, avatarRadius),
-        ],
+              _buildHeader(context, headerHeight),
+              _buildProfileAvatar(headerHeight, avatarRadius, user.photo),
+            ],
+          );
+        },
       ),
     );
   }
@@ -84,12 +107,16 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField(label: 'Full Name', controller: _fullNameController),
+          _buildTextField(
+            label: 'Full Name',
+            controller: _fullNameController,
+            readOnly: !_isEditMode,
+          ),
           const SizedBox(height: 16),
           _buildDateField(
             label: 'Date of birth',
             controller: _dobController,
-            onTap: () => _selectDate(context),
+            onTap: _isEditMode ? () => _selectDate(context) : null,
           ),
           const SizedBox(height: 16),
           _buildGenderDropdown(),
@@ -97,13 +124,13 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           _buildTextField(
             label: 'Phone',
             controller: _phoneController,
-            keyboardType: TextInputType.phone,
+            readOnly: !_isEditMode,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             label: 'Email',
             controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
+            readOnly: true,
           ),
         ],
       ),
@@ -114,32 +141,28 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
     required String label,
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black54,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          readOnly: readOnly,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: readOnly ? Colors.grey.shade300 : Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],
@@ -149,17 +172,14 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
   Widget _buildDateField({
     required String label,
     required TextEditingController controller,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black54,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -168,19 +188,13 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           onTap: onTap,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: onTap != null ? Colors.white : Colors.grey.shade300,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            suffixIcon: const Icon(
-              Icons.calendar_today_outlined,
-              color: Colors.grey,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: const Icon(Icons.calendar_today_outlined, color: Colors.grey),
           ),
         ),
       ],
@@ -196,26 +210,28 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _selectedGender,
-          items: _genders.map((String gender) {
-            return DropdownMenuItem<String>(value: gender, child: Text(gender));
-          }).toList(),
-          onChanged: (newValue) {
-            setState(() {
-              _selectedGender = newValue;
-            });
-          },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+        IgnorePointer(
+          ignoring: !_isEditMode,
+          child: DropdownButtonFormField<String>(
+            value: _selectedGender,
+            items: _genders.map((String gender) {
+              return DropdownMenuItem<String>(value: gender, child: Text(gender));
+            }).toList(),
+            onChanged: _isEditMode
+                ? (newValue) {
+                    setState(() {
+                      _selectedGender = newValue;
+                    });
+                  }
+                : null,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: _isEditMode ? Colors.white : Colors.grey.shade300,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ),
@@ -223,108 +239,146 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
     );
   }
 
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          // Logika untuk menyimpan data
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Personal data saved!')));
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildActionButtons() {
+    if (_isEditMode) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _isEditMode = false;
+                  _populateControllersFromBloc();
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(color: Colors.grey.shade400)),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey.shade700)),
+            ),
           ),
-          elevation: 2,
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Perubahan disimpan!')),
+                );
+                setState(() {
+                  _isEditMode = false;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            setState(() {
+              _isEditMode = true;
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: const Text(
+            'Edit Profile',
+            style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
-        child: const Text(
-          'Save Changes',
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      );
+    }
+  }
+
+  Widget _buildHeader(BuildContext context, double height) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+      child: Container(
+        height: height,
+        width: double.infinity,
+        color: Colors.red.shade700,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              const Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'Personal Data',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-Widget _buildHeader(BuildContext context, double height) {
-  return ClipRRect(
-    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-    child: Container(
-      height: height,
-      width: double.infinity,
-      color: Colors.red.shade700,
-      child: SafeArea(
-        child: Stack(
-          children: [
-            const Align(
-              alignment: Alignment.center,
-              child: Text(
-                'Personal Data',
-                style: TextStyle(
+  Widget _buildProfileAvatar(
+    double headerHeight,
+    double avatarRadius,
+    String? photoUrl,
+  ) {
+    return Positioned(
+      top: headerHeight - avatarRadius,
+      left: 0,
+      right: 0,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircleAvatar(
+            radius: avatarRadius + 4,
+            backgroundColor: Colors.grey.shade200,
+            child: CircleAvatar(
+              radius: avatarRadius,
+              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                  ? NetworkImage(photoUrl)
+                  : const NetworkImage('https://i.pravatar.cc/150?img=56')
+                      as ImageProvider,
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: MediaQuery.of(context).size.width / 2 - avatarRadius - 18,
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white,
+              child: CircleAvatar(
+                radius: 15,
+                backgroundColor: Colors.orange,
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 16,
                   color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    ),
-  );
-}
-
-Widget _buildProfileAvatar(double headerHeight, double avatarRadius) {
-  return Positioned(
-    top: headerHeight - avatarRadius,
-    left: 0,
-    right: 0,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        CircleAvatar(
-          radius: avatarRadius + 4,
-          backgroundColor: Colors.grey.shade200,
-          child: CircleAvatar(
-            radius: avatarRadius,
-            backgroundImage: const NetworkImage(
-              'https://i.pravatar.cc/150?img=56',
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.white,
-            child: CircleAvatar(
-              radius: 15,
-              backgroundColor: Colors.orange.shade300,
-              child: const Icon(
-                Icons.camera_alt,
-                size: 16,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+    );
+  }
 }
