@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:nusantara_mobile/core/constant/api_constant.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
-import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/auth_remote_datasource.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/phone_check_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
@@ -14,7 +12,8 @@ import 'package:nusantara_mobile/features/authentication/data/models/user_model.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final http.Client client;
 
-  AuthRemoteDataSourceImpl(NetworkInfo networkInfo, {required this.client});
+  // DIHAPUS: NetworkInfo tidak digunakan di layer ini
+  AuthRemoteDataSourceImpl({required this.client});
 
   Map<String, String> _headers({String? token}) {
     final headers = {
@@ -27,6 +26,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return headers;
   }
 
+  // BARU: Helper method terpusat untuk memproses semua respons HTTP
+  dynamic _processResponse(http.Response response) {
+    final jsonResponse = json.decode(response.body);
+    print("API Response (${response.request?.url}): ${response.statusCode} -> $jsonResponse");
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonResponse;
+    } else if (response.statusCode == 400) {
+      throw ServerException(jsonResponse['message'] ?? 'Bad Request');
+    } else if (response.statusCode == 401) {
+      throw AuthException(jsonResponse['message'] ?? 'Unauthorized');
+    } else if (response.statusCode == 429) {
+      final retrySeconds = jsonResponse['error']?['retry_after_seconds'] ?? 60;
+      throw RateLimitException(jsonResponse['message'] ?? 'Too Many Requests', retrySeconds);
+    } else {
+      // Untuk 500 dan error lainnya
+      throw ServerException(jsonResponse['message'] ?? 'Internal Server Error');
+    }
+  }
+
   @override
   Future<PhoneCheckResponseModel> checkPhone(String phoneNumber) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/check-phone');
@@ -36,27 +55,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber}),
       );
-
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data check phone: $jsonResponse");
-
-      if (response.statusCode == 200) {
-        return PhoneCheckResponseModel.fromJson(json.decode(response.body));
-      } else {
-        throw ServerException(
-          json.decode(response.body)['message'] ?? 'Failed to check phone',
-        );
-      }
+      // REFACTOR: Panggil helper method
+      final jsonResponse = _processResponse(response);
+      return PhoneCheckResponseModel.fromJson(jsonResponse['data']);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
   @override
-  Future<void> verifyCode({
-    required String phoneNumber,
-    required String code,
-  }) async {
+  Future<void> verifyCode({required String phoneNumber, required String code}) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/code-verify');
     try {
       final response = await client.post(
@@ -64,17 +72,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'code': code}),
       );
-
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data verify otp: $jsonResponse");
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          json.decode(response.body)['message'] ?? 'OTP Verification Failed',
-        );
-      }
+      // REFACTOR: Panggil helper method, tidak perlu return apa-apa
+      _processResponse(response);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
@@ -87,32 +88,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode(register.toJson()),
       );
-
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data register: $jsonResponse");
-
-      if (response.statusCode == 201) {
-        try {
-          final registerData = jsonResponse['data'];
-          return RegisterResponseModel.fromJson(registerData);
-        } catch (e) {
-          throw ServerException(e.toString());
-        }
-      } else {
-        throw ServerException(
-          json.decode(response.body)['message'] ?? 'Registration failed',
-        );
-      }
+      final jsonResponse = _processResponse(response);
+      return RegisterResponseModel.fromJson(jsonResponse['data']);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
   @override
-  Future<void> createPin({
-    required String phoneNumber,
-    required String pin,
-  }) async {
+  Future<void> createPin({required String phoneNumber, required String pin}) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin');
     try {
       final response = await client.post(
@@ -120,21 +104,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
       );
-      if (response.statusCode != 200) {
-        throw ServerException(
-          json.decode(response.body)['message'] ?? 'Failed to create PIN',
-        );
-      }
+      _processResponse(response);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
   @override
-  Future<UserModel> confirmPin({
-    required String phone,
-    required String confirmPin,
-  }) async {
+  Future<UserModel> confirmPin({required String phone, required String confirmPin}) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/confirm-pin');
     try {
       final response = await client.post(
@@ -142,29 +119,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phone, 'confirm_pin': confirmPin}),
       );
-
-      final jsonResponse = json.decode(response.body);
-
-      if (response.statusCode == 200) {
-        // Ambil objek 'data' dari respons
-        final data = jsonResponse['data'];
-        // Buat UserModel dari 'user' dan 'token' di dalam 'data'
-        return UserModel.fromJson(data['user'], token: data['token']);
-      } else {
-        throw ServerException(
-          jsonResponse['message'] ?? 'PIN confirmation failed',
-        );
-      }
+      final jsonResponse = _processResponse(response);
+      final data = jsonResponse['data'];
+      return UserModel.fromJson(data['user'], token: data['token']);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
   @override
-  Future<UserModel> verifyPin({
-    required String phoneNumber,
-    required String pin,
-  }) async {
+  Future<String> loginAndGetToken({required String phoneNumber, required String pin}) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
     try {
       final response = await client.post(
@@ -172,68 +136,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
       );
-
-      final jsonResponse = json.decode(response.body);
-      print('DEBUG: Respons /login -> $jsonResponse');
-
-      if (response.statusCode == 200) {
-        final String token = jsonResponse['data'];
-        Map<String, dynamic> decodedPayload = JwtDecoder.decode(token);
-        return UserModel.fromJson(decodedPayload, token: token);
-      } else if (response.statusCode == 429) {
-        final int retrySeconds =
-            jsonResponse['error']['retry_after_seconds'] ?? 60;
-        throw RateLimitException(jsonResponse['message'], retrySeconds);
-      } else {
-        throw ServerException(
-          jsonResponse['message'] ?? 'Invalid PIN or phone number',
-        );
-      }
+      final jsonResponse = _processResponse(response);
+      return jsonResponse['data']; // Mengembalikan String TOKEN
     } on SocketException {
-      throw const ServerException('No Internet Connection');
-    }
-  }
-
-  @override
-  Future<void> logout(String token) async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/logout');
-    try {
-      final response = await client.post(uri, headers: _headers(token: token));
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          json.decode(response.body)['message'] ?? 'Logout failed',
-        );
-      }
-    } on SocketException {
-      throw const ServerException('No Internet Connection');
-    }
-  }
-
-  @override
-  Future<String> loginAndGetToken({
-    required String phoneNumber,
-    required String pin,
-  }) async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
-    try {
-      final response = await client.post(
-        uri,
-        headers: _headers(),
-        body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
-      );
-      final jsonResponse = json.decode(response.body);
-      if (response.statusCode == 200) {
-        return jsonResponse['data']; // Mengembalikan String TOKEN
-      } else if (response.statusCode == 429) {
-        final retrySeconds =
-            jsonResponse['error']?['retry_after_seconds'] ?? 60;
-        throw RateLimitException(jsonResponse['message'], retrySeconds);
-      } else {
-        throw AuthException(jsonResponse['message'] ?? 'Login Gagal');
-      }
-    } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
 
@@ -242,16 +148,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
     try {
       final response = await client.get(uri, headers: _headers(token: token));
-      final jsonResponse = json.decode(response.body);
-      if (response.statusCode == 200) {
-        return UserModel.fromJson(jsonResponse['data'], token: token);
-      } else {
-        throw ServerException(
-          'Gagal mengambil profil: ${jsonResponse['message']}',
-        );
-      }
+      final jsonResponse = _processResponse(response);
+      return UserModel.fromJson(jsonResponse['data'], token: token);
     } on SocketException {
-      throw const ServerException('No Internet Connection');
+      throw const ServerException('Koneksi internet bermasalah');
     }
   }
+
+  @override
+  Future<void> logout(String token) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/logout');
+    try {
+      final response = await client.post(uri, headers: _headers(token: token));
+      _processResponse(response);
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+  
+  // Catatan: Metode `verifyPin` Anda sebelumnya duplikat dengan `loginAndGetToken`.
+  // Sebaiknya hanya gunakan satu, yaitu `loginAndGetToken`.
+  // Jika masih diperlukan, bisa diimplementasikan dengan pola yang sama.
 }

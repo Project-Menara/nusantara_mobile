@@ -1,13 +1,18 @@
-// Di file phone_check_entity.dart
 import 'package:equatable/equatable.dart';
-import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 
 class PhoneCheckEntity extends Equatable {
   final String action;
-  final UserEntity? user;
+  final String phoneNumber;
+  final int ttl;
+  final bool isRegistered;
 
-  const PhoneCheckEntity({required this.action, this.user});
+  const PhoneCheckEntity({
+    required this.action,
+    required this.phoneNumber,
+    required this.ttl,
+    required this.isRegistered,
+  });
 
   @override
-  List<Object?> get props => [action, user];
+  List<Object?> get props => [action, phoneNumber, ttl, isRegistered];
 }

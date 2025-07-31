@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/features/onBoarding_screen/repositories/onBoarding_repository.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class OnboardingScreen2 extends StatelessWidget {
@@ -31,8 +32,9 @@ class OnboardingScreen2 extends StatelessWidget {
                       },
                     ),
                     TextButton(
-                      onPressed: () {
-                        // PERBAIKAN: Gunakan context.go() untuk ke login
+                      onPressed: () async {
+                        final onBoardRepo = OnboardingRepository();
+                        await onBoardRepo.setSession();
                         context.go(InitialRoutes.loginScreen);
                       },
                       child: const Text(

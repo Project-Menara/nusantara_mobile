@@ -4,7 +4,8 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/constant/path_constant.dart';
-import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart';
+// PERBAIKAN: Hapus impor RegisterModel karena UI tidak boleh mengetahuinya
+// import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart'; 
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
@@ -35,13 +36,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    // Normalisasi nomor telepon (hilangkan +62 jika perlu untuk tampilan)
     final displayPhoneNumber = widget.phoneNumber.startsWith('+62')
         ? widget.phoneNumber.substring(3)
         : widget.phoneNumber;
     _phoneController = TextEditingController(text: displayPhoneNumber);
-    // Debug: Pastikan nomor telepon diterima
-    print('Received phone number: ${widget.phoneNumber}');
   }
 
   @override
@@ -63,18 +61,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
-      // Pastikan nomor telepon dalam format +62 untuk dikirim ke server
+      
       final phone = widget.phoneNumber.startsWith('+62')
           ? widget.phoneNumber
           : '+62${_phoneController.text}';
-      final register = RegisterModel(
+
+      // PERBAIKAN: Buat objek "RegisterEntity" dari Domain Layer, bukan "RegisterModel"
+      final registerEntity = RegisterEntity(
         name: _fullNameController.text,
         username: _usernameController.text,
         email: _emailController.text,
         phone: phone,
         gender: _selectedGender ?? '',
       );
-      context.read<AuthBloc>().add(AuthRegisterPressed(register));
+
+      // PERBAIKAN: Kirim event dengan "RegisterEntity"
+      context.read<AuthBloc>().add(AuthRegisterPressed(registerEntity));
     }
   }
 
@@ -93,18 +95,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthRegisterFailure) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            // Sembunyikan loading jika ada, lalu tampilkan error
+            Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
           } else if (state is AuthRegisterSuccess) {
+            // Sembunyikan loading
+            Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Registrasi Berhasil!")),
             );
+
+            // PERBAIKAN: Asumsikan `AuthRegisterSuccess` kini membawa entity yang bersih.
+            // Jika `AuthRegisterSuccess` tidak membawa data, Anda mungkin perlu mengambil
+            // nomor telepon dari controller/widget state.
+            // Contoh jika AuthRegisterSuccess membawa `RegisterSuccessEntity`
+            // final extraData = RegisterExtra(
+            //   phoneNumber: state.result.user.phone,
+            //   ttl: state.result.ttl,
+            // );
+
+            // Contoh jika AuthRegisterSuccess tidak membawa data, tapi OTP dikirim ke nomor yang sama
             final extraData = RegisterExtra(
-              phoneNumber: state.user.user.phone,
-              ttl: state.user.ttl,
+                phoneNumber: widget.phoneNumber,
+                // TTL mungkin perlu di-hardcode atau didapat dari state lain jika API tidak mengembalikannya
+                ttl: 60 
             );
+
             context.go(InitialRoutes.verifyNumber, extra: extraData);
+          } else if (state is AuthLoading) {
+            // Tampilkan dialog loading
+            showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(child: CircularProgressIndicator()));
           }
         },
         child: SingleChildScrollView(
@@ -189,40 +212,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 24),
                   _buildTermsAndConditions(),
                   const SizedBox(height: 32),
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state is AuthLoading;
-                      return ElevatedButton(
-                        // onPressed: isLoading ? null : _onCreateAccountPressed,
-                        onPressed: context.read<AuthBloc>().state is AuthLoading
-                            ? null
-                            : _onCreateAccountPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryOrange,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 3,
-                                ),
-                              )
-                            : const Text(
-                                'Buat Akun',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      );
-                    },
+                  // Tombol tidak perlu BlocBuilder jika loading ditangani oleh dialog
+                  ElevatedButton(
+                    onPressed: _onCreateAccountPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryOrange,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Buat Akun',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -234,6 +241,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // Widget helper (_buildTextField, _buildGenderDropdown, _buildTermsAndConditions)
+  // tetap sama seperti kode Anda sebelumnya, tidak perlu diubah.
+  // ... (letakkan kode widget helper Anda di sini)
   Widget _buildTextField({
     required String label,
     required String hint,

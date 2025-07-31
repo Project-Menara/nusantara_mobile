@@ -1,7 +1,10 @@
+// File: features/authentication/presentation/pages/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/constant/color_constant.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
@@ -36,31 +39,49 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorConstant.whiteColor, // warna latar belakang oranye
+      backgroundColor: ColorConstant.whiteColor,
       resizeToAvoidBottomInset: false,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthCheckPhoneFailure) {
+          if (state is AuthLoading) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+          } else if (state is AuthCheckPhoneFailure) {
+            Navigator.of(context, rootNavigator: true).pop();
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
           } else if (state is AuthCheckPhoneSuccess) {
-            final phoneNumber = '+62${_phoneController.text}';
-            final action = state.result.action;
+            Navigator.of(context, rootNavigator: true).pop();
+
+            final checkResult = state.result; // Ini adalah PhoneCheckEntity yang sudah diperbaiki
+            final action = checkResult.action;
 
             switch (action) {
               case 'register':
-                context.push(InitialRoutes.registerScreen, extra: phoneNumber);
+                context.push(InitialRoutes.registerScreen, extra: checkResult.phoneNumber);
                 break;
+
               case 'verify_otp':
-                context.push(InitialRoutes.verifyNumber, extra: phoneNumber);
+                final extraData = RegisterExtra(
+                  phoneNumber: checkResult.phoneNumber, // Sekarang tidak error
+                  ttl: checkResult.ttl,                 // Sekarang tidak error
+                );
+                context.push(InitialRoutes.verifyNumber, extra: extraData);
                 break;
+
               case 'verify_otp_and_create_pin':
-                context.push(InitialRoutes.createPin, extra: phoneNumber);
+                context.push(InitialRoutes.createPin, extra: checkResult.phoneNumber);
                 break;
+
               case 'login':
-                context.push(InitialRoutes.pinLogin, extra: phoneNumber);
+                context.push(InitialRoutes.pinLogin, extra: checkResult.phoneNumber);
                 break;
+
               default:
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -74,10 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, constraints) {
             return Stack(
               children: [
-                // Header: tetap di tengah atas
                 const Positioned(left: 0, right: 0, child: LoginHeaderWidget()),
-
-                // Form seperti bottom sheet
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SingleChildScrollView(

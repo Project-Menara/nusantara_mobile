@@ -21,6 +21,7 @@ abstract class AuthRepository {
 
   /// Method untuk membuat PIN baru.
   Future<Either<Failures, Unit>> createPin({
+    // Ganti UserEntity menjadi Unit
     required String phoneNumber,
     required String pin,
   });

@@ -74,8 +74,7 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () =>
-        AuthRemoteDataSourceImpl(sl<NetworkInfo>(), client: sl<http.Client>()),
+    () => AuthRemoteDataSourceImpl(client: sl<http.Client>()),
   );
   sl.registerLazySingleton<LocalDatasource>(
     () => LocalDatasourceImpl(sl<SharedPreferences>()),

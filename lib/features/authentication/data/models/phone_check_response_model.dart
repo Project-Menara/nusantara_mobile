@@ -1,34 +1,35 @@
+import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/phone_check_entity.dart';
 
 class PhoneCheckResponseModel {
-  final int statusCode;
-  final String message;
   final String action;
+  final int ttl;
+  final UserModel? user; // User bisa null jika action-nya 'register'
 
-  PhoneCheckResponseModel({
-    required this.statusCode,
-    required this.message,
+  const PhoneCheckResponseModel({
     required this.action,
+    required this.ttl,
+    this.user,
   });
 
-  // Factory constructor untuk membuat objek dari JSON
   factory PhoneCheckResponseModel.fromJson(Map<String, dynamic> json) {
     return PhoneCheckResponseModel(
-      statusCode: json['status_code'],
-      message: json['message'],
-      action: json['data']['action'], // Mengambil 'action' dari dalam 'data'
+      action: json['action'],
+      ttl: json['ttl'],
+      // Cek jika ada data user, baru di-parse
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
     );
   }
-  Map<String, dynamic> toJson() {
-    return {
-      'status_code': statusCode,
-      'message': message,
-      'data': {'action': action},
-    };
-  }
 
-  // Method untuk mengonversi Model (Data Layer) ke Entity (Domain Layer)
+  // Fungsi ini mengubah Model (Data Layer) menjadi Entity (Domain Layer)
   PhoneCheckEntity toEntity() {
-    return PhoneCheckEntity(action: action);
+    return PhoneCheckEntity(
+      action: action,
+      ttl: ttl,
+      // Ambil nomor telepon dari data user jika ada, jika tidak, string kosong
+      phoneNumber: user?.phone ?? '', 
+      // isRegistered bisa kita tentukan dari ada atau tidaknya data user
+      isRegistered: user != null, 
+    );
   }
 }

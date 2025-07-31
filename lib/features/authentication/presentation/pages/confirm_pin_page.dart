@@ -9,12 +9,10 @@ import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class ConfirmPinPage extends StatefulWidget {
   final String phoneNumber;
-  final String firstPin;
 
   const ConfirmPinPage({
     super.key,
     required this.phoneNumber,
-    required this.firstPin,
   });
 
   @override
@@ -39,33 +37,12 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
   }
 
   void _togglePinVisibility() {
-    setState(() {
-      _isPinVisible = !_isPinVisible;
-    });
+    setState(() => _isPinVisible = !_isPinVisible);
   }
 
-  void _confirmAndSavePin(BuildContext blocContext) {
-    if (widget.firstPin.isEmpty) {
-      showAppFlashbar(context,
-          title: 'Error',
-          message: 'Terjadi kesalahan, PIN awal tidak ditemukan.',
-          isSuccess: false);
-      return;
-    }
-
-    if (_pin != widget.firstPin) {
-      showAppFlashbar(
-        context,
-        title: 'PIN Tidak Cocok',
-        message: 'PIN yang Anda masukkan tidak sama. Coba lagi.',
-        isSuccess: false,
-      );
-      setState(() => _pin = '');
-      return;
-    }
-
+  void _confirmFinalPin(BuildContext blocContext) {
     blocContext.read<PinBloc>().add(
-          CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+          ConfirmPinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
         );
   }
 
@@ -75,19 +52,25 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
       create: (context) => sl<PinBloc>(),
       child: BlocListener<PinBloc, PinState>(
         listener: (context, state) {
-          if (state is PinCreationSuccess) {
+          if (state is PinLoading) {
+            showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(child: CircularProgressIndicator()));
+          } else if (state is PinConfirmationSuccess) {
+            Navigator.of(context, rootNavigator: true).pop();
             showAppFlashbar(
               context,
               title: 'Berhasil!',
-              message: 'PIN Anda berhasil dibuat.',
+              message: 'PIN Anda berhasil dikonfirmasi dan Anda telah login.',
               isSuccess: true,
             );
-            // Arahkan ke halaman login PIN setelah sukses membuat PIN
-            context.go(InitialRoutes.pinLogin, extra: widget.phoneNumber);
-          } else if (state is PinCreationError) {
+            context.go(InitialRoutes.home);
+          } else if (state is PinConfirmationError) {
+            Navigator.of(context, rootNavigator: true).pop();
             showAppFlashbar(
               context,
-              title: 'Gagal',
+              title: 'PIN Tidak Cocok',
               message: state.message,
               isSuccess: false,
             );
@@ -96,21 +79,21 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => context.pop(),
-            ),
             title: const Text(
-              'Confirm Your PIN',
-              style: TextStyle(
+              'Konfirmasi PIN',
+               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
-            backgroundColor: Colors.white,
+             backgroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => context.pop(),
+            ),
           ),
           body: Column(
             children: [
@@ -121,15 +104,13 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                     children: [
                       const Spacer(),
                       const Text(
-                        'Confirm Your PIN',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Konfirmasi PIN Anda',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Re-enter your PIN to confirm.',
+                        'Masukkan ulang PIN Anda untuk melanjutkan.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 60),
@@ -141,9 +122,7 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                             alignment: Alignment.centerRight,
                             child: IconButton(
                               icon: Icon(
-                                _isPinVisible
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
+                                _isPinVisible ? Icons.visibility_off : Icons.visibility,
                                 color: Colors.grey,
                               ),
                               onPressed: _togglePinVisibility,
@@ -154,41 +133,31 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                       const SizedBox(height: 60),
                       BlocBuilder<PinBloc, PinState>(
                         builder: (context, state) {
-                          final isLoading = state is PinCreationLoading;
+                          final isLoading = state is PinLoading;
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed:
-                                  (_pin.length == _pinLength && !isLoading)
-                                      ? () => _confirmAndSavePin(context)
-                                      : null,
-                              style: ElevatedButton.styleFrom(
+                              onPressed: (_pin.length == _pinLength && !isLoading)
+                                  ? () => _confirmFinalPin(context)
+                                  : null,
+                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor:
-                                    Colors.orange.withOpacity(0.4),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor: Colors.orange.withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Confirm & Save',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                  )
+                                : const Text(
+                                    'Konfirmasi & Simpan',
+                                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
                             ),
                           );
                         },
@@ -250,9 +219,6 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
         ),
       );
     }
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: displayWidgets,
-    );
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
   }
 }

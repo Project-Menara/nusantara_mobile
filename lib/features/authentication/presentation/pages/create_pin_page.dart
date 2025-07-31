@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
+import 'package:nusantara_mobile/core/injection_container.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
+import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class CreatePinPage extends StatefulWidget {
   final String phoneNumber;
@@ -34,91 +38,139 @@ class _CreatePinPageState extends State<CreatePinPage> {
     });
   }
 
-  void _goToConfirmPage() {
-    final args = {'phoneNumber': widget.phoneNumber, 'firstPin': _pin};
-    context.push(InitialRoutes.confirmPin, extra: args);
+  void _createAndSavePin(BuildContext blocContext) {
+    blocContext.read<PinBloc>().add(
+          CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Create New PIN',
-            style: TextStyle(
+    return BlocProvider(
+      create: (context) => sl<PinBloc>(),
+      child: BlocListener<PinBloc, PinState>(
+        listener: (context, state) {
+          if (state is PinLoading) {
+            showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(child: CircularProgressIndicator()));
+          } else if (state is PinCreationSuccess) {
+            Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+            context.push(
+              InitialRoutes.confirmPin,
+              extra: {
+                'phoneNumber': widget.phoneNumber,
+              },
+            );
+          } else if (state is PinCreationError) {
+            Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+            showAppFlashbar(
+              context,
+              title: 'Gagal',
+              message: state.message,
+              isSuccess: false,
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: const Text(
+              'Buat PIN Baru',
+               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 16)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  const Text('Create Your New PIN',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  const Text(
-                      'Add a PIN number to make your account\nmore secure.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 60),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      _buildPinDisplay(),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          icon: Icon(
-                            _isPinVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: _togglePinVisibility,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 60),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          _pin.length == _pinLength ? _goToConfirmPage : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        disabledBackgroundColor: Colors.orange.withOpacity(0.4),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Continue',
-                          style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const Spacer(flex: 2),
-                ],
+                fontSize: 16,
               ),
             ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
           ),
-          PinInputWidgets(
-            onNumpadTapped: _onNumpadTapped,
-            onBackspaceTapped: _onBackspaceTapped,
+          body: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: Column(
+                    children: [
+                      const Spacer(),
+                      const Text(
+                        'Buat PIN Keamanan Anda',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Tambahkan nomor PIN agar akun Anda\nlebih aman.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 60),
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          _buildPinDisplay(),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              icon: Icon(
+                                _isPinVisible ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: _togglePinVisibility,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 60),
+                      BlocBuilder<PinBloc, PinState>(
+                        builder: (context, state) {
+                          final isLoading = state is PinLoading;
+                          return SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: (_pin.length == _pinLength && !isLoading)
+                                  ? () => _createAndSavePin(context)
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                disabledBackgroundColor: Colors.orange.withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                  )
+                                : const Text(
+                                    'Lanjutkan',
+                                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
+                      const Spacer(flex: 2),
+                    ],
+                  ),
+                ),
+              ),
+              PinInputWidgets(
+                onNumpadTapped: _onNumpadTapped,
+                onBackspaceTapped: _onBackspaceTapped,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -164,7 +216,6 @@ class _CreatePinPageState extends State<CreatePinPage> {
         ),
       );
     }
-    return Row(
-        mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
   }
 }

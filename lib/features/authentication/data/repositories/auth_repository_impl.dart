@@ -76,39 +76,41 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  // PENAMBAHAN: Implementasi createPin
   @override
-  Future<Either<Failures, Unit>> createPin({
-    required String phoneNumber,
-    required String pin,
-  }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        await authRemoteDatasource.createPin(
-          phoneNumber: phoneNumber,
-          pin: pin,
-        );
-        return const Right(unit);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
+Future<Either<Failures, Unit>> createPin({ // KEMBALIKAN jadi Unit (void)
+  required String phoneNumber,
+  required String pin,
+}) async {
+  if (await networkInfo.isConnected) {
+    try {
+      // HANYA panggil createPin, HAPUS semua kode login setelahnya
+      await authRemoteDatasource.createPin(
+        phoneNumber: phoneNumber,
+        pin: pin,
+      );
+      // Jika berhasil, kembalikan 'unit' yang menandakan sukses tanpa data
+      return const Right(unit);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     }
+    // Hapus blok catch untuk AuthException dan RateLimitException dari fungsi ini
+  } else {
+    return const Left(NetworkFailure('No Internet Connection'));
   }
+}
 
   @override
-  Future<Either<Failures, Unit>> confirmPin({
+  Future<Either<Failures, UserEntity>> confirmPin({
     required String phone,
     required String confirmPin,
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        await authRemoteDatasource.confirmPin(
+        final user = await authRemoteDatasource.confirmPin(
           phone: phone,
           confirmPin: confirmPin,
         );
-        return const Right(unit);
+        return Right(user);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }

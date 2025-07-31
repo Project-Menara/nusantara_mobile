@@ -33,9 +33,10 @@ class OnboardingScreen3 extends StatelessWidget {
                       },
                     ),
                     TextButton(
-                      onPressed: () {
-                        // PERBAIKAN: Gunakan context.go() untuk ke login
-                        context.go(InitialRoutes.loginScreen);
+                      onPressed: () async{
+                          final onBoardRepo = OnboardingRepository();
+                          await onBoardRepo.setSession();                        
+                          context.go(InitialRoutes.loginScreen);
                       },
                       child: const Text(
                         "Skip",
