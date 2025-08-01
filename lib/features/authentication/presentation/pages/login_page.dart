@@ -1,5 +1,3 @@
-// File: features/authentication/presentation/pages/login_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +9,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_header_widget.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_form_widget.dart';
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart'; // <<< PERUBAHAN: Impor helper flashbar
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,41 +51,52 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           } else if (state is AuthCheckPhoneFailure) {
             Navigator.of(context, rootNavigator: true).pop();
-            ScaffoldMessenger.of(
+            // <<< PERUBAHAN: Ganti SnackBar dengan showAppFlashbar >>>
+            showAppFlashbar(
               context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+              title: 'Gagal',
+              message: state.message,
+              isSuccess: false,
+            );
           } else if (state is AuthCheckPhoneSuccess) {
             Navigator.of(context, rootNavigator: true).pop();
 
-            final checkResult = state.result; // Ini adalah PhoneCheckEntity yang sudah diperbaiki
+            final checkResult = state.result;
             final action = checkResult.action;
 
             switch (action) {
               case 'register':
-                context.push(InitialRoutes.registerScreen, extra: checkResult.phoneNumber);
+                final originalPhoneNumber = '+62${_phoneController.text}';
+                context.push(
+                  InitialRoutes.registerScreen,
+                  extra: originalPhoneNumber,
+                );
                 break;
 
               case 'verify_otp':
+              case 'verify_otp_and_create_pin':
                 final extraData = RegisterExtra(
-                  phoneNumber: checkResult.phoneNumber, // Sekarang tidak error
-                  ttl: checkResult.ttl,                 // Sekarang tidak error
+                  phoneNumber: checkResult.phoneNumber,
+                  ttl: checkResult.ttl,
+                  action: action,
                 );
                 context.push(InitialRoutes.verifyNumber, extra: extraData);
                 break;
-
-              case 'verify_otp_and_create_pin':
-                context.push(InitialRoutes.createPin, extra: checkResult.phoneNumber);
-                break;
-
+                
               case 'login':
-                context.push(InitialRoutes.pinLogin, extra: checkResult.phoneNumber);
+                context.push(
+                  InitialRoutes.pinLogin,
+                  extra: checkResult.phoneNumber,
+                );
                 break;
 
               default:
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Terjadi kesalahan: Aksi tidak dikenal'),
-                  ),
+                // <<< PERUBAHAN: Ganti SnackBar dengan showAppFlashbar >>>
+                showAppFlashbar(
+                  context,
+                  title: 'Terjadi Kesalahan',
+                  message: 'Aksi tidak dikenal dari server.',
+                  isSuccess: false,
                 );
             }
           }

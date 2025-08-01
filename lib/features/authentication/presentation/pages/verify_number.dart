@@ -1,44 +1,48 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart'; // <<< PERUBAHAN: Kembali menggunakan flashbar_helper
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_event.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_state.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/otp_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
-// WIDGET UTAMA: Tugasnya hanya menyediakan BLoC
 class VerifyNumberPage extends StatelessWidget {
   final String phoneNumber;
   final int ttl;
+  final String action;
+
   const VerifyNumberPage({
     super.key,
     required this.phoneNumber,
     required this.ttl,
+    required this.action,
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<OtpBloc>(),
-      // Anak dari BlocProvider adalah widget UI yang sebenarnya
-      child: VerifyNumberView(phoneNumber: phoneNumber, ttl: ttl),
+      child: VerifyNumberView(
+        phoneNumber: phoneNumber,
+        ttl: ttl,
+        action: action,
+      ),
     );
   }
 }
 
-// WIDGET VIEW: Berisi semua UI dan logika state
 class VerifyNumberView extends StatefulWidget {
   final String phoneNumber;
   final int ttl;
+  final String action;
+
   const VerifyNumberView({
     super.key,
     required this.phoneNumber,
     required this.ttl,
+    required this.action,
   });
 
   @override
@@ -66,6 +70,7 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
 
   void _startTimer() {
     _timer?.cancel();
+    setState(() => _remainingSeconds = widget.ttl);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds <= 1) {
         timer.cancel();
@@ -89,16 +94,22 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
   }
 
   void _submitOtp() {
-    // context di sini sudah berada di "bawah" BlocProvider, sehingga bisa menemukan OtpBloc
     context.read<OtpBloc>().add(
-      OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
-    );
+          OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
+        );
+  }
+
+  void _resendOtp() {
+    context.read<OtpBloc>().add(
+          OtpResendRequested(phoneNumber: widget.phoneNumber),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<OtpBloc, OtpState>(
       listener: (context, state) {
+        // <<< PERUBAHAN: Semua notifikasi kembali menggunakan showAppFlashbar >>>
         if (state is OtpVerificationSuccess) {
           showAppFlashbar(
             context,
@@ -106,7 +117,11 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
             message: 'Nomor Anda telah terverifikasi.',
             isSuccess: true,
           );
-          context.push(InitialRoutes.createPin, extra: widget.phoneNumber);
+          if (widget.action == 'verify_otp_and_create_pin') {
+            context.push(InitialRoutes.createPin, extra: widget.phoneNumber);
+          } else {
+            context.push(InitialRoutes.pinLogin, extra: widget.phoneNumber);
+          }
         } else if (state is OtpVerificationFailure) {
           showAppFlashbar(
             context,
@@ -114,31 +129,37 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
             message: state.message,
             isSuccess: false,
           );
+        } else if (state is OtpResendSuccess) {
+          _startTimer();
+          showAppFlashbar(
+            context,
+            title: 'Mengirim Ulang',
+            message: 'Kode OTP baru telah dikirim.',
+            isSuccess: true,
+          );
+        } else if (state is OtpResendFailure) {
+          showAppFlashbar(
+            context,
+            title: 'Gagal Mengirim Ulang',
+            message: state.message,
+            isSuccess: false,
+          );
         }
       },
       child: WillPopScope(
         onWillPop: () async {
-          context.go(InitialRoutes.loginScreen);
+          context.pop();
           return false;
         },
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
               onPressed: () => context.pop(),
             ),
-            title: const Text(
-              'Verify Number',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            backgroundColor: Colors.white,
-            elevation: 0,
-            centerTitle: true,
           ),
           body: Column(
             children: [
@@ -151,22 +172,16 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                       const Text(
                         'Verify Your Number',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       const Text(
                         'Enter your OTP code below',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          height: 1.5,
-                        ),
+                            fontSize: 14, color: Colors.grey, height: 1.5),
                       ),
                       const SizedBox(height: 60),
-                      // Tampilan display OTP dipindahkan ke widget terpisah untuk kerapian
                       _buildOtpDisplay(),
                       const SizedBox(height: 30),
                       _resendCodeSection(),
@@ -177,17 +192,15 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed:
-                                  (_otpCode.length == _otpLength && !isLoading)
+                              onPressed: (_otpCode.length == _otpLength && !isLoading)
                                   ? _submitOtp
                                   : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange
-                                    .withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
+                                disabledBackgroundColor:
+                                    Colors.orange.withOpacity(0.4),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -197,17 +210,14 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                                       height: 24,
                                       width: 24,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ),
+                                          color: Colors.white, strokeWidth: 3),
                                     )
                                   : const Text(
                                       'Next',
                                       style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
                                     ),
                             ),
                           );
@@ -239,19 +249,29 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
   Widget _resendCodeSection() {
     return Column(
       children: [
-        _remainingSeconds > 0
-            ? Text(
-                'Kirim ulang kode dalam ${_formatTime(_remainingSeconds)}',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              )
-            : TextButton(
-                onPressed: () {
-                  setState(() => _remainingSeconds = widget.ttl);
-                  _startTimer();
-                  // context.read<OtpBloc>().add(
-                  //   OtpResendRequested(phoneNumber: widget.phoneNumber),
-                  // );
-                },
+        if (_remainingSeconds > 0)
+          Text(
+            'Kirim ulang kode dalam ${_formatTime(_remainingSeconds)}',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          )
+        else
+          BlocBuilder<OtpBloc, OtpState>(
+            buildWhen: (previous, current) {
+              return current is OtpResendLoading ||
+                  current is OtpResendSuccess ||
+                  current is OtpResendFailure ||
+                  previous is OtpResendLoading;
+            },
+            builder: (context, state) {
+              if (state is OtpResendLoading) {
+                return const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                );
+              }
+              return TextButton(
+                onPressed: _resendOtp,
                 child: const Text(
                   'Kirim Ulang Kode',
                   style: TextStyle(
@@ -260,14 +280,14 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
+              );
+            },
+          ),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  // Widget ini lebih cocok berada di sini daripada di dalam OtpInputWidgets
-  // karena OtpInputWidgets hanya fokus pada Numpad.
   Widget _buildOtpDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _otpLength; i++) {
@@ -286,10 +306,9 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                 ? Text(
                     _otpCode[i],
                     style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
                   )
                 : null,
           ),

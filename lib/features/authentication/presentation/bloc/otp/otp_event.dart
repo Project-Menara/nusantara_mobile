@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'otp_bloc.dart';
 
 abstract class OtpEvent extends Equatable {
   const OtpEvent();
@@ -16,4 +16,13 @@ class OtpSubmitted extends OtpEvent {
 
   @override
   List<Object> get props => [phoneNumber, code];
+}
+
+class OtpResendRequested extends OtpEvent {
+  final String phoneNumber;
+
+  const OtpResendRequested({required this.phoneNumber});
+
+  @override
+  List<Object> get props => [phoneNumber];
 }

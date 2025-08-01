@@ -40,4 +40,19 @@ class ProfileRepositoryImpl extends ProfileRepository {
     // TODO: implement updateUserProfile
     throw UnimplementedError();
   }
+  @override
+  Future<Either<Failures, void>> logoutUser() async {
+    if (await networkInfo.isConnected) {
+      try {
+        final token = await localDatasource.getAuthToken();
+        await profileRemoteDataSource.logoutUser(token!);
+        await localDatasource.clearAuthToken();
+        return const Right(null);
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
 }

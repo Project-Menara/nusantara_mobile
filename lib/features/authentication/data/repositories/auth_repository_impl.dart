@@ -22,21 +22,33 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.networkInfo,
   });
 
+  // BARU: Helper method terpusat untuk menangani semua request ke remote data source
+  Future<Either<Failures, T>> _getResponse<T>(Future<T> Function() call) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final result = await call();
+        return Right(result);
+      } on AuthException catch (e) {
+        return Left(AuthFailure(e.message));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } on RateLimitException catch (e) {
+        return Left(RateLimitFailure(e.message, e.retryAfterSeconds));
+      }
+    } else {
+      return const Left(NetworkFailure('Tidak ada koneksi internet'));
+    }
+  }
+
   @override
   Future<Either<Failures, PhoneCheckEntity>> checkPhone(
     String phoneNumber,
   ) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final resultModel = await authRemoteDatasource.checkPhone(phoneNumber);
-        // Diasumsikan PhoneCheckResponseModel memiliki method toEntity()
-        return Right(resultModel.toEntity());
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() async {
+      final resultModel = await authRemoteDatasource.checkPhone(phoneNumber);
+      return resultModel.toEntity();
+    });
   }
 
   @override
@@ -44,148 +56,117 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String code,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        await authRemoteDatasource.verifyCode(
-          phoneNumber: phoneNumber,
-          code: code,
-        );
-        return const Right(unit);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() async {
+      await authRemoteDatasource.verifyCode(
+        phoneNumber: phoneNumber,
+        code: code,
+      );
+      return unit;
+    });
   }
 
   @override
   Future<Either<Failures, RegisterResponseModel>> register(
     RegisterEntity user,
   ) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final formEntity = RegisterModel.fromEntity(user);
-        final created = await authRemoteDatasource.register(formEntity);
-        return Right(created);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() {
+      final formModel = RegisterModel.fromEntity(user);
+      return authRemoteDatasource.register(formModel);
+    });
   }
 
   @override
-Future<Either<Failures, Unit>> createPin({ // KEMBALIKAN jadi Unit (void)
-  required String phoneNumber,
-  required String pin,
-}) async {
-  if (await networkInfo.isConnected) {
-    try {
-      // HANYA panggil createPin, HAPUS semua kode login setelahnya
-      await authRemoteDatasource.createPin(
-        phoneNumber: phoneNumber,
-        pin: pin,
-      );
-      // Jika berhasil, kembalikan 'unit' yang menandakan sukses tanpa data
-      return const Right(unit);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    }
-    // Hapus blok catch untuk AuthException dan RateLimitException dari fungsi ini
-  } else {
-    return const Left(NetworkFailure('No Internet Connection'));
+  Future<Either<Failures, Unit>> createPin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() async {
+      await authRemoteDatasource.createPin(phoneNumber: phoneNumber, pin: pin);
+      return unit;
+    });
   }
-}
 
   @override
   Future<Either<Failures, UserEntity>> confirmPin({
     required String phone,
     required String confirmPin,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final user = await authRemoteDatasource.confirmPin(
-          phone: phone,
-          confirmPin: confirmPin,
-        );
-        return Right(user);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() {
+      return authRemoteDatasource.confirmPin(
+        phone: phone,
+        confirmPin: confirmPin,
+      );
+    });
   }
 
-  // PENAMBAHAN: Implementasi verifyPinAndLogin (sebelumnya di-comment)
   @override
   Future<Either<Failures, UserEntity>> verifyPinAndLogin({
     required String phoneNumber,
     required String pin,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        // Langkah 1: Panggil API login untuk dapat TOKEN
-        final String token = await authRemoteDatasource.loginAndGetToken(
-          phoneNumber: phoneNumber,
-          pin: pin,
-        );
-        await localDatasource.cacheAuthToken(token);
-
-        // Langkah 2: Panggil API profil untuk dapat DATA USER LENGKAP
-        final userModel = await authRemoteDatasource.getUserProfile(
-          token: token,
-        );
-
-        return Right(userModel);
-      } on RateLimitException catch (e) {
-        return Left(RateLimitFailure(e.message, e.retryAfterSeconds));
-      } on AuthException catch (e) {
-        return Left(AuthFailure(e.message));
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() async {
+      final token = await authRemoteDatasource.loginAndGetToken(
+        phoneNumber: phoneNumber,
+        pin: pin,
+      );
+      await localDatasource.cacheAuthToken(token);
+      final user = await authRemoteDatasource.getUserProfile(token: token);
+      return user;
+    });
   }
 
   @override
   Future<Either<Failures, UserEntity>> getLoggedInUser() async {
+    // Metode ini berbeda karena tidak selalu butuh koneksi internet di awal,
+    // jadi biarkan seperti ini agar logikanya tetap jelas.
     try {
       final token = await localDatasource.getAuthToken();
       if (token == null) {
         return const Left(AuthFailure('No token found'));
       }
-      // Jika ada token, ambil profil user
-      final user = await authRemoteDatasource.getUserProfile(token: token);
-      return Right(user);
+
+      // Jika ada token, coba ambil profil user (butuh internet)
+      if (await networkInfo.isConnected) {
+        final user = await authRemoteDatasource.getUserProfile(token: token);
+        return Right(user);
+      } else {
+        // Opsional: Jika offline, Anda bisa coba ambil data user dari cache jika ada
+        return const Left(
+          NetworkFailure('No Internet Connection to fetch profile'),
+        );
+      }
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
     }
   }
 
   @override
+  Future<Either<Failures, Unit>> resendCode(String phoneNumber) async {
+    return _getResponse(() async {
+      await authRemoteDatasource.resendCode(phoneNumber);
+      return unit;
+    });
+  }
+
+  @override
   Future<Either<Failures, Unit>> logout() async {
-    // Implementasi logout tetap sama
-    if (await networkInfo.isConnected) {
-      try {
-        final token = await localDatasource.getAuthToken();
-        if (token == null) return const Right(unit);
+    // REFACTOR: Jadi lebih ringkas
+    return _getResponse(() async {
+      final token = await localDatasource.getAuthToken();
+      if (token != null) {
         await authRemoteDatasource.logout(token);
         await localDatasource.clearAuthToken();
-        return const Right(unit);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } on CacheException {
-        return const Right(unit);
       }
-    } else {
-      return const Left(NetworkFailure('No Internet Connection'));
-    }
+      return unit;
+    });
   }
 }

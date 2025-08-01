@@ -71,11 +71,16 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       backgroundColor: Colors.grey.shade200,
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          if (state is! AuthLoginSuccess) {
+          // Ganti ini agar memeriksa kedua state sukses
+          if (state is! AuthLoginSuccess && state is! AuthGetUserSuccess) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final user = state.user;
+          // Ekstrak user dari state yang sesuai
+          final user = (state is AuthLoginSuccess)
+              ? state.user
+              : (state as AuthGetUserSuccess).user;
+
           return Stack(
             children: [
               SingleChildScrollView(
@@ -83,8 +88,17 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
                     children: [
-
-                      const SizedBox(height: headerHeight + avatarRadius + 24),
+                      const SizedBox(height: headerHeight + avatarRadius),
+                      // --- TAMBAHAN: Judul halaman dipindah ke sini ---
+                      const Text(
+                        'Personal Data',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       _buildForm(),
                       const SizedBox(height: 30),
                       _buildActionButtons(),
@@ -148,7 +162,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -162,7 +179,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -179,7 +199,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -193,8 +216,14 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            suffixIcon: const Icon(Icons.calendar_today_outlined, color: Colors.grey),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            suffixIcon: const Icon(
+              Icons.calendar_today_outlined,
+              color: Colors.grey,
+            ),
           ),
         ),
       ],
@@ -215,7 +244,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           child: DropdownButtonFormField<String>(
             value: _selectedGender,
             items: _genders.map((String gender) {
-              return DropdownMenuItem<String>(value: gender, child: Text(gender));
+              return DropdownMenuItem<String>(
+                value: gender,
+                child: Text(gender),
+              );
             }).toList(),
             onChanged: _isEditMode
                 ? (newValue) {
@@ -231,7 +263,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
           ),
         ),
@@ -252,10 +287,16 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                 });
               },
               style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  side: BorderSide(color: Colors.grey.shade400)),
-              child: Text('Cancel', style: TextStyle(color: Colors.grey.shade700)),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: BorderSide(color: Colors.grey.shade400),
+              ),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -272,9 +313,17 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Save Changes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
@@ -291,11 +340,17 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           child: const Text(
             'Edit Profile',
-            style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       );
@@ -312,17 +367,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
         child: SafeArea(
           child: Stack(
             children: [
-              const Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Personal Data',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              // --- PERUBAHAN: Judul dihapus dari sini ---
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -357,7 +402,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                   ? NetworkImage(photoUrl)
                   : const NetworkImage('https://i.pravatar.cc/150?img=56')
-                      as ImageProvider,
+                        as ImageProvider,
             ),
           ),
           Positioned(

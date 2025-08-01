@@ -9,9 +9,6 @@ class VerifyPinAndLoginUseCase {
 
   VerifyPinAndLoginUseCase(this.repository);
 
-  // =========================================================
-  // HAPUS TANDA KOMENTAR DI BAWAH INI UNTUK MENGAKTIFKANNYA
-  // =========================================================
   Future<Either<Failures, UserEntity>> call(VerifyPinParams params) async {
     return await repository.verifyPinAndLogin(
       phoneNumber: params.phoneNumber,

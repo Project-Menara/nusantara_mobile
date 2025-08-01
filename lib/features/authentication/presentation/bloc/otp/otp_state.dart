@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'otp_bloc.dart';
 
 abstract class OtpState extends Equatable {
   const OtpState();
@@ -18,6 +18,17 @@ class OtpVerificationFailure extends OtpState {
 
   const OtpVerificationFailure(this.message);
 
+  @override
+  List<Object> get props => [message];
+}
+
+class OtpResendLoading extends OtpState {}
+
+class OtpResendSuccess extends OtpState {}
+
+class OtpResendFailure extends OtpState {
+  final String message;
+  const OtpResendFailure(this.message);
   @override
   List<Object> get props => [message];
 }

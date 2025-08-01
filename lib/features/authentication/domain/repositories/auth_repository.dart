@@ -9,6 +9,7 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 abstract class AuthRepository {
   /// Method untuk mengecek nomor telepon saat pertama kali login.
   Future<Either<Failures, PhoneCheckEntity>> checkPhone(String phoneNumber);
+  Future<Either<Failures, Unit>> resendCode(String phoneNumber);
 
   /// Method untuk verifikasi kode OTP.
   Future<Either<Failures, Unit>> verifyCode({
@@ -27,7 +28,7 @@ abstract class AuthRepository {
   });
 
   /// Method untuk konfirmasi PIN.
-  Future<Either<Failures, void>> confirmPin({
+  Future<Either<Failures, UserEntity>> confirmPin({
     required String phone,
     required String confirmPin,
   });

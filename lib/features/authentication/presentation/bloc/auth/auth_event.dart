@@ -45,6 +45,7 @@ class AuthRegisterPressed extends AuthEvent {
 }
 
 /// Event saat pengguna menekan tombol logout.
-class AuthLogoutPressed extends AuthEvent {}
+class AuthLogoutRequested extends AuthEvent {}
 
 class AuthCheckStatusRequested extends AuthEvent {}
+

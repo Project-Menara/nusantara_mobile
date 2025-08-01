@@ -4,6 +4,7 @@ import 'package:nusantara_mobile/core/usecase/usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/logout_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'auth_event.dart';
@@ -14,20 +15,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CheckPhoneUseCase checkPhoneUseCase;
   final VerifyPinAndLoginUseCase verifyPinAndLoginUseCase;
   final RegisterUseCase registerUseCase;
+  final LogoutUserUseCase logoutUserUseCase; // <-- PASTIKAN BARIS INI ADA
 
   AuthBloc({
     required this.getLoggedInUserUseCase,
     required this.checkPhoneUseCase,
     required this.verifyPinAndLoginUseCase,
     required this.registerUseCase,
+    required this.logoutUserUseCase, // --- TAMBAHKAN INI ---
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
-
     on<AuthCheckPhonePressed>(_onCheckPhone);
     on<AuthLoginWithPinSubmitted>(_onVerifyPin);
     on<AuthRegisterPressed>(_onRegister);
+    on<AuthLogoutRequested>(_onLogout); // --- TAMBAHKAN INI ---
   }
-
   Future<void> _onCheckStatus(
     AuthCheckStatusRequested event,
     Emitter<AuthState> emit,
@@ -86,6 +88,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthRegisterFailure(failure.message)),
       (user) => emit(AuthRegisterSuccess(user)),
+    );
+  }
+
+  Future<void> _onLogout(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    final result = await logoutUserUseCase(NoParams());
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message) as AuthState),
+      (_) => emit(AuthUnauthenticated()),
     );
   }
 }

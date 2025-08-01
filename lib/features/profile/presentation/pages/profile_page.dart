@@ -1,25 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // --- PERUBAHAN: Tambah import BLoC ---
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // --- PERUBAHAN: Tambah import AuthBloc ---
+import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Cek state yang ada saat ini di BLoC.
+    // Panggil API HANYA jika state belum memiliki data user.
+    final currentState = context.read<AuthBloc>().state;
+    if (currentState is! AuthLoginSuccess && currentState is! AuthGetUserSuccess) {
+      context.read<AuthBloc>().add(AuthCheckStatusRequested());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final double headerHeight = 150.0;
     const double avatarRadius = 60.0;
 
-    // --- PERUBAHAN: Bungkus dengan BlocListener untuk handle navigasi logout ---
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
-          // Jika state menjadi Unauthenticated (setelah logout), kembali ke login
           context.go(InitialRoutes.loginScreen);
+        } else if (state is AuthLogoutFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal Logout: ${state.message}')),
+          );
         }
       },
       child: Scaffold(
@@ -30,17 +49,30 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(height: headerHeight + avatarRadius),
-                  // --- PERUBAHAN: Gunakan BlocBuilder untuk menampilkan data user ---
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
-                      if (state is AuthLoginSuccess) {
-                        // Jika login berhasil, tampilkan data user
-                        return _buildUserInfo(
-                          name: state.user.name,
-                          email: state.user.email,
+                      // Tambahkan pengecekan untuk state loading awal
+                      if (state is AuthLoading || state is AuthInitial) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 16.0),
+                          child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      // Tampilkan placeholder atau loading jika data belum siap
+
+                      UserEntity? user;
+                      if (state is AuthLoginSuccess) {
+                        user = state.user;
+                      } else if (state is AuthGetUserSuccess) {
+                        user = state.user;
+                      }
+
+                      if (user != null) {
+                        return _buildUserInfo(
+                          name: user.name,
+                          email: user.email,
+                        );
+                      }
+                      
                       return _buildUserInfo(name: 'Loading...', email: '...');
                     },
                   ),
@@ -51,17 +83,19 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             _buildHeader(headerHeight),
-            // --- PERUBAHAN: Gunakan BlocBuilder untuk menampilkan foto profil ---
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
-                String? photoUrl;
+                UserEntity? user;
                 if (state is AuthLoginSuccess) {
-                  photoUrl = state.user.photo;
+                  user = state.user;
+                } else if (state is AuthGetUserSuccess) {
+                  user = state.user;
                 }
+                
                 return _buildProfileAvatar(
                   headerHeight,
                   avatarRadius,
-                  photoUrl,
+                  user?.photo,
                 );
               },
             ),
@@ -72,7 +106,6 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildHeader(double height) {
-    // ... (kode ini tidak berubah)
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       child: Container(
@@ -99,7 +132,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // --- PERUBAHAN: Terima URL foto sebagai parameter ---
   Widget _buildProfileAvatar(
     double headerHeight,
     double avatarRadius,
@@ -118,14 +150,12 @@ class ProfilePage extends StatelessWidget {
               backgroundColor: Colors.white,
               child: CircleAvatar(
                 radius: avatarRadius,
-                // --- PERUBAHAN: Gunakan gambar dari network jika ada, jika tidak, gunakan default ---
                 backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                     ? NetworkImage(photoUrl)
                     : const NetworkImage('https://i.pravatar.cc/150?img=56')
-                          as ImageProvider,
+                        as ImageProvider,
               ),
             ),
-            // ... (Ikon kamera tetap sama)
             Positioned(
               bottom: 5,
               right: 5,
@@ -155,7 +185,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // --- PERUBAHAN: Terima nama dan email sebagai parameter ---
   Widget _buildUserInfo({required String name, required String email}) {
     return Column(
       children: [
@@ -171,7 +200,6 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildProfileCard(BuildContext context) {
-    // Terima context
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -193,31 +221,24 @@ class ProfilePage extends StatelessWidget {
             padding: EdgeInsets.only(left: 24, bottom: 8),
             child: Text('Profile', style: TextStyle(color: Colors.grey)),
           ),
-          // MODIFIKASI DI SINI
           _buildListTile(
             icon: Icons.person_outline,
             title: 'Personal Data',
             onTap: () {
-              context.push(InitialRoutes.personalData); 
+              context.push(InitialRoutes.personalData);
             },
           ),
           _buildListTile(
             icon: Icons.settings_outlined,
             title: 'Settings',
-            onTap: () {
-              /* Navigasi untuk Settings */
-            },
+            onTap: () {/* Navigasi untuk Settings */},
           ),
           _buildListTile(
             icon: Icons.confirmation_number_outlined,
             title: 'My Voucher',
-            onTap: () {
-              /* Navigasi untuk Voucher */
-            },
+            onTap: () {/* Navigasi untuk Voucher */},
           ),
-
           const Divider(indent: 24, endIndent: 24, height: 24),
-
           const Padding(
             padding: EdgeInsets.only(left: 24, bottom: 8),
             child: Text('Support', style: TextStyle(color: Colors.grey)),
@@ -225,31 +246,47 @@ class ProfilePage extends StatelessWidget {
           _buildListTile(
             icon: Icons.support_agent_outlined,
             title: 'Layanan Pelanggan',
-            onTap: () {
-              /* Navigasi */
-            },
+            onTap: () {/* Navigasi */},
           ),
           _buildListTile(
             icon: Icons.delete_outline,
             title: 'Request Account Deletion',
-            onTap: () {
-              /* Navigasi */
-            },
+            onTap: () {/* Navigasi */},
           ),
           _buildListTile(
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
-            onTap: () {
-              /* Navigasi */
-            },
+            onTap: () {/* Navigasi */},
           ),
-
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: OutlinedButton.icon(
               onPressed: () {
-                // Logika Sign Out
+                showDialog(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return AlertDialog(
+                      title: const Text('Konfirmasi'),
+                      content: const Text('Apakah Anda yakin ingin keluar?'),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Batal'),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                        ),
+                        TextButton(
+                          child: const Text('Ya, Keluar'),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            context.read<AuthBloc>().add(AuthLogoutRequested());
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: const Text(
@@ -275,7 +312,6 @@ class ProfilePage extends StatelessWidget {
     required String title,
     VoidCallback? onTap,
   }) {
-    // ... (kode ini tidak berubah)
     return ListTile(
       leading: Icon(icon, color: Colors.grey.shade700),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),

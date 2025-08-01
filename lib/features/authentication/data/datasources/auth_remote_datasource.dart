@@ -10,6 +10,8 @@ abstract class AuthRemoteDataSource {
   Future<void> verifyCode({required String phoneNumber, required String code});
   Future<RegisterResponseModel> register(RegisterModel register);
   Future<void> createPin({required String phoneNumber, required String pin});
+  Future<void> resendCode(String phoneNumber); 
+
   Future<UserModel> confirmPin({
     required String phone,
     required String confirmPin,

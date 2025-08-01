@@ -1,10 +1,8 @@
-// flashbar_helper.dart
-
 import 'package:flash/flash.dart';
 import 'package:flash/flash_helper.dart';
 import 'package:flutter/material.dart';
 
-// Helper untuk menampilkan notifikasi
+// Helper untuk menampilkan notifikasi dengan tampilan yang lebih elegan
 void showAppFlashbar(
   BuildContext context, {
   required String title,
@@ -12,57 +10,49 @@ void showAppFlashbar(
   bool isSuccess = true,
 }) {
   context.showFlash<void>(
-    barrierColor: Colors.black54,
-    barrierDismissible: true,
-    // --- DURATION & ANIMASI DIPINDAHKAN KE SINI ---
+    // Durasi notifikasi tampil di layar
     duration: const Duration(seconds: 4),
-    // --- ------------------------------------ ---
+    // Animasi saat notifikasi muncul dan menghilang
+    transitionDuration: const Duration(milliseconds: 500),
     builder: (context, controller) {
       return FlashBar(
         controller: controller,
         position: FlashPosition.top,
         behavior: FlashBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isSuccess ? Colors.green.shade800 : Colors.red.shade800,
-            width: 1.5,
-          ),
+        // --- BARU: Beri jarak dari tepi layar ---
+        margin: const EdgeInsets.all(16.0),
+        // --- BARU: Bentuk dengan bayangan (shadow) ---
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // --- BARU: Hapus border, ganti dengan shadow ---
+        backgroundColor: Colors.white,
+        // --- BARU: Garis indikator di sisi kiri ---
+        indicatorColor: isSuccess ? Colors.green : Colors.red,
+        icon: Icon(
+          isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+          color: isSuccess ? Colors.green : Colors.red,
+          size: 32,
         ),
-        backgroundColor:
-            isSuccess ? Colors.green.shade100 : Colors.red.shade100,
-        // 'duration' dan 'forwardAnimationCurve' DIHAPUS DARI SINI
         content: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color:
-                      isSuccess ? Colors.green.shade900 : Colors.red.shade900,
+                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 message,
-                style: TextStyle(
-                  fontSize: 14,
-                  color:
-                      isSuccess ? Colors.green.shade800 : Colors.red.shade800,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ],
           ),
-        ),
-        icon: Icon(
-          isSuccess ? Icons.check_circle : Icons.error,
-          color: isSuccess ? Colors.green.shade800 : Colors.red.shade800,
-          size: 32,
         ),
       );
     },

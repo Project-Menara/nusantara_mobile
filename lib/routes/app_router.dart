@@ -59,7 +59,7 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.verifyNumber,
       builder: (context, state) {
         final extra = state.extra as RegisterExtra;
-        return VerifyNumberPage(ttl: extra.ttl, phoneNumber: extra.phoneNumber);
+        return VerifyNumberPage(ttl: extra.ttl, phoneNumber: extra.phoneNumber, action: extra.action ?? '');
       },
     ),
     GoRoute(

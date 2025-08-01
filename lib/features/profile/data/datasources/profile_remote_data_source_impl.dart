@@ -55,7 +55,24 @@ class ProfileRemoteDataSourceImpl extends ProfileRemoteDataSource {
       final updatedUser = UserModel.fromJson(data);
       return updatedUser;
     } else {
-      throw ServerException('Failed to load user');
+      throw const ServerException('Failed to load user');
+    }
+  }
+
+  @override
+  Future<void> logoutUser(String token) async {
+    // Ganti dengan endpoint logout dari API Anda jika ada
+    final uri = Uri.parse('${ApiConstant.baseUrl}/auth/logout');
+    final response = await client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      print('Failed to logout from server: ${response.body}');
     }
   }
 }

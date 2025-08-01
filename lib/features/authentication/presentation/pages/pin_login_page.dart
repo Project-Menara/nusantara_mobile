@@ -49,19 +49,17 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _startCountdown(int seconds) {
-    // Memastikan timer sebelumnya dibatalkan jika ada
-    _timer?.cancel(); 
+    _timer?.cancel();
     setState(() {
       _countdownSeconds = seconds;
       _pin = '';
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) { // Pengecekan keamanan jika widget sudah di-dispose
+      if (!mounted) {
         timer.cancel();
         return;
       }
-
       if (_countdownSeconds > 0) {
         setState(() => _countdownSeconds--);
       } else {
@@ -73,7 +71,6 @@ class _PinLoginViewState extends State<PinLoginView> {
 
   void _onNumpadTapped(String value) {
     if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
-
     if (_pin.length < _pinLength) {
       setState(() {
         _pin += value;
@@ -86,7 +83,6 @@ class _PinLoginViewState extends State<PinLoginView> {
 
   void _onBackspaceTapped() {
     if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
-
     if (_pin.isNotEmpty) {
       setState(() => _pin = _pin.substring(0, _pin.length - 1));
     }
@@ -109,93 +105,87 @@ class _PinLoginViewState extends State<PinLoginView> {
         if (state is AuthLoginSuccess) {
           context.go(InitialRoutes.home);
         } else if (state is AuthLoginRateLimited) {
-          showAppFlashbar(
-            context,
-            title: "Terlalu Banyak Percobaan",
-            message: state.message,
-            isSuccess: false,
-          );
+          showAppFlashbar(context, title: "Terlalu Banyak Percobaan", message: state.message, isSuccess: false);
           _startCountdown(state.retryAfterSeconds);
         } else if (state is AuthLoginFailure) {
-          showAppFlashbar(
-            context,
-            title: "Login Gagal",
-            message: state.message,
-            isSuccess: false,
-          );
+          showAppFlashbar(context, title: "Login Gagal", message: state.message, isSuccess: false);
           setState(() => _pin = '');
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('Masukkan PIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+      // --- PERUBAHAN 1: Bungkus Scaffold dengan WillPopScope ---
+      child: WillPopScope(
+        onWillPop: () async {
+          // Arahkan ke halaman login saat tombol kembali Android ditekan
+          context.go(InitialRoutes.loginScreen);
+          // Return false untuk mencegah pop default
+          return false;
+        },
+        child: Scaffold(
           backgroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(InitialRoutes.loginScreen);
-              }
-            },
+          appBar: AppBar(
+            title: const Text('Masukkan PIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              // --- PERUBAHAN 2: Arahkan langsung ke halaman login ---
+              onPressed: () => context.go(InitialRoutes.loginScreen),
+            ),
           ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    const Text('Selamat Datang Kembali!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Text('Masukkan 6-digit PIN Anda untuk melanjutkan.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                    const SizedBox(height: 60),
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        if (_isRateLimited) {
-                          return Text('Coba lagi dalam $_countdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
-                        }
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            if (state is AuthLoading)
-                              const CircularProgressIndicator(color: Colors.orange)
-                            else
-                              _buildPinDisplay(),
-                            if (state is! AuthLoading)
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: IconButton(
-                                  icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                                  onPressed: _togglePinVisibility,
+          body: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: Column(
+                    children: [
+                      const Spacer(),
+                      const Text('Selamat Datang Kembali!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      Text('Masukkan 6-digit PIN Anda untuk melanjutkan.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                      const SizedBox(height: 60),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          if (_isRateLimited) {
+                            return Text('Coba lagi dalam $_countdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
+                          }
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              if (state is AuthLoading)
+                                const CircularProgressIndicator(color: Colors.orange)
+                              else
+                                _buildPinDisplay(),
+                              if (state is! AuthLoading)
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: IconButton(
+                                    icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                                    onPressed: _togglePinVisibility,
+                                  ),
                                 ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const Spacer(flex: 2),
-                  ],
+                            ],
+                          );
+                        },
+                      ),
+                      const Spacer(flex: 2),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            PinInputWidgets(
-              onNumpadTapped: _onNumpadTapped,
-              onBackspaceTapped: _onBackspaceTapped,
-            ),
-          ],
+              PinInputWidgets(
+                onNumpadTapped: _onNumpadTapped,
+                onBackspaceTapped: _onBackspaceTapped,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPinDisplay() {
+ Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
       displayWidgets.add(

@@ -12,7 +12,6 @@ import 'package:nusantara_mobile/features/authentication/data/models/user_model.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final http.Client client;
 
-  // DIHAPUS: NetworkInfo tidak digunakan di layer ini
   AuthRemoteDataSourceImpl({required this.client});
 
   Map<String, String> _headers({String? token}) {
@@ -26,10 +25,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return headers;
   }
 
-  // BARU: Helper method terpusat untuk memproses semua respons HTTP
   dynamic _processResponse(http.Response response) {
     final jsonResponse = json.decode(response.body);
-    print("API Response (${response.request?.url}): ${response.statusCode} -> $jsonResponse");
+    print(
+      "API Response (${response.request?.url}): ${response.statusCode} -> $jsonResponse",
+    );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonResponse;
@@ -39,7 +39,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw AuthException(jsonResponse['message'] ?? 'Unauthorized');
     } else if (response.statusCode == 429) {
       final retrySeconds = jsonResponse['error']?['retry_after_seconds'] ?? 60;
-      throw RateLimitException(jsonResponse['message'] ?? 'Too Many Requests', retrySeconds);
+      throw RateLimitException(
+        jsonResponse['message'] ?? 'Too Many Requests',
+        retrySeconds,
+      );
     } else {
       // Untuk 500 dan error lainnya
       throw ServerException(jsonResponse['message'] ?? 'Internal Server Error');
@@ -55,7 +58,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber}),
       );
-      // REFACTOR: Panggil helper method
       final jsonResponse = _processResponse(response);
       return PhoneCheckResponseModel.fromJson(jsonResponse['data']);
     } on SocketException {
@@ -64,7 +66,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> verifyCode({required String phoneNumber, required String code}) async {
+  Future<void> verifyCode({
+    required String phoneNumber,
+    required String code,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/code-verify');
     try {
       final response = await client.post(
@@ -72,7 +77,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'code': code}),
       );
-      // REFACTOR: Panggil helper method, tidak perlu return apa-apa
       _processResponse(response);
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');
@@ -96,7 +100,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> createPin({required String phoneNumber, required String pin}) async {
+  Future<void> createPin({
+    required String phoneNumber,
+    required String pin,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin');
     try {
       final response = await client.post(
@@ -111,7 +118,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> confirmPin({required String phone, required String confirmPin}) async {
+  Future<UserModel> confirmPin({
+    required String phone,
+    required String confirmPin,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/confirm-pin');
     try {
       final response = await client.post(
@@ -128,7 +138,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<String> loginAndGetToken({required String phoneNumber, required String pin}) async {
+  Future<String> loginAndGetToken({
+    required String phoneNumber,
+    required String pin,
+  }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/login');
     try {
       final response = await client.post(
@@ -156,6 +169,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> resendCode(String phoneNumber) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/resend-code-verify');
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phoneNumber}),
+      );
+      _processResponse(response);
+      final jsonResponse = json.decode(response.body);
+      print("API Response ({$jsonResponse})");
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+
+  @override
   Future<void> logout(String token) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/logout');
     try {
@@ -165,8 +195,4 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw const ServerException('Koneksi internet bermasalah');
     }
   }
-  
-  // Catatan: Metode `verifyPin` Anda sebelumnya duplikat dengan `loginAndGetToken`.
-  // Sebaiknya hanya gunakan satu, yaitu `loginAndGetToken`.
-  // Jika masih diperlukan, bisa diimplementasikan dengan pola yang sama.
 }
