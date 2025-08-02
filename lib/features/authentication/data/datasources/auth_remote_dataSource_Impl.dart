@@ -174,10 +174,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'confirm_pin': confirmPin}),
       );
-      final jsonResponse = json.decode(response.body);
-      print("API Response confirmNewPinForgot :({$jsonResponse})");
 
+      // PERBAIKAN: Panggil _processResponse dulu
+      final jsonResponse = _processResponse(response);
+
+      // Setelah dipastikan sukses, baru parsing data
       final data = jsonResponse['data'];
+      if (data == null || data['user'] == null || data['token'] == null) {
+        throw const ServerException('Format respons tidak valid dari server.');
+      }
       return UserModel.fromJson(data['user'], token: data['token']);
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');

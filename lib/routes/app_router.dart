@@ -22,6 +22,7 @@ import 'package:nusantara_mobile/features/profile/presentation/pages/personal_da
 import 'package:nusantara_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -53,6 +54,7 @@ final GoRouter appRoute = GoRouter(
     ),
     GoRoute(
       path: InitialRoutes.registerScreen,
+      name: InitialRoutes.registerScreen,
       builder: (context, state) {
         final phoneNumber = state.extra as String? ?? '';
         return RegisterScreen(phoneNumber: phoneNumber);
@@ -60,6 +62,7 @@ final GoRouter appRoute = GoRouter(
     ),
     GoRoute(
       path: InitialRoutes.verifyNumber,
+      name: InitialRoutes.verifyNumber,
       builder: (context, state) {
         final extra = state.extra as RegisterExtra;
         return VerifyNumberPage(
@@ -71,6 +74,7 @@ final GoRouter appRoute = GoRouter(
     ),
     GoRoute(
       path: InitialRoutes.createPin,
+      name: InitialRoutes.createPin,
       builder: (context, state) {
         final phoneNumber = state.extra as String? ?? '';
         return CreatePinPage(phoneNumber: phoneNumber);
@@ -78,15 +82,16 @@ final GoRouter appRoute = GoRouter(
     ),
     GoRoute(
       path: InitialRoutes.confirmPin,
+      name: InitialRoutes.confirmPin,
       builder: (context, state) {
         final args = state.extra as Map<String, dynamic>;
         final phoneNumber = args['phoneNumber'] as String;
-        // final firstPin = args['firstPin'] as String; // Anda mungkin tidak butuh ini lagi
         return ConfirmPinPage(phoneNumber: phoneNumber);
       },
     ),
     GoRoute(
       path: InitialRoutes.pinLogin,
+      name: InitialRoutes.pinLogin,
       builder: (context, state) {
         final phoneNumber = state.extra as String;
         return PinLoginPage(phoneNumber: phoneNumber);
@@ -94,19 +99,59 @@ final GoRouter appRoute = GoRouter(
     ),
     GoRoute(
       path: InitialRoutes.personalData,
+      name: InitialRoutes.personalData,
       builder: (context, state) => const PersonalDataPage(),
     ),
 
+    // <<< PERBAIKAN: Kedua GoRoute digabung menjadi satu yang pintar >>>
     GoRoute(
-      path: InitialRoutes.forgotPinNew, 
-      name: InitialRoutes.forgotPinNew,
+      path: '/reset-pin', // Path ini untuk deep link dari luar aplikasi
+      name: InitialRoutes
+          .forgotPinNew, // Nama ini untuk navigasi dari dalam aplikasi
       builder: (context, state) {
-        final extra = state.extra as ForgotPinExtra;
-        return ForgotPinNewPage(extra: extra);
+        final token = state.uri.queryParameters['token'];
+
+        if (token == null || token.isEmpty) {
+          return const Scaffold(
+            body: Center(child: Text('Token tidak valid atau hilang')),
+          );
+        }
+
+        // Gunakan FutureBuilder untuk mengambil nomor telepon dari SharedPreferences
+        return FutureBuilder<String?>(
+          future: SharedPreferences.getInstance().then(
+            (prefs) => prefs.getString('last_forgot_pin_phone'),
+          ),
+          builder: (context, snapshot) {
+            // Tampilkan loading selagi menunggu
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final phoneNumber = snapshot.data;
+            if (phoneNumber == null || phoneNumber.isEmpty) {
+              return const Scaffold(
+                body: Center(
+                  child: Text('Gagal mengambil data sesi. Silakan coba lagi.'),
+                ),
+              );
+            }
+
+            // Jika berhasil, kirim data lengkap ke halaman
+            final extra = ForgotPinExtra(
+              token: token,
+              phoneNumber: phoneNumber,
+            );
+            return ForgotPinNewPage(extra: extra);
+          },
+        );
       },
     ),
+
     GoRoute(
-      path: InitialRoutes.confirmPinForgot, 
+      path: InitialRoutes.confirmPinForgot,
       name: InitialRoutes.confirmPinForgot,
       builder: (context, state) {
         final extra = state.extra as ForgotPinExtra;
@@ -118,8 +163,6 @@ final GoRouter appRoute = GoRouter(
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
-        // AuthBloc harus disediakan di atas MaterialApp.router
-        // agar bisa diakses oleh semua halaman di dalam shell
         return BlocProvider.value(
           value: sl<AuthBloc>(),
           child: MainScreen(child: child),
@@ -128,26 +171,30 @@ final GoRouter appRoute = GoRouter(
       routes: [
         GoRoute(
           path: InitialRoutes.home,
+          name: InitialRoutes.home,
           builder: (context, state) => const HomePage(),
         ),
         GoRoute(
           path: InitialRoutes.orders,
+          name: InitialRoutes.orders,
           builder: (context, state) =>
               const Center(child: Text('Halaman Pesanan')),
         ),
         GoRoute(
           path: InitialRoutes.favorites,
+          name: InitialRoutes.favorites,
           builder: (context, state) =>
               const Center(child: Text('Halaman Favorit')),
         ),
         GoRoute(
           path: InitialRoutes.vouchers,
+          name: InitialRoutes.vouchers,
           builder: (context, state) =>
               const Center(child: Text('Halaman Voucher')),
         ),
         GoRoute(
-          path:
-              InitialRoutes.profile, // <-- DEFINISI /profile HANYA ADA DI SINI
+          path: InitialRoutes.profile,
+          name: InitialRoutes.profile,
           builder: (context, state) => const ProfilePage(),
         ),
       ],

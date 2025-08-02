@@ -9,6 +9,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <<< TAMBAHKAN IMPORT INI
 
 // Wrapper untuk menyediakan BLoC
 class PinLoginPage extends StatelessWidget {
@@ -73,7 +74,6 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _onNumpadTapped(String value) {
-    // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
     if (context.read<AuthBloc>().state is AuthLoginLoading || _isRateLimited) return;
     if (_pin.length < _pinLength) {
       setState(() {
@@ -86,7 +86,6 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _onBackspaceTapped() {
-    // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
     if (context.read<AuthBloc>().state is AuthLoginLoading || _isRateLimited) return;
     if (_pin.isNotEmpty) {
       setState(() => _pin = _pin.substring(0, _pin.length - 1));
@@ -103,8 +102,23 @@ class _PinLoginViewState extends State<PinLoginView> {
         );
   }
 
-  void _forgotPin() {
-    context.read<AuthBloc>().add(AuthForgotPinRequested(widget.phoneNumber));
+  // --- PERBAIKAN UTAMA DI SINI ---
+  void _forgotPin() async { // 1. Ubah menjadi async
+    try {
+      // 2. Simpan nomor telepon ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_forgot_pin_phone', widget.phoneNumber);
+      
+      // 3. Kirim event ke BLoC (pastikan widget masih ada/mounted)
+      if (mounted) {
+        context.read<AuthBloc>().add(AuthForgotPinRequested(widget.phoneNumber));
+      }
+    } catch (e) {
+      // Menangani jika ada error saat menyimpan ke SharedPreferences
+      if(mounted) {
+        showAppFlashbar(context, title: "Error Lokal", message: "Gagal menyimpan sesi sementara.", isSuccess: false);
+      }
+    }
   }
 
   @override
@@ -116,7 +130,7 @@ class _PinLoginViewState extends State<PinLoginView> {
           setState(() => _isForgotPinLoading = true);
         }
         // Hentikan loading lupa pin jika sudah selesai (baik sukses maupun gagal)
-        if (state is AuthForgotPinSuccess || (state is AuthFailure)) {
+        if (state is AuthForgotPinSuccess || state is AuthFailure) {
           setState(() => _isForgotPinLoading = false);
         }
 
@@ -181,7 +195,6 @@ class _PinLoginViewState extends State<PinLoginView> {
                           return Stack(
                             alignment: Alignment.center,
                             children: [
-                              // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
                               if (state is AuthLoginLoading)
                                 const CircularProgressIndicator(color: Colors.orange)
                               else

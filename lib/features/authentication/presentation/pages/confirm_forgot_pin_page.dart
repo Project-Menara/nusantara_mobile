@@ -53,26 +53,25 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
       create: (context) => sl<PinBloc>(),
       child: BlocListener<PinBloc, PinState>(
         listener: (context, state) {
-          if (state is PinLoading) {
-            showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator()));
-          } else if (state is ConfirmNewPinForgotSuccess) {
-            Navigator.of(context, rootNavigator: true).pop();
+          // <<< PERBAIKAN: Hapus 'showDialog' dari sini >>>
+          // if (state is PinLoading) {
+          //   showDialog(...);
+          // } else 
+          if (state is ConfirmNewPinForgotSuccess) {
+            // Jika ada dialog, tutup dulu (opsional, untuk keamanan)
+            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             showAppFlashbar(
               context,
               title: 'PIN Berhasil Diperbarui!',
               message: 'Silakan masuk kembali menggunakan PIN baru Anda.',
               isSuccess: true,
             );
-            // Arahkan ke halaman login untuk keamanan
             context.go(InitialRoutes.loginScreen);
           } else if (state is ConfirmNewPinForgotError) {
-            Navigator.of(context, rootNavigator: true).pop();
+            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             showAppFlashbar(
               context,
-              title: 'PIN Tidak Cocok',
+              title: 'Gagal',
               message: state.message,
               isSuccess: false,
             );
@@ -126,6 +125,7 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
                       const SizedBox(height: 60),
                       BlocBuilder<PinBloc, PinState>(
                         builder: (context, state) {
+                          // Biarkan BlocBuilder ini yang menangani tampilan loading
                           final isLoading = state is PinLoading;
                           return SizedBox(
                             width: double.infinity,
