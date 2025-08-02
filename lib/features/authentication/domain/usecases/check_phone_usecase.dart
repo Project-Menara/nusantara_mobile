@@ -8,7 +8,6 @@ class CheckPhoneUseCase {
 
   CheckPhoneUseCase(this.repository);
 
-  // 'call' akan menerima nomor telepon dan mengembalikan hasil pengecekan
   Future<Either<Failures, PhoneCheckEntity>> call(String phoneNumber) async {
     return await repository.checkPhone(phoneNumber);
   }

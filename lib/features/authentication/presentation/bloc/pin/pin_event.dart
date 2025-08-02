@@ -17,16 +17,40 @@ class CreatePinSubmitted extends PinEvent {
   List<Object> get props => [phoneNumber, pin];
 }
 
-// === TAMBAHAN EVENT UNTUK KONFIRMASI PIN ===
 class ConfirmPinSubmitted extends PinEvent {
   final String phoneNumber;
-  final String pin; // Diubah dari confirmPin menjadi pin agar konsisten
+  final String pin;
 
-  const ConfirmPinSubmitted({
-    required this.phoneNumber,
-    required this.pin,
-  });
+  const ConfirmPinSubmitted({required this.phoneNumber, required this.pin});
 
   @override
   List<Object> get props => [phoneNumber, pin];
+}
+
+class SetNewPinForgotSubmitted extends PinEvent {
+  final String token;
+  final String phoneNumber;
+  final String pin;
+
+  const SetNewPinForgotSubmitted({
+    required this.token,
+    required this.phoneNumber,
+    required this.pin,
+  });
+  @override
+  List<Object> get props => [token, phoneNumber, pin];
+}
+
+class ConfirmNewPinForgotSubmitted extends PinEvent {
+  final String token;
+  final String phoneNumber;
+  final String pin;
+
+  const ConfirmNewPinForgotSubmitted({
+    required this.token,
+    required this.phoneNumber,
+    required this.pin,
+  });
+  @override
+  List<Object> get props => [token, phoneNumber, pin];
 }

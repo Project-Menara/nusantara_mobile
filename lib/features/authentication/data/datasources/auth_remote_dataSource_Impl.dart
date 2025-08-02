@@ -138,6 +138,53 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> setNewPinForgot({
+    required String token,
+    required String phoneNumber,
+    required String pin,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/new-pin-forgot?token=$token',
+    );
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
+      );
+      final jsonResponse = json.decode(response.body);
+      print("API Response setNewPinForgot :({$jsonResponse})");
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+
+  @override
+  Future<UserModel> confirmNewPinForgot({
+    required String token,
+    required String phoneNumber,
+    required String confirmPin,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/confirm-pin-forgot?token=$token',
+    );
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phoneNumber, 'confirm_pin': confirmPin}),
+      );
+      final jsonResponse = json.decode(response.body);
+      print("API Response confirmNewPinForgot :({$jsonResponse})");
+
+      final data = jsonResponse['data'];
+      return UserModel.fromJson(data['user'], token: data['token']);
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+
+  @override
   Future<String> loginAndGetToken({
     required String phoneNumber,
     required String pin,
@@ -180,6 +227,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       _processResponse(response);
       final jsonResponse = json.decode(response.body);
       print("API Response ({$jsonResponse})");
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+
+  @override
+  Future<String> forgotPin(String phoneNumber) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/forgot-pin');
+    try {
+      final response = await client.post(
+        uri,
+        headers: _headers(),
+        body: jsonEncode({'phone': phoneNumber}),
+      );
+      final jsonResponse = _processResponse(response);
+      return jsonResponse['data']['token'];
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');
     }

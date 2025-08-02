@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/core/helper/flashbar_helper.dart'; // <<< PERUBAHAN: Kembali menggunakan flashbar_helper
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/otp_input_widgets.dart';
@@ -72,6 +72,10 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
     _timer?.cancel();
     setState(() => _remainingSeconds = widget.ttl);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       if (_remainingSeconds <= 1) {
         timer.cancel();
         setState(() => _remainingSeconds = 0);
@@ -109,7 +113,6 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
   Widget build(BuildContext context) {
     return BlocListener<OtpBloc, OtpState>(
       listener: (context, state) {
-        // <<< PERUBAHAN: Semua notifikasi kembali menggunakan showAppFlashbar >>>
         if (state is OtpVerificationSuccess) {
           showAppFlashbar(
             context,
@@ -148,7 +151,8 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
       },
       child: WillPopScope(
         onWillPop: () async {
-          context.pop();
+          // <<< PERBAIKAN 1: Ganti pop() dengan go() >>>
+          context.go(InitialRoutes.loginScreen);
           return false;
         },
         child: Scaffold(
@@ -158,7 +162,8 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => context.pop(),
+              // <<< PERBAIKAN 2: Ganti pop() dengan go() >>>
+              onPressed: () => context.go(InitialRoutes.loginScreen),
             ),
           ),
           body: Column(
@@ -192,9 +197,10 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: (_otpCode.length == _otpLength && !isLoading)
-                                  ? _submitOtp
-                                  : null,
+                              onPressed:
+                                  (_otpCode.length == _otpLength && !isLoading)
+                                      ? _submitOtp
+                                      : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                                 disabledBackgroundColor:

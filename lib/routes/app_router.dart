@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/core/presentation/main_screen.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/forgot_pin_extra.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/confirm_forgot_pin_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/confirm_pin_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/forgot_pin_new_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/login_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/pin_login_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
@@ -59,7 +62,11 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.verifyNumber,
       builder: (context, state) {
         final extra = state.extra as RegisterExtra;
-        return VerifyNumberPage(ttl: extra.ttl, phoneNumber: extra.phoneNumber, action: extra.action ?? '');
+        return VerifyNumberPage(
+          ttl: extra.ttl,
+          phoneNumber: extra.phoneNumber,
+          action: extra.action ?? '',
+        );
       },
     ),
     GoRoute(
@@ -90,13 +97,22 @@ final GoRouter appRoute = GoRouter(
       builder: (context, state) => const PersonalDataPage(),
     ),
 
-    // =======================================================
-    // PERHATIKAN: Rute /profile di bawah ini TELAH DIHAPUS
-    // =======================================================
-    // GoRoute(
-    //   path: InitialRoutes.profile,
-    //   builder: (context, state) => const ProfilePage(),
-    // ),
+    GoRoute(
+      path: InitialRoutes.forgotPinNew, 
+      name: InitialRoutes.forgotPinNew,
+      builder: (context, state) {
+        final extra = state.extra as ForgotPinExtra;
+        return ForgotPinNewPage(extra: extra);
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.confirmPinForgot, 
+      name: InitialRoutes.confirmPinForgot,
+      builder: (context, state) {
+        final extra = state.extra as ForgotPinExtra;
+        return ConfirmForgotPinPage(extra: extra);
+      },
+    ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---
     ShellRoute(
@@ -116,18 +132,22 @@ final GoRouter appRoute = GoRouter(
         ),
         GoRoute(
           path: InitialRoutes.orders,
-          builder: (context, state) => const Center(child: Text('Halaman Pesanan')),
+          builder: (context, state) =>
+              const Center(child: Text('Halaman Pesanan')),
         ),
         GoRoute(
           path: InitialRoutes.favorites,
-          builder: (context, state) => const Center(child: Text('Halaman Favorit')),
+          builder: (context, state) =>
+              const Center(child: Text('Halaman Favorit')),
         ),
         GoRoute(
           path: InitialRoutes.vouchers,
-          builder: (context, state) => const Center(child: Text('Halaman Voucher')),
+          builder: (context, state) =>
+              const Center(child: Text('Halaman Voucher')),
         ),
         GoRoute(
-          path: InitialRoutes.profile, // <-- DEFINISI /profile HANYA ADA DI SINI
+          path:
+              InitialRoutes.profile, // <-- DEFINISI /profile HANYA ADA DI SINI
           builder: (context, state) => const ProfilePage(),
         ),
       ],

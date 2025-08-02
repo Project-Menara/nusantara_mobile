@@ -17,8 +17,9 @@ class PinLoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<AuthBloc>(),
+    // Gunakan BlocProvider.value karena AuthBloc adalah Singleton
+    return BlocProvider.value(
+      value: sl<AuthBloc>(),
       child: PinLoginView(phoneNumber: phoneNumber),
     );
   }
@@ -41,6 +42,8 @@ class _PinLoginViewState extends State<PinLoginView> {
   Timer? _timer;
   int _countdownSeconds = 0;
   bool get _isRateLimited => _timer?.isActive ?? false;
+
+  bool _isForgotPinLoading = false;
 
   @override
   void dispose() {
@@ -70,7 +73,8 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _onNumpadTapped(String value) {
-    if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
+    // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
+    if (context.read<AuthBloc>().state is AuthLoginLoading || _isRateLimited) return;
     if (_pin.length < _pinLength) {
       setState(() {
         _pin += value;
@@ -82,7 +86,8 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   void _onBackspaceTapped() {
-    if (context.read<AuthBloc>().state is AuthLoading || _isRateLimited) return;
+    // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
+    if (context.read<AuthBloc>().state is AuthLoginLoading || _isRateLimited) return;
     if (_pin.isNotEmpty) {
       setState(() => _pin = _pin.substring(0, _pin.length - 1));
     }
@@ -98,10 +103,23 @@ class _PinLoginViewState extends State<PinLoginView> {
         );
   }
 
+  void _forgotPin() {
+    context.read<AuthBloc>().add(AuthForgotPinRequested(widget.phoneNumber));
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        // Atur state loading untuk tombol lupa pin
+        if (state is AuthForgotPinLoading) {
+          setState(() => _isForgotPinLoading = true);
+        }
+        // Hentikan loading lupa pin jika sudah selesai (baik sukses maupun gagal)
+        if (state is AuthForgotPinSuccess || (state is AuthFailure)) {
+          setState(() => _isForgotPinLoading = false);
+        }
+
         if (state is AuthLoginSuccess) {
           context.go(InitialRoutes.home);
         } else if (state is AuthLoginRateLimited) {
@@ -110,14 +128,25 @@ class _PinLoginViewState extends State<PinLoginView> {
         } else if (state is AuthLoginFailure) {
           showAppFlashbar(context, title: "Login Gagal", message: state.message, isSuccess: false);
           setState(() => _pin = '');
+        } else if (state is AuthForgotPinSuccess) {
+          showAppFlashbar(
+            context,
+            title: "Permintaan Terkirim",
+            message: "Link untuk mengatur ulang PIN telah dikirim melalui WhatsApp.",
+            isSuccess: true,
+          );
+        } else if (state is AuthFailure) {
+          showAppFlashbar(
+            context,
+            title: "Terjadi Kesalahan",
+            message: state.message,
+            isSuccess: false,
+          );
         }
       },
-      // --- PERUBAHAN 1: Bungkus Scaffold dengan WillPopScope ---
       child: WillPopScope(
         onWillPop: () async {
-          // Arahkan ke halaman login saat tombol kembali Android ditekan
           context.go(InitialRoutes.loginScreen);
-          // Return false untuk mencegah pop default
           return false;
         },
         child: Scaffold(
@@ -129,7 +158,6 @@ class _PinLoginViewState extends State<PinLoginView> {
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
-              // --- PERUBAHAN 2: Arahkan langsung ke halaman login ---
               onPressed: () => context.go(InitialRoutes.loginScreen),
             ),
           ),
@@ -153,11 +181,12 @@ class _PinLoginViewState extends State<PinLoginView> {
                           return Stack(
                             alignment: Alignment.center,
                             children: [
-                              if (state is AuthLoading)
+                              // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthLoginLoading >>>
+                              if (state is AuthLoginLoading)
                                 const CircularProgressIndicator(color: Colors.orange)
                               else
                                 _buildPinDisplay(),
-                              if (state is! AuthLoading)
+                              if (state is! AuthLoginLoading)
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: IconButton(
@@ -169,6 +198,7 @@ class _PinLoginViewState extends State<PinLoginView> {
                           );
                         },
                       ),
+                      _buildForgotPasswordButton(),
                       const Spacer(flex: 2),
                     ],
                   ),
@@ -184,8 +214,33 @@ class _PinLoginViewState extends State<PinLoginView> {
       ),
     );
   }
+  
+  Widget _buildForgotPasswordButton() {
+    return Container(
+      alignment: Alignment.centerRight,
+      child: _isForgotPinLoading
+          ? const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+            )
+          : TextButton(
+              onPressed: _forgotPin,
+              child: const Text(
+                'Lupa PIN?',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+    );
+  }
 
- Widget _buildPinDisplay() {
+  Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
       displayWidgets.add(

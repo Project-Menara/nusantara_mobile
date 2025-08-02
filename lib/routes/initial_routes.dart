@@ -17,6 +17,11 @@ class InitialRoutes {
   static const confirmPin = '/confirm-pin';
   static const pinLogin = '/pin-login';
 
+  // Rute Lupa PIN
+  static const forgotPin = '/forgot-pin';
+  static const forgotPinNew = '/forgot-pin-new';
+  static const confirmPinForgot = '/confirm-pin-forgot';
+
   //Rute Profile
   static const personalData = '/personal-data';
 

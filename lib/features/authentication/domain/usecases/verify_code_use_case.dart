@@ -4,7 +4,6 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
 
-// Gunakan Usecase<void, ...> karena verifikasi OTP tidak mengembalikan data
 class VerifyCodeUseCase extends Usecase<void, VerifyCodeParams> {
   final AuthRepository repository;
 
@@ -19,7 +18,6 @@ class VerifyCodeUseCase extends Usecase<void, VerifyCodeParams> {
   }
 }
 
-// DEFINISIKAN KELAS PARAMETER DI SINI
 class VerifyCodeParams extends Equatable {
   final String phoneNumber;
   final String code;

@@ -9,14 +9,14 @@ part 'otp_state.dart';
 
 class OtpBloc extends Bloc<OtpEvent, OtpState> {
   final VerifyCodeUseCase verifyCodeUseCase;
-  final ResendCodeUseCase resendCodeUseCase; // <-- TAMBAHKAN
+  final ResendCodeUseCase resendCodeUseCase; 
 
   OtpBloc({
     required this.verifyCodeUseCase,
-    required this.resendCodeUseCase, // <-- TAMBAHKAN
+    required this.resendCodeUseCase, 
   }) : super(OtpInitial()) {
     on<OtpSubmitted>(_onOtpSubmitted);
-    on<OtpResendRequested>(_onOtpResendRequested); // <-- TAMBAHKAN
+    on<OtpResendRequested>(_onOtpResendRequested); 
   }
 
   Future<void> _onOtpSubmitted(
@@ -25,14 +25,10 @@ class OtpBloc extends Bloc<OtpEvent, OtpState> {
   ) async {
     emit(OtpVerificationLoading());
 
-    // --- PERBAIKAN DI SINI ---
-    // 1. Buat objek parameter terlebih dahulu
     final params = VerifyCodeParams(
       phoneNumber: event.phoneNumber,
       code: event.code,
     );
-
-    // 2. Kirim objek parameter tersebut ke dalam use case
     final result = await verifyCodeUseCase(params);
 
     result.fold(
@@ -41,7 +37,6 @@ class OtpBloc extends Bloc<OtpEvent, OtpState> {
     );
   }
 
-  // --- TAMBAHKAN HANDLER BARU INI ---
   Future<void> _onOtpResendRequested(
     OtpResendRequested event,
     Emitter<OtpState> emit,
@@ -49,7 +44,6 @@ class OtpBloc extends Bloc<OtpEvent, OtpState> {
     emit(OtpResendLoading());
     final result = await resendCodeUseCase(event.phoneNumber);
     result.fold((failure) {
-      // --- TAMBAHKAN LOGIKA INI ---
       if (failure is ServerFailure &&
           failure.message.toLowerCase().contains('failed to send otp')) {
         emit(
@@ -60,7 +54,6 @@ class OtpBloc extends Bloc<OtpEvent, OtpState> {
       } else {
         emit(OtpResendFailure(failure.message));
       }
-      // --------------------------
     }, (_) => emit(OtpResendSuccess()));
   }
 }

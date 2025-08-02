@@ -7,7 +7,6 @@ abstract class OtpEvent extends Equatable {
   List<Object> get props => [];
 }
 
-/// Event yang dikirim saat tombol "Next" ditekan
 class OtpSubmitted extends OtpEvent {
   final String phoneNumber;
   final String code;

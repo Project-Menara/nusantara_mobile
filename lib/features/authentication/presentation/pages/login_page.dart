@@ -9,7 +9,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_header_widget.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/login_form_widget.dart';
-import 'package:nusantara_mobile/core/helper/flashbar_helper.dart'; // <<< PERUBAHAN: Impor helper flashbar
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,7 +42,8 @@ class _LoginScreenState extends State<LoginScreen> {
       resizeToAvoidBottomInset: false,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthLoading) {
+          // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthCheckPhoneLoading >>>
+          if (state is AuthCheckPhoneLoading) {
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -51,7 +52,6 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           } else if (state is AuthCheckPhoneFailure) {
             Navigator.of(context, rootNavigator: true).pop();
-            // <<< PERUBAHAN: Ganti SnackBar dengan showAppFlashbar >>>
             showAppFlashbar(
               context,
               title: 'Gagal',
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
                 context.push(InitialRoutes.verifyNumber, extra: extraData);
                 break;
-                
+
               case 'login':
                 context.push(
                   InitialRoutes.pinLogin,
@@ -91,7 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 break;
 
               default:
-                // <<< PERUBAHAN: Ganti SnackBar dengan showAppFlashbar >>>
                 showAppFlashbar(
                   context,
                   title: 'Terjadi Kesalahan',

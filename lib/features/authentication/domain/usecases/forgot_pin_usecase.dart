@@ -3,13 +3,13 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
 
-class ResendCodeUseCase implements Usecase<void, String> {
+class ForgotPinUseCase implements Usecase<String, String> {
   final AuthRepository repository;
 
-  ResendCodeUseCase(this.repository);
+  ForgotPinUseCase(this.repository);
 
   @override
-  Future<Either<Failures, void>> call(String phoneNumber) async {
-    return await repository.resendCode(phoneNumber);
+  Future<Either<Failures, String>> call(String phoneNumber) async {
+    return await repository.forgotPin(phoneNumber);
   }
 }

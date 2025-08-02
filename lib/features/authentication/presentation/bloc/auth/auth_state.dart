@@ -5,94 +5,104 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 
 abstract class AuthState extends Equatable {
   const AuthState();
-
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class AuthInitial extends AuthState {}
 
-class AuthLoading extends AuthState {}
+class AuthCheckPhoneLoading extends AuthState {}
 
-//--- Phone Check States ---//
+class AuthRegisterLoading extends AuthState {}
+
+class AuthLoginLoading extends AuthState {}
+
+class AuthForgotPinLoading extends AuthState {}
+
+class AuthGetProfileLoading extends AuthState {} 
+
+// --- ---
+
+class AuthUnauthenticated extends AuthState {}
+
+// --- State Sukses ---
 class AuthCheckPhoneSuccess extends AuthState {
   final PhoneCheckEntity result;
   const AuthCheckPhoneSuccess(this.result);
   @override
-  List<Object> get props => [result];
-}
-
-class AuthCheckPhoneFailure extends AuthState {
-  final String message;
-  const AuthCheckPhoneFailure(this.message);
-  @override
-  List<Object> get props => [message];
-}
-
-//--- Login States ---//
-class AuthLoginSuccess extends AuthState {
-  final UserEntity user;
-  const AuthLoginSuccess(this.user);
-  @override
-  List<Object> get props => [user];
-}
-
-class AuthLoginFailure extends AuthState {
-  final String message;
-  const AuthLoginFailure(this.message);
-  @override
-  List<Object> get props => [message];
-}
-
-class AuthLoginRateLimited extends AuthLoginFailure {
-  final int retryAfterSeconds;
-
-  const AuthLoginRateLimited({
-    required String message,
-    required this.retryAfterSeconds,
-  }) : super(message);
-
-  @override
-  List<Object> get props => [message, retryAfterSeconds];
+  List<Object?> get props => [result];
 }
 
 class AuthRegisterSuccess extends AuthState {
   final RegisterResponseModel user;
-
   const AuthRegisterSuccess(this.user);
-
   @override
-  List<Object> get props => [user];
+  List<Object?> get props => [user];
 }
 
-class AuthRegisterFailure extends AuthState {
-  final String message;
-  const AuthRegisterFailure(this.message);
+class AuthLoginSuccess extends AuthState {
+  final UserEntity user;
+  const AuthLoginSuccess(this.user);
   @override
-  List<Object> get props => [message];
-}
-
-class AuthLogoutSuccess extends AuthState {}
-
-class AuthLogoutFailure extends AuthState {
-  final String message;
-  const AuthLogoutFailure(this.message);
-  @override
-  List<Object> get props => [message];
+  List<Object?> get props => [user];
 }
 
 class AuthGetUserSuccess extends AuthState {
   final UserEntity user;
   const AuthGetUserSuccess(this.user);
   @override
-  List<Object> get props => [user];
+  List<Object?> get props => [user];
 }
 
-class AuthGetUserFailure extends AuthState {
-  final String message;
-  const AuthGetUserFailure(this.message);
+class AuthForgotPinSuccess extends AuthState {
+  final String token;
+  const AuthForgotPinSuccess(this.token);
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [token];
 }
 
-class AuthUnauthenticated extends AuthState {}
+// --- State Gagal ---
+class AuthFailure extends AuthState {
+  final String message;
+  const AuthFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthLogoutFailure extends AuthState {
+  final String message;
+  const AuthLogoutFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthCheckPhoneFailure extends AuthState {
+  final String message;
+  const AuthCheckPhoneFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthRegisterFailure extends AuthState {
+  final String message;
+  const AuthRegisterFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthLoginFailure extends AuthState {
+  final String message;
+  const AuthLoginFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthLoginRateLimited extends AuthLoginFailure {
+  final int retryAfterSeconds;
+  const AuthLoginRateLimited({
+    required String message,
+    required this.retryAfterSeconds,
+  }) : super(message);
+  @override
+  List<Object?> get props => [message, retryAfterSeconds];
+}

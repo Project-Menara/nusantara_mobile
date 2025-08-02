@@ -22,7 +22,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.networkInfo,
   });
 
-  // BARU: Helper method terpusat untuk menangani semua request ke remote data source
   Future<Either<Failures, T>> _getResponse<T>(Future<T> Function() call) async {
     if (await networkInfo.isConnected) {
       try {
@@ -38,6 +37,36 @@ class AuthRepositoryImpl implements AuthRepository {
     } else {
       return const Left(NetworkFailure('Tidak ada koneksi internet'));
     }
+  }
+
+  @override
+  Future<Either<Failures, void>> setNewPinForgot({
+    required String token,
+    required String phoneNumber,
+    required String pin,
+  }) async {
+    return _getResponse(() async {
+      await authRemoteDatasource.setNewPinForgot(
+        token: token,
+        phoneNumber: phoneNumber,
+        pin: pin,
+      );
+    });
+  }
+
+  @override
+  Future<Either<Failures, UserEntity>> confirmNewPinForgot({
+    required String token,
+    required String phoneNumber,
+    required String confirmPin,
+  }) async {
+    return _getResponse(
+      () => authRemoteDatasource.confirmNewPinForgot(
+        token: token,
+        phoneNumber: phoneNumber,
+        confirmPin: confirmPin,
+      ),
+    );
   }
 
   @override
@@ -122,8 +151,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failures, UserEntity>> getLoggedInUser() async {
-    // Metode ini berbeda karena tidak selalu butuh koneksi internet di awal,
-    // jadi biarkan seperti ini agar logikanya tetap jelas.
     try {
       final token = await localDatasource.getAuthToken();
       if (token == null) {
@@ -158,8 +185,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failures, String>> forgotPin(String phoneNumber) async {
+    return _getResponse(() {
+      return authRemoteDatasource.forgotPin(phoneNumber);
+    });
+  }
+
+  @override
   Future<Either<Failures, Unit>> logout() async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() async {
       final token = await localDatasource.getAuthToken();
       if (token != null) {

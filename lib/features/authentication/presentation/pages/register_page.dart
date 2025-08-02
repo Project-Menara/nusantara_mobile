@@ -4,14 +4,13 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/constant/path_constant.dart';
-// PERBAIKAN: Hapus impor RegisterModel karena UI tidak boleh mengetahuinya
-// import 'package:nusantara_mobile/features/authentication/data/models/register_model.dart'; 
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 
 class RegisterScreen extends StatefulWidget {
   final String phoneNumber;
@@ -54,10 +53,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onCreateAccountPressed() {
     if (_formKey.currentState!.validate()) {
       if (!_agreeToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Anda harus menyetujui Syarat & Ketentuan'),
-          ),
+        showAppFlashbar(
+          context,
+          title: 'Perhatian',
+          message: 'Anda harus menyetujui Syarat & Ketentuan.',
+          isSuccess: false,
         );
         return;
       }
@@ -66,7 +66,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ? widget.phoneNumber
           : '+62${_phoneController.text}';
 
-      // PERBAIKAN: Buat objek "RegisterEntity" dari Domain Layer, bukan "RegisterModel"
       final registerEntity = RegisterEntity(
         name: _fullNameController.text,
         username: _usernameController.text,
@@ -75,7 +74,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         gender: _selectedGender ?? '',
       );
 
-      // PERBAIKAN: Kirim event dengan "RegisterEntity"
       context.read<AuthBloc>().add(AuthRegisterPressed(registerEntity));
     }
   }
@@ -95,35 +93,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthRegisterFailure) {
-            // Sembunyikan loading jika ada, lalu tampilkan error
-            Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            Navigator.of(context).pop(); // Tutup dialog loading
+            showAppFlashbar(
+              context,
+              title: 'Registrasi Gagal',
+              message: state.message,
+              isSuccess: false,
+            );
           } else if (state is AuthRegisterSuccess) {
-            // Sembunyikan loading
-            Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Registrasi Berhasil!")),
+            Navigator.of(context).pop(); // Tutup dialog loading
+            showAppFlashbar(
+              context,
+              title: 'Registrasi Berhasil',
+              message: 'Silakan verifikasi nomor telepon Anda.',
+              isSuccess: true,
             );
 
-            // PERBAIKAN: Asumsikan `AuthRegisterSuccess` kini membawa entity yang bersih.
-            // Jika `AuthRegisterSuccess` tidak membawa data, Anda mungkin perlu mengambil
-            // nomor telepon dari controller/widget state.
-            // Contoh jika AuthRegisterSuccess membawa `RegisterSuccessEntity`
-            // final extraData = RegisterExtra(
-            //   phoneNumber: state.result.user.phone,
-            //   ttl: state.result.ttl,
-            // );
-
-            // Contoh jika AuthRegisterSuccess tidak membawa data, tapi OTP dikirim ke nomor yang sama
             final extraData = RegisterExtra(
                 phoneNumber: widget.phoneNumber,
-                // TTL mungkin perlu di-hardcode atau didapat dari state lain jika API tidak mengembalikannya
-                ttl: 60 
+                ttl: state.user.ttl ?? 60,
+                action: 'verify_otp_and_create_pin'
             );
 
             context.go(InitialRoutes.verifyNumber, extra: extraData);
-          } else if (state is AuthLoading) {
-            // Tampilkan dialog loading
+          } else if (state is AuthRegisterLoading) { // <<< PERBAIKAN FINAL ADA DI SINI
             showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -212,7 +205,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 24),
                   _buildTermsAndConditions(),
                   const SizedBox(height: 32),
-                  // Tombol tidak perlu BlocBuilder jika loading ditangani oleh dialog
                   ElevatedButton(
                     onPressed: _onCreateAccountPressed,
                     style: ElevatedButton.styleFrom(
@@ -241,9 +233,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Widget helper (_buildTextField, _buildGenderDropdown, _buildTermsAndConditions)
-  // tetap sama seperti kode Anda sebelumnya, tidak perlu diubah.
-  // ... (letakkan kode widget helper Anda di sini)
   Widget _buildTextField({
     required String label,
     required String hint,

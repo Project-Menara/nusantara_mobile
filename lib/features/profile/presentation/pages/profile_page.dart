@@ -21,7 +21,8 @@ class _ProfilePageState extends State<ProfilePage> {
     // Cek state yang ada saat ini di BLoC.
     // Panggil API HANYA jika state belum memiliki data user.
     final currentState = context.read<AuthBloc>().state;
-    if (currentState is! AuthLoginSuccess && currentState is! AuthGetUserSuccess) {
+    if (currentState is! AuthLoginSuccess &&
+        currentState is! AuthGetUserSuccess) {
       context.read<AuthBloc>().add(AuthCheckStatusRequested());
     }
   }
@@ -52,7 +53,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       // Tambahkan pengecekan untuk state loading awal
-                      if (state is AuthLoading || state is AuthInitial) {
+                      if (state is AuthGetProfileLoading ||
+                          state is AuthInitial) {
                         return const Padding(
                           padding: EdgeInsets.only(top: 16.0),
                           child: Center(child: CircularProgressIndicator()),
@@ -72,7 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           email: user.email,
                         );
                       }
-                      
+
                       return _buildUserInfo(name: 'Loading...', email: '...');
                     },
                   ),
@@ -91,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 } else if (state is AuthGetUserSuccess) {
                   user = state.user;
                 }
-                
+
                 return _buildProfileAvatar(
                   headerHeight,
                   avatarRadius,
@@ -153,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                     ? NetworkImage(photoUrl)
                     : const NetworkImage('https://i.pravatar.cc/150?img=56')
-                        as ImageProvider,
+                          as ImageProvider,
               ),
             ),
             Positioned(
@@ -231,12 +233,16 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildListTile(
             icon: Icons.settings_outlined,
             title: 'Settings',
-            onTap: () {/* Navigasi untuk Settings */},
+            onTap: () {
+              /* Navigasi untuk Settings */
+            },
           ),
           _buildListTile(
             icon: Icons.confirmation_number_outlined,
             title: 'My Voucher',
-            onTap: () {/* Navigasi untuk Voucher */},
+            onTap: () {
+              /* Navigasi untuk Voucher */
+            },
           ),
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(
@@ -246,17 +252,23 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildListTile(
             icon: Icons.support_agent_outlined,
             title: 'Layanan Pelanggan',
-            onTap: () {/* Navigasi */},
+            onTap: () {
+              /* Navigasi */
+            },
           ),
           _buildListTile(
             icon: Icons.delete_outline,
             title: 'Request Account Deletion',
-            onTap: () {/* Navigasi */},
+            onTap: () {
+              /* Navigasi */
+            },
           ),
           _buildListTile(
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
-            onTap: () {/* Navigasi */},
+            onTap: () {
+              /* Navigasi */
+            },
           ),
           const SizedBox(height: 16),
           Padding(

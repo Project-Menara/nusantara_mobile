@@ -1,35 +1,41 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/logout_user_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'auth_event.dart';
-import 'auth_state.dart';
+import 'auth_state.dart' hide AuthFailure;
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetLoggedInUserUseCase getLoggedInUserUseCase;
   final CheckPhoneUseCase checkPhoneUseCase;
   final VerifyPinAndLoginUseCase verifyPinAndLoginUseCase;
   final RegisterUseCase registerUseCase;
-  final LogoutUserUseCase logoutUserUseCase; // <-- PASTIKAN BARIS INI ADA
+  final LogoutUserUseCase logoutUserUseCase;
+  final ForgotPinUseCase forgotPinUseCase;
 
   AuthBloc({
     required this.getLoggedInUserUseCase,
     required this.checkPhoneUseCase,
     required this.verifyPinAndLoginUseCase,
     required this.registerUseCase,
-    required this.logoutUserUseCase, // --- TAMBAHKAN INI ---
+    required this.logoutUserUseCase,
+    required this.forgotPinUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
     on<AuthCheckPhonePressed>(_onCheckPhone);
     on<AuthLoginWithPinSubmitted>(_onVerifyPin);
     on<AuthRegisterPressed>(_onRegister);
-    on<AuthLogoutRequested>(_onLogout); // --- TAMBAHKAN INI ---
+    on<AuthLogoutRequested>(_onLogout);
+    on<AuthForgotPinRequested>(_onForgotPinRequested);
   }
+
   Future<void> _onCheckStatus(
     AuthCheckStatusRequested event,
     Emitter<AuthState> emit,
@@ -37,7 +43,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await getLoggedInUserUseCase(NoParams());
     result.fold(
       (failure) => emit(AuthUnauthenticated()),
-      (user) => emit(AuthLoginSuccess(user)),
+      (user) => emit(AuthGetUserSuccess(user)),
     );
   }
 
@@ -45,7 +51,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckPhonePressed event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    emit(AuthCheckPhoneLoading()); // <-- PERBAIKAN
     final result = await checkPhoneUseCase(event.phoneNumber);
     result.fold(
       (failure) => emit(AuthCheckPhoneFailure(failure.message)),
@@ -57,7 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLoginWithPinSubmitted event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    emit(AuthLoginLoading()); // <-- PERBAIKAN
     final params = VerifyPinParams(
       phoneNumber: event.phoneNumber,
       pin: event.pin,
@@ -81,7 +87,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRegisterPressed event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    emit(AuthRegisterLoading()); // <-- PERBAIKAN
     final result = await registerUseCase(
       RegisterParams(registerEntity: event.registerEntity),
     );
@@ -91,11 +97,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
+  Future<void> _onForgotPinRequested(
+    AuthForgotPinRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthForgotPinLoading()); // <-- PERBAIKAN
+    final result = await forgotPinUseCase(event.phoneNumber);
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message) as AuthState),
+      (token) => emit(AuthForgotPinSuccess(token)),
+    );
+  }
+
   Future<void> _onLogout(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    // Untuk logout, kita bisa tetap pakai state loading umum atau buat yang baru
+    // Di sini kita pakai AuthLoginLoading sebagai contoh
+    emit(AuthLoginLoading());
     final result = await logoutUserUseCase(NoParams());
     result.fold(
       (failure) => emit(AuthFailure(failure.message) as AuthState),

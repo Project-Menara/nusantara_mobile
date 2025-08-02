@@ -8,7 +8,6 @@ abstract class AuthEvent extends Equatable {
   List<Object> get props => [];
 }
 
-/// Event saat pengguna menekan tombol 'Lanjutkan' untuk mengecek nomor telepon.
 class AuthCheckPhonePressed extends AuthEvent {
   final String phoneNumber;
   const AuthCheckPhonePressed(this.phoneNumber);
@@ -16,7 +15,6 @@ class AuthCheckPhonePressed extends AuthEvent {
   List<Object> get props => [phoneNumber];
 }
 
-/// Event saat pengguna memasukkan PIN untuk login.
 class AuthLoginWithPinSubmitted extends AuthEvent {
   final String phoneNumber;
   final String pin;
@@ -35,7 +33,6 @@ class GetUserEvent extends AuthEvent {
   List<Object> get props => [];
 }
 
-/// Event saat pengguna menekan tombol 'Create Account' di halaman registrasi.
 class AuthRegisterPressed extends AuthEvent {
   final RegisterEntity registerEntity;
 
@@ -44,8 +41,15 @@ class AuthRegisterPressed extends AuthEvent {
   List<Object> get props => [registerEntity];
 }
 
-/// Event saat pengguna menekan tombol logout.
 class AuthLogoutRequested extends AuthEvent {}
 
 class AuthCheckStatusRequested extends AuthEvent {}
 
+class AuthForgotPinRequested extends AuthEvent {
+  final String phoneNumber;
+
+  const AuthForgotPinRequested(this.phoneNumber);
+
+  @override
+  List<Object> get props => [phoneNumber];
+}

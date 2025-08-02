@@ -1,6 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/set_confirm_new_pin_forgot_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/set_new_pin_forgot_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -46,14 +49,22 @@ Future<void> init() async {
       registerUseCase: sl(),
       getLoggedInUserUseCase: sl(),
       logoutUserUseCase: sl(),
+      forgotPinUseCase: sl(),
     ),
   );
-sl.registerFactory(() => OtpBloc(
-  verifyCodeUseCase: sl(),
-  resendCodeUseCase: sl(), // <-- Tambahkan ini
-));
   sl.registerFactory(
-    () => PinBloc(createPinUseCase: sl(), confirmPinUseCase: sl()),
+    () => OtpBloc(
+      verifyCodeUseCase: sl(),
+      resendCodeUseCase: sl(), // <-- Tambahkan ini
+    ),
+  );
+  sl.registerFactory(
+    () => PinBloc(
+      createPinUseCase: sl(),
+      confirmPinUseCase: sl(),
+      setNewPinForgotUseCase: sl(),
+      confirmNewPinForgotUseCase: sl(),
+    ),
   );
   sl.registerFactory(() => HomeBloc());
 
@@ -67,7 +78,9 @@ sl.registerFactory(() => OtpBloc(
   sl.registerLazySingleton(() => ConfirmPinUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUserUseCase(sl()));
   sl.registerLazySingleton(() => ResendCodeUseCase(sl()));
-
+  sl.registerLazySingleton(() => ForgotPinUseCase(sl()));
+  sl.registerLazySingleton(() => SetNewPinForgotUseCase(sl()));
+  sl.registerLazySingleton(() => ConfirmNewPinForgotUseCase(sl()));
   // Repositories & DataSources
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(

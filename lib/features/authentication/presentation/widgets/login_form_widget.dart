@@ -24,14 +24,14 @@ class LoginFormWidget extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white, // The background color of the form itself
+        color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Shadow color and opacity
+            color: Colors.black.withOpacity(0.1),
             spreadRadius: 0,
-            blurRadius: 10, // Adjust blur to make it appear softer
-            offset: const Offset(0, -3), // Negative Y for shadow on top edge
+            blurRadius: 10,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -41,8 +41,7 @@ class LoginFormWidget extends StatelessWidget {
           key: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize
-                .min, // Keep this! It's important for the column to take only the space it needs.
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "MASUKKAN NOMOR TELEPON ANDA",
@@ -67,68 +66,70 @@ class LoginFormWidget extends StatelessWidget {
                 style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 12, right: 8),
-                    child: Text(
-                      '+62 ',
-                      style: TextStyle(color: Colors.black, fontSize: 16),
-                    ),
+              // --- PERBAIKAN: Bungkus Row dengan Container untuk border ---
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
                   ),
-                  Expanded(
-                    child: TextFormField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: "81234567890",
-                        hintStyle: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 16,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300, // Light grey border
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: primaryOrange,
-                            width: 1.5,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 12, right: 8),
+                      child: Text(
+                        '+62 ',
+                        style: TextStyle(color: Colors.black, fontSize: 16),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Nomor telepon tidak boleh kosong';
-                        }
-                        // Check if value starts with '0' (common mistake in Indonesia)
-                        if (value.startsWith('0')) {
-                          return 'Nomor telepon tidak boleh diawali 0';
-                        }
-                        if (value.length < 10 || value.length > 13) {
-                          return 'Nomor telepon harus 10 sampai 13 digit';
-                        }
-                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                          return 'Hanya boleh berisi angka';
-                        }
-                        return null;
-                      },
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: "81234567890",
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 16,
+                          ),
+                          // Hapus border dari TextFormField agar menyatu
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 0, // Dihapus karena sudah ada padding di Row
+                            vertical: 14, // Atur tinggi vertikal
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Nomor telepon tidak boleh kosong';
+                          }
+                          if (value.startsWith('0')) {
+                            return 'Nomor telepon tidak boleh diawali 0';
+                          }
+                          if (value.length < 9 || value.length > 13) {
+                            return 'Nomor telepon harus 9 sampai 13 digit';
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                            return 'Hanya boleh berisi angka';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
-                  final isLoading = state is AuthLoading;
+                  // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthCheckPhoneLoading >>>
+                  final isLoading = state is AuthCheckPhoneLoading;
                   return ElevatedButton(
                     onPressed: isLoading ? null : onLanjutkanPressed,
                     style: ElevatedButton.styleFrom(

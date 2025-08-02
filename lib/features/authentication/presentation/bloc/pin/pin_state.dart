@@ -11,10 +11,9 @@ abstract class PinState extends Equatable {
 
 class PinInitial extends PinState {}
 
-class PinLoading  extends PinState {}
+class PinLoading extends PinState {}
 
-class PinCreationSuccess extends PinState {} // Jadikan class kosong
-
+class PinCreationSuccess extends PinState {}
 
 class PinCreationError extends PinState {
   final String message;
@@ -25,9 +24,8 @@ class PinCreationError extends PinState {
   List<Object> get props => [message];
 }
 
-// === TAMBAHAN STATE UNTUK HASIL KONFIRMASI PIN ===
 class PinConfirmationSuccess extends PinState {
-  final UserModel user; // Membawa data user setelah login berhasil
+  final UserModel user;
 
   const PinConfirmationSuccess(this.user);
 
@@ -44,3 +42,25 @@ class PinConfirmationError extends PinState {
   List<Object> get props => [message];
 }
 
+class SetNewPinForgotSuccess extends PinState {}
+
+class SetNewPinForgotError extends PinState {
+  final String message;
+  const SetNewPinForgotError(this.message);
+  @override
+  List<Object> get props => [message];
+}
+
+class ConfirmNewPinForgotSuccess extends PinState {
+  final UserModel user;
+  const ConfirmNewPinForgotSuccess(this.user);
+  @override
+  List<Object> get props => [user];
+}
+
+class ConfirmNewPinForgotError extends PinState {
+  final String message;
+  const ConfirmNewPinForgotError(this.message);
+  @override
+  List<Object> get props => [message];
+}
