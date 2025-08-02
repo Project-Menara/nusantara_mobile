@@ -93,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthRegisterFailure) {
-            Navigator.of(context).pop(); // Tutup dialog loading
+            Navigator.of(context).pop(); 
             showAppFlashbar(
               context,
               title: 'Registrasi Gagal',
@@ -101,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               isSuccess: false,
             );
           } else if (state is AuthRegisterSuccess) {
-            Navigator.of(context).pop(); // Tutup dialog loading
+            Navigator.of(context).pop(); 
             showAppFlashbar(
               context,
               title: 'Registrasi Berhasil',
