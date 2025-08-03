@@ -60,13 +60,16 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String confirmPin,
   }) async {
-    return _getResponse(
-      () => authRemoteDatasource.confirmNewPinForgot(
+    return _getResponse(() async {
+      final userModel = await authRemoteDatasource.confirmNewPinForgot(
         token: token,
         phoneNumber: phoneNumber,
         confirmPin: confirmPin,
-      ),
-    );
+      );
+      // <<< TAMBAHAN PENTING: Simpan token baru ke local storage >>>
+      await localDatasource.cacheAuthToken(userModel.token!);
+      return userModel;
+    });
   }
 
   @override
@@ -123,12 +126,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phone,
     required String confirmPin,
   }) async {
-    // REFACTOR: Jadi lebih ringkas
-    return _getResponse(() {
-      return authRemoteDatasource.confirmPin(
+    return _getResponse(() async {
+      // Tambahkan async
+      final userModel = await authRemoteDatasource.confirmPin(
         phone: phone,
         confirmPin: confirmPin,
       );
+      await localDatasource.cacheAuthToken(userModel.token!);
+      return userModel;
     });
   }
 

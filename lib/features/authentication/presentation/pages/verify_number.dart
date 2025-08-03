@@ -99,14 +99,14 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
 
   void _submitOtp() {
     context.read<OtpBloc>().add(
-          OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
-        );
+      OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
+    );
   }
 
   void _resendOtp() {
     context.read<OtpBloc>().add(
-          OtpResendRequested(phoneNumber: widget.phoneNumber),
-        );
+      OtpResendRequested(phoneNumber: widget.phoneNumber),
+    );
   }
 
   @override
@@ -177,14 +177,19 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                       const Text(
                         'Verify Your Number',
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(
                         'Enter your OTP code below',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 14, color: Colors.grey, height: 1.5),
+                          fontSize: 14,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 60),
                       _buildOtpDisplay(),
@@ -199,14 +204,15 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                             child: ElevatedButton(
                               onPressed:
                                   (_otpCode.length == _otpLength && !isLoading)
-                                      ? _submitOtp
-                                      : null,
+                                  ? _submitOtp
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor:
-                                    Colors.orange.withOpacity(0.4),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor: Colors.orange
+                                    .withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -216,14 +222,17 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                                       height: 24,
                                       width: 24,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 3),
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
                                     )
                                   : const Text(
                                       'Next',
                                       style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                             ),
                           );
@@ -312,9 +321,10 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
                 ? Text(
                     _otpCode[i],
                     style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   )
                 : null,
           ),

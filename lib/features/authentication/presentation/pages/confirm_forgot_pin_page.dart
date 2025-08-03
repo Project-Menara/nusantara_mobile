@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/forgot_pin_extra.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // <<< Impor AuthBloc
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'; // <<< Impor AuthEvent
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
@@ -39,12 +41,12 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
 
   void _confirmFinalPin(BuildContext blocContext) {
     blocContext.read<PinBloc>().add(
-          ConfirmNewPinForgotSubmitted(
-            token: widget.extra.token,
-            phoneNumber: widget.extra.phoneNumber,
-            pin: _pin,
-          ),
-        );
+      ConfirmNewPinForgotSubmitted(
+        token: widget.extra.token,
+        phoneNumber: widget.extra.phoneNumber,
+        pin: _pin,
+      ),
+    );
   }
 
   @override
@@ -53,22 +55,31 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
       create: (context) => sl<PinBloc>(),
       child: BlocListener<PinBloc, PinState>(
         listener: (context, state) {
-          // <<< PERBAIKAN: Hapus 'showDialog' dari sini >>>
-          // if (state is PinLoading) {
-          //   showDialog(...);
-          // } else 
-          if (state is ConfirmNewPinForgotSuccess) {
-            // Jika ada dialog, tutup dulu (opsional, untuk keamanan)
-            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+          if (state is PinLoading) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+          } else if (state is ConfirmNewPinForgotSuccess) {
+            // Tutup dialog loading
+            Navigator.of(context, rootNavigator: true).pop();
+
             showAppFlashbar(
               context,
               title: 'PIN Berhasil Diperbarui!',
-              message: 'Silakan masuk kembali menggunakan PIN baru Anda.',
+              message: 'Selamat datang kembali!',
               isSuccess: true,
             );
-            context.go(InitialRoutes.loginScreen);
+
+            // <<< PERBAIKAN UTAMA DI SINI >>>
+            // 1. Beri tahu AuthBloc bahwa login berhasil
+            context.read<AuthBloc>().add(AuthLoggedIn(user: state.user));
+            // 2. Navigasi ke halaman home
+            context.go(InitialRoutes.home);
           } else if (state is ConfirmNewPinForgotError) {
-            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+            Navigator.of(context, rootNavigator: true).pop();
             showAppFlashbar(
               context,
               title: 'Gagal',
@@ -80,8 +91,14 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text('Konfirmasi PIN Baru',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+            title: const Text(
+              'Konfirmasi PIN Baru',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
             backgroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
@@ -100,7 +117,10 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
                       const Spacer(),
                       const Text(
                         'Konfirmasi PIN Baru Anda',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(
@@ -116,7 +136,12 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: IconButton(
-                              icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                              icon: Icon(
+                                _isPinVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
                               onPressed: _togglePinVisibility,
                             ),
                           ),
@@ -125,18 +150,21 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
                       const SizedBox(height: 60),
                       BlocBuilder<PinBloc, PinState>(
                         builder: (context, state) {
-                          // Biarkan BlocBuilder ini yang menangani tampilan loading
                           final isLoading = state is PinLoading;
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: (_pin.length == _pinLength && !isLoading)
+                              onPressed:
+                                  (_pin.length == _pinLength && !isLoading)
                                   ? () => _confirmFinalPin(context)
                                   : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange.withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor: Colors.orange
+                                    .withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -145,11 +173,18 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
                                   ? const SizedBox(
                                       height: 24,
                                       width: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
                                     )
                                   : const Text(
                                       'Konfirmasi & Simpan',
-                                      style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                             ),
                           );
@@ -183,25 +218,38 @@ class _ConfirmForgotPinPageState extends State<ConfirmForgotPinPage> {
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                      ? Text(
-                          _pin[i],
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-                        )
-                      : Container(
-                          width: 20,
-                          height: 20,
-                          decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
-                        ))
+                        ? Text(
+                            _pin[i],
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          ))
                   : Container(
                       width: 20,
                       height: 20,
-                      decoration: BoxDecoration(color: Colors.grey[300], shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        shape: BoxShape.circle,
+                      ),
                     ),
             ),
           ),
         ),
       );
     }
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: displayWidgets,
+    );
   }
 }

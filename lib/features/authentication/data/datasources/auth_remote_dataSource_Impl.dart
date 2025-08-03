@@ -178,7 +178,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // PERBAIKAN: Panggil _processResponse dulu
       final jsonResponse = _processResponse(response);
 
-      // Setelah dipastikan sukses, baru parsing data
       final data = jsonResponse['data'];
       if (data == null || data['user'] == null || data['token'] == null) {
         throw const ServerException('Format respons tidak valid dari server.');

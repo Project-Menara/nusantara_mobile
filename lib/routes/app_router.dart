@@ -103,11 +103,9 @@ final GoRouter appRoute = GoRouter(
       builder: (context, state) => const PersonalDataPage(),
     ),
 
-    // <<< PERBAIKAN: Kedua GoRoute digabung menjadi satu yang pintar >>>
     GoRoute(
-      path: '/reset-pin', // Path ini untuk deep link dari luar aplikasi
-      name: InitialRoutes
-          .forgotPinNew, // Nama ini untuk navigasi dari dalam aplikasi
+      path: InitialRoutes.resetPin,
+      name: InitialRoutes.forgotPinNew,
       builder: (context, state) {
         final token = state.uri.queryParameters['token'];
 
@@ -117,7 +115,6 @@ final GoRouter appRoute = GoRouter(
           );
         }
 
-        // Gunakan FutureBuilder untuk mengambil nomor telepon dari SharedPreferences
         return FutureBuilder<String?>(
           future: SharedPreferences.getInstance().then(
             (prefs) => prefs.getString('last_forgot_pin_phone'),

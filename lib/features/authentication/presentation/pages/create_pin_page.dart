@@ -40,8 +40,8 @@ class _CreatePinPageState extends State<CreatePinPage> {
 
   void _createAndSavePin(BuildContext blocContext) {
     blocContext.read<PinBloc>().add(
-          CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
-        );
+      CreatePinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+    );
   }
 
   @override
@@ -50,21 +50,13 @@ class _CreatePinPageState extends State<CreatePinPage> {
       create: (context) => sl<PinBloc>(),
       child: BlocListener<PinBloc, PinState>(
         listener: (context, state) {
-          if (state is PinLoading) {
-            showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator()));
-          } else if (state is PinCreationSuccess) {
-            Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+          if (state is PinCreationSuccess) {
             context.push(
               InitialRoutes.confirmPin,
-              extra: {
-                'phoneNumber': widget.phoneNumber,
-              },
+              extra: {'phoneNumber': widget.phoneNumber},
             );
           } else if (state is PinCreationError) {
-            Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+            // Tidak perlu pop dialog lagi
             showAppFlashbar(
               context,
               title: 'Gagal',
@@ -78,7 +70,7 @@ class _CreatePinPageState extends State<CreatePinPage> {
           appBar: AppBar(
             title: const Text(
               'Buat PIN Baru',
-               style: TextStyle(
+              style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -119,7 +111,9 @@ class _CreatePinPageState extends State<CreatePinPage> {
                             alignment: Alignment.centerRight,
                             child: IconButton(
                               icon: Icon(
-                                _isPinVisible ? Icons.visibility_off : Icons.visibility,
+                                _isPinVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                                 color: Colors.grey,
                               ),
                               onPressed: _togglePinVisibility,
@@ -134,27 +128,38 @@ class _CreatePinPageState extends State<CreatePinPage> {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: (_pin.length == _pinLength && !isLoading)
+                              onPressed:
+                                  (_pin.length == _pinLength && !isLoading)
                                   ? () => _createAndSavePin(context)
                                   : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange.withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor: Colors.orange
+                                    .withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                  )
-                                : const Text(
-                                    'Lanjutkan',
-                                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Lanjutkan',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           );
                         },
@@ -187,22 +192,22 @@ class _CreatePinPageState extends State<CreatePinPage> {
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                      ? Text(
-                          _pin[i],
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        )
-                      : Container(
-                          width: 20,
-                          height: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.orange,
-                            shape: BoxShape.circle,
-                          ),
-                        ))
+                        ? Text(
+                            _pin[i],
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          ))
                   : Container(
                       width: 20,
                       height: 20,
@@ -216,6 +221,9 @@ class _CreatePinPageState extends State<CreatePinPage> {
         ),
       );
     }
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: displayWidgets,
+    );
   }
 }

@@ -11,7 +11,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<FetchHomeData>(_onFetchHomeData);
   }
 
-  Future<void> _onFetchHomeData(FetchHomeData event, Emitter<HomeState> emit) async {
+  Future<void> _onFetchHomeData(
+    FetchHomeData event,
+    Emitter<HomeState> emit,
+  ) async {
     emit(HomeLoading());
     try {
       // Di dunia nyata, Anda akan memanggil:
@@ -20,15 +23,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // dll.
 
       // Untuk saat ini, kita gunakan data palsu (mock)
-      await Future.delayed(const Duration(seconds: 1)); // Simulasi network delay
+      await Future.delayed(
+        const Duration(seconds: 1),
+      ); // Simulasi network delay
       final mockPromos = [
         PromoEntity('assets/images/banner_burger.jpg'),
         PromoEntity('assets/images/banner_burger.jpg'),
         PromoEntity('assets/images/banner_burger.jpg'),
       ];
-      
-      emit(HomeLoaded(promos: mockPromos));
 
+      emit(HomeLoaded(promos: mockPromos));
     } catch (e) {
       emit(HomeError(e.toString()));
     }

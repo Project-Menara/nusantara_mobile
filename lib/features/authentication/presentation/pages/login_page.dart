@@ -42,16 +42,13 @@ class _LoginScreenState extends State<LoginScreen> {
       resizeToAvoidBottomInset: false,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthCheckPhoneLoading >>>
-          if (state is AuthCheckPhoneLoading) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) =>
-                  const Center(child: CircularProgressIndicator()),
-            );
-          } else if (state is AuthCheckPhoneFailure) {
-            Navigator.of(context, rootNavigator: true).pop();
+          // <<< PERBAIKAN 1: Hapus logika showDialog untuk AuthCheckPhoneLoading >>>
+          // if (state is AuthCheckPhoneLoading) {
+          //   showDialog(...);
+          // } else 
+          if (state is AuthCheckPhoneFailure) {
+            // <<< PERBAIKAN 2: Hapus Navigator.pop() >>>
+            // Navigator.of(context, rootNavigator: true).pop();
             showAppFlashbar(
               context,
               title: 'Gagal',
@@ -59,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
               isSuccess: false,
             );
           } else if (state is AuthCheckPhoneSuccess) {
-            Navigator.of(context, rootNavigator: true).pop();
+            // <<< PERBAIKAN 3: Hapus Navigator.pop() >>>
+            // Navigator.of(context, rootNavigator: true).pop();
 
             final checkResult = state.result;
             final action = checkResult.action;

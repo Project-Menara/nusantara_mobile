@@ -106,3 +106,9 @@ class AuthLoginRateLimited extends AuthLoginFailure {
   @override
   List<Object?> get props => [message, retryAfterSeconds];
 }
+class AuthForgotPinFailure extends AuthState {
+  final String message;
+  const AuthForgotPinFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}

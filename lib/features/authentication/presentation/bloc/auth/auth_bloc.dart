@@ -34,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthRegisterPressed>(_onRegister);
     on<AuthLogoutRequested>(_onLogout);
     on<AuthForgotPinRequested>(_onForgotPinRequested);
+    on<AuthLoggedIn>(_onAuthLoggedIn);
   }
 
   Future<void> _onCheckStatus(
@@ -101,20 +102,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthForgotPinRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthForgotPinLoading()); // <-- PERBAIKAN
+    emit(AuthForgotPinLoading());
     final result = await forgotPinUseCase(event.phoneNumber);
     result.fold(
-      (failure) => emit(AuthFailure(failure.message) as AuthState),
+      // <<< PERBAIKAN: Gunakan state failure yang spesifik >>>
+      (failure) => emit(AuthForgotPinFailure(failure.message)),
       (token) => emit(AuthForgotPinSuccess(token)),
     );
+  }
+
+  void _onAuthLoggedIn(AuthLoggedIn event, Emitter<AuthState> emit) {
+    emit(AuthLoginSuccess(event.user));
   }
 
   Future<void> _onLogout(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    // Untuk logout, kita bisa tetap pakai state loading umum atau buat yang baru
-    // Di sini kita pakai AuthLoginLoading sebagai contoh
     emit(AuthLoginLoading());
     final result = await logoutUserUseCase(NoParams());
     result.fold(

@@ -9,16 +9,14 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // <<< TAMBAHKAN IMPORT INI
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Wrapper untuk menyediakan BLoC
 class PinLoginPage extends StatelessWidget {
   final String phoneNumber;
   const PinLoginPage({super.key, required this.phoneNumber});
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan BlocProvider.value karena AuthBloc adalah Singleton
     return BlocProvider.value(
       value: sl<AuthBloc>(),
       child: PinLoginView(phoneNumber: phoneNumber),
@@ -26,7 +24,6 @@ class PinLoginPage extends StatelessWidget {
   }
 }
 
-// Widget untuk UI dan State
 class PinLoginView extends StatefulWidget {
   final String phoneNumber;
   const PinLoginView({super.key, required this.phoneNumber});
@@ -40,35 +37,58 @@ class _PinLoginViewState extends State<PinLoginView> {
   final int _pinLength = 6;
   bool _isPinVisible = false;
 
-  Timer? _timer;
-  int _countdownSeconds = 0;
-  bool get _isRateLimited => _timer?.isActive ?? false;
+  Timer? _rateLimitTimer;
+  int _rateLimitCountdownSeconds = 0;
+  bool get _isRateLimited => _rateLimitTimer?.isActive ?? false;
 
-  bool _isForgotPinLoading = false;
+  // --- BARU: State & Timer untuk Lupa PIN Cooldown ---
+  Timer? _forgotPinTimer;
+  int _forgotPinCountdownSeconds = 0;
+  bool get _isForgotPinOnCooldown => _forgotPinTimer?.isActive ?? false;
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _rateLimitTimer?.cancel();
+    _forgotPinTimer?.cancel(); // <-- Jangan lupa dispose timer baru
     super.dispose();
   }
 
-  void _startCountdown(int seconds) {
-    _timer?.cancel();
+  void _startRateLimitCountdown(int seconds) {
+    _rateLimitTimer?.cancel();
     setState(() {
-      _countdownSeconds = seconds;
+      _rateLimitCountdownSeconds = seconds;
       _pin = '';
     });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _rateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      if (_countdownSeconds > 0) {
-        setState(() => _countdownSeconds--);
+      if (_rateLimitCountdownSeconds > 0) {
+        setState(() => _rateLimitCountdownSeconds--);
       } else {
         timer.cancel();
         setState(() {});
+      }
+    });
+  }
+  
+  // --- BARU: Fungsi untuk memulai cooldown Lupa PIN ---
+  void _startForgotPinCooldown() {
+    _forgotPinTimer?.cancel();
+    setState(() {
+      _forgotPinCountdownSeconds = 120;
+    });
+    _forgotPinTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_forgotPinCountdownSeconds > 0) {
+        setState(() => _forgotPinCountdownSeconds--);
+      } else {
+        timer.cancel();
+        setState(() {}); // Rebuild untuk menampilkan tombol lagi
       }
     });
   }
@@ -102,22 +122,14 @@ class _PinLoginViewState extends State<PinLoginView> {
         );
   }
 
-  // --- PERBAIKAN UTAMA DI SINI ---
-  void _forgotPin() async { // 1. Ubah menjadi async
-    try {
-      // 2. Simpan nomor telepon ke SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('last_forgot_pin_phone', widget.phoneNumber);
-      
-      // 3. Kirim event ke BLoC (pastikan widget masih ada/mounted)
-      if (mounted) {
-        context.read<AuthBloc>().add(AuthForgotPinRequested(widget.phoneNumber));
-      }
-    } catch (e) {
-      // Menangani jika ada error saat menyimpan ke SharedPreferences
-      if(mounted) {
-        showAppFlashbar(context, title: "Error Lokal", message: "Gagal menyimpan sesi sementara.", isSuccess: false);
-      }
+  void _forgotPin() async {
+    // --- PERBAIKAN: Panggil fungsi cooldown di sini ---
+    _startForgotPinCooldown();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_forgot_pin_phone', widget.phoneNumber);
+    if (mounted) {
+      context.read<AuthBloc>().add(AuthForgotPinRequested(widget.phoneNumber));
     }
   }
 
@@ -125,20 +137,11 @@ class _PinLoginViewState extends State<PinLoginView> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        // Atur state loading untuk tombol lupa pin
-        if (state is AuthForgotPinLoading) {
-          setState(() => _isForgotPinLoading = true);
-        }
-        // Hentikan loading lupa pin jika sudah selesai (baik sukses maupun gagal)
-        if (state is AuthForgotPinSuccess || state is AuthFailure) {
-          setState(() => _isForgotPinLoading = false);
-        }
-
         if (state is AuthLoginSuccess) {
           context.go(InitialRoutes.home);
         } else if (state is AuthLoginRateLimited) {
           showAppFlashbar(context, title: "Terlalu Banyak Percobaan", message: state.message, isSuccess: false);
-          _startCountdown(state.retryAfterSeconds);
+          _startRateLimitCountdown(state.retryAfterSeconds);
         } else if (state is AuthLoginFailure) {
           showAppFlashbar(context, title: "Login Gagal", message: state.message, isSuccess: false);
           setState(() => _pin = '');
@@ -149,10 +152,10 @@ class _PinLoginViewState extends State<PinLoginView> {
             message: "Link untuk mengatur ulang PIN telah dikirim melalui WhatsApp.",
             isSuccess: true,
           );
-        } else if (state is AuthFailure) {
+        } else if (state is AuthForgotPinFailure) {
           showAppFlashbar(
             context,
-            title: "Terjadi Kesalahan",
+            title: "Gagal Meminta Reset PIN",
             message: state.message,
             isSuccess: false,
           );
@@ -190,7 +193,7 @@ class _PinLoginViewState extends State<PinLoginView> {
                       BlocBuilder<AuthBloc, AuthState>(
                         builder: (context, state) {
                           if (_isRateLimited) {
-                            return Text('Coba lagi dalam $_countdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
+                            return Text('Coba lagi dalam $_rateLimitCountdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
                           }
                           return Stack(
                             alignment: Alignment.center,
@@ -231,24 +234,43 @@ class _PinLoginViewState extends State<PinLoginView> {
   Widget _buildForgotPasswordButton() {
     return Container(
       alignment: Alignment.centerRight,
-      child: _isForgotPinLoading
-          ? const Padding(
-              padding: EdgeInsets.all(12.0),
-              child: SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(strokeWidth: 3),
+      // --- PERBAIKAN: Tampilkan countdown jika sedang cooldown ---
+      child: _isForgotPinOnCooldown
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Text(
+                'Kirim ulang dalam $_forgotPinCountdownSeconds detik',
+                style: TextStyle(color: Colors.grey.shade700),
               ),
             )
-          : TextButton(
-              onPressed: _forgotPin,
-              child: const Text(
-                'Lupa PIN?',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          : BlocBuilder<AuthBloc, AuthState>(
+              buildWhen: (previous, current) {
+                return current is AuthForgotPinLoading ||
+                       current is AuthForgotPinSuccess ||
+                       current is AuthForgotPinFailure;
+              },
+              builder: (context, state) {
+                if (state is AuthForgotPinLoading) {
+                  return const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    ),
+                  );
+                }
+                return TextButton(
+                  onPressed: _forgotPin,
+                  child: const Text(
+                    'Lupa PIN?',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
             ),
     );
   }

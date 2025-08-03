@@ -63,72 +63,85 @@ class LoginFormWidget extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 "Nomor Telepon",
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
-              // --- PERBAIKAN: Bungkus Row dengan Container untuk border ---
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey.shade300,
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                autofocus: true,
+                decoration: InputDecoration(
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(left: 16, right: 8),
+                    child: Text(
+                      '+62',
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    ),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 0,
+                    minHeight: 0,
+                  ),
+                  hintText: "81234567890",
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 16,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  errorStyle: const TextStyle(height: 1),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
+                  // --- PERBAIKAN DESAIN ADA DI SINI ---
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: primaryOrange,
+                      width: 1.5,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 1.5),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 12, right: 8),
-                      child: Text(
-                        '+62 ',
-                        style: TextStyle(color: Colors.black, fontSize: 16),
-                      ),
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        controller: phoneController,
-                        keyboardType: TextInputType.phone,
-                        autofocus: true,
-                        decoration: InputDecoration(
-                          hintText: "81234567890",
-                          hintStyle: TextStyle(
-                            color: Colors.grey.shade400,
-                            fontSize: 16,
-                          ),
-                          // Hapus border dari TextFormField agar menyatu
-                          border: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 0, // Dihapus karena sudah ada padding di Row
-                            vertical: 14, // Atur tinggi vertikal
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Nomor telepon tidak boleh kosong';
-                          }
-                          if (value.startsWith('0')) {
-                            return 'Nomor telepon tidak boleh diawali 0';
-                          }
-                          if (value.length < 9 || value.length > 13) {
-                            return 'Nomor telepon harus 9 sampai 13 digit';
-                          }
-                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                            return 'Hanya boleh berisi angka';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nomor telepon tidak boleh kosong';
+                  }
+                  if (value.startsWith('0')) {
+                    return 'Nomor telepon tidak boleh diawali 0';
+                  }
+                  if (value.length < 9 || value.length > 13) {
+                    return 'Nomor telepon harus 9 sampai 13 digit';
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return 'Hanya boleh berisi angka';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
-                  // <<< PERBAIKAN: Ganti AuthLoading menjadi AuthCheckPhoneLoading >>>
                   final isLoading = state is AuthCheckPhoneLoading;
                   return ElevatedButton(
                     onPressed: isLoading ? null : onLanjutkanPressed,

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // <<< TAMBAHAN: Impor AuthBloc
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'; // <<< TAMBAHAN: Impor AuthEvent
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
@@ -10,10 +12,7 @@ import 'package:nusantara_mobile/routes/initial_routes.dart';
 class ConfirmPinPage extends StatefulWidget {
   final String phoneNumber;
 
-  const ConfirmPinPage({
-    super.key,
-    required this.phoneNumber,
-  });
+  const ConfirmPinPage({super.key, required this.phoneNumber});
 
   @override
   State<ConfirmPinPage> createState() => _ConfirmPinPageState();
@@ -58,14 +57,22 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                 barrierDismissible: false,
                 builder: (context) => const Center(child: CircularProgressIndicator()));
           } else if (state is PinConfirmationSuccess) {
+            // Tutup dialog loading
             Navigator.of(context, rootNavigator: true).pop();
+            
             showAppFlashbar(
               context,
               title: 'Berhasil!',
-              message: 'PIN Anda berhasil dikonfirmasi dan Anda telah login.',
+              message: 'PIN Anda berhasil dibuat. Selamat datang!',
               isSuccess: true,
             );
+            
+            // <<< PERBAIKAN UTAMA DI SINI >>>
+            // 1. Beri tahu AuthBloc (BLoC global) bahwa login berhasil
+            context.read<AuthBloc>().add(AuthLoggedIn(user: state.user));
+            // 2. Navigasi ke halaman home
             context.go(InitialRoutes.home);
+
           } else if (state is PinConfirmationError) {
             Navigator.of(context, rootNavigator: true).pop();
             showAppFlashbar(
@@ -81,13 +88,13 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
           appBar: AppBar(
             title: const Text(
               'Konfirmasi PIN',
-               style: TextStyle(
+              style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
-             backgroundColor: Colors.white,
+            backgroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
             leading: IconButton(
@@ -140,7 +147,7 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                               onPressed: (_pin.length == _pinLength && !isLoading)
                                   ? () => _confirmFinalPin(context)
                                   : null,
-                               style: ElevatedButton.styleFrom(
+                              style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                                 disabledBackgroundColor: Colors.orange.withOpacity(0.4),
                                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -149,15 +156,15 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                                 ),
                               ),
                               child: isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                  )
-                                : const Text(
-                                    'Konfirmasi & Simpan',
-                                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                    )
+                                  : const Text(
+                                      'Konfirmasi & Simpan',
+                                      style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
                             ),
                           );
                         },

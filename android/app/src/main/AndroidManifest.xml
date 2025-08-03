@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="nusantara_mobile"
         android:name="${applicationName}"
@@ -30,7 +32,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="http" android:host="nusantara-oleh-oleh.com" />
-                <data android:scheme="httpss" android:host="nusantara-oleh-oleh.com" />
+                <data android:scheme="https" android:host="nusantara-oleh-oleh.com" />
 
             </intent-filter>
 

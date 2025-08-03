@@ -1,33 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/home_bloc.dart';
-
-// Impor untuk semua widget yang telah dipisah
 import '../widgets/promo_banner.dart';
 import '../widgets/category_icons.dart';
 import '../widgets/event_list.dart';
 import '../widgets/nearby_store_list.dart';
 
-class HomePage extends StatelessWidget {
+// PERUBAHAN 1: Ubah menjadi StatefulWidget
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // PERUBAHAN 2: Buat ScrollController untuk mendeteksi scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Panggil data saat pertama kali halaman dibuat
     context.read<HomeBloc>().add(FetchHomeData());
 
+    // Tambahkan listener ke controller
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    // Jangan lupa hapus controller saat widget dihancurkan
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // PERUBAHAN 3: Fungsi yang akan dipanggil setiap kali ada scroll
+  void _scrollListener() {
+    // kToolbarHeight adalah tinggi standar AppBar (sekitar 56.0)
+    // Jika posisi scroll sudah melewati tinggi header yang besar dikurangi 2x tinggi AppBar,
+    // maka kita anggap header sudah mengecil.
+    if (_scrollController.offset > 200 - (kToolbarHeight * 2)) {
+      if (!_isScrolled) {
+        setState(() {
+          _isScrolled = true;
+        });
+      }
+    } else {
+      if (_isScrolled) {
+        setState(() {
+          _isScrolled = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(190.0),
-        child: _buildOrangeHeader(),
-      ),
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
           if (state is HomeLoading || state is HomeInitial) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is HomeLoaded) {
-            return _buildContent(context, state);
+            return _buildContentWithSlivers(context, state);
           }
           if (state is HomeError) {
             return Center(child: Text('Gagal memuat data: ${state.message}'));
@@ -35,103 +75,128 @@ class HomePage extends StatelessWidget {
           return const Center(child: Text("Terjadi sesuatu yang salah."));
         },
       ),
-      // TAMBAHKAN: FloatingActionButton di sini
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Tambahkan logika aksi saat tombol keranjang diklik
-          // contoh: context.go('/cart');
-        },
+        onPressed: () {},
         backgroundColor: Colors.orange,
-        shape: const CircleBorder(), // Membuatnya bulat sempurna
+        shape: const CircleBorder(),
         child: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
       ),
     );
   }
 
-  /// Membangun konten utama halaman ketika data sudah berhasil dimuat.
-  Widget _buildContent(BuildContext context, HomeLoaded state) {
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        PromoBanner(promoImages: state.promos.map((e) => e.imageUrl).toList()),
-        const CategoryIcons(),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Text("Event", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        const EventList(),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("TOKO TERDEKAT", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
+  Widget _buildContentWithSlivers(BuildContext context, HomeLoaded state) {
+    return CustomScrollView(
+      // PERUBAHAN 4: Hubungkan controller ke CustomScrollView
+      controller: _scrollController,
+      slivers: [
+        _buildSliverHeader(),
+        SliverToBoxAdapter(
+          child: PromoBanner(
+            promoImages: state.promos.map((e) => e.imageUrl).toList(),
           ),
         ),
-        const NearbyStoreList(),
-        // Padding ini penting agar item terakhir tidak tertutup oleh FAB
-        const SizedBox(height: 80),
+        const SliverToBoxAdapter(child: CategoryIcons()),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Text(
+              "Event",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: EventList()),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "TOKO TERDEKAT",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: NearbyStoreList()),
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
   }
 
-  // Widget _buildOrangeHeader tidak perlu diubah
-  Widget _buildOrangeHeader() {
-    // ... (kode header tetap sama)
-    return AppBar(
+  Widget _buildSliverHeader() {
+    // PERUBAHAN 5: Tentukan warna berdasarkan status scroll
+    final ColorTween colorTween = ColorTween(
+      begin: Colors.orange,
+      end: Colors.white,
+    );
+    final Color textColor = _isScrolled ? Colors.black87 : Colors.white;
+    final Color iconColor = _isScrolled ? Colors.orange : Colors.white;
+
+    return SliverAppBar(
       automaticallyImplyLeading: false,
-      backgroundColor: Colors.orange,
-      elevation: 0,
-      flexibleSpace: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.location_on, color: Colors.white),
-                      SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Location", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          Text("Pematang Siantar", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-              Row(
+      // Gunakan warna dinamis, defaultnya oranye
+      backgroundColor: _isScrolled ? Colors.white : Colors.orange,
+      elevation: _isScrolled ? 2 : 0, // Beri shadow saat sudah menjadi putih
+      pinned: true,
+      stretch: true,
+      expandedHeight: 200.0,
+
+      title: Row(
+        children: [
+          Icon(Icons.location_on, color: iconColor, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            "Pematang Siantar",
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.notifications_none, color: textColor),
+          onPressed: () {},
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 5), // Jarak standard app bar
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Expanded(
                     child: Text(
                       "Yuk beli oleh-oleh untuk kerabat lewat Nusantara App!",
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                      ),
                     ),
                   ),
                   SizedBox(
-                    height: 80,
-                    child: Image.asset('assets/images/character.png', fit: BoxFit.contain),
+                    height: 130,
+                    child: Image.asset(
+                      'assets/images/character.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
       ),
     );
   }

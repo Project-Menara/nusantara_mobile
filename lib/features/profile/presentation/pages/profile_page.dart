@@ -5,6 +5,7 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
+import 'package:nusantara_mobile/features/profile/presentation/widgets/logout_confirmation_dialog.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -275,30 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: OutlinedButton.icon(
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext dialogContext) {
-                    return AlertDialog(
-                      title: const Text('Konfirmasi'),
-                      content: const Text('Apakah Anda yakin ingin keluar?'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Batal'),
-                          onPressed: () {
-                            Navigator.of(dialogContext).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Ya, Keluar'),
-                          onPressed: () {
-                            Navigator.of(dialogContext).pop();
-                            context.read<AuthBloc>().add(AuthLogoutRequested());
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
+                showLogoutConfirmationDialog(context);
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: const Text(

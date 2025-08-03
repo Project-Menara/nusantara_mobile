@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/register_response_model.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -52,4 +53,13 @@ class AuthForgotPinRequested extends AuthEvent {
 
   @override
   List<Object> get props => [phoneNumber];
+}
+
+class AuthLoggedIn extends AuthEvent {
+  final UserEntity user;
+
+  const AuthLoggedIn({required this.user});
+
+  @override
+  List<Object> get props => [user];
 }
