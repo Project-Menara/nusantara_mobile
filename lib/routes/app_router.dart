@@ -24,6 +24,10 @@ import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// <<< BARU: Impor halaman ubah PIN >>>
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/confirm_change_pin_page.dart';
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -120,7 +124,6 @@ final GoRouter appRoute = GoRouter(
             (prefs) => prefs.getString('last_forgot_pin_phone'),
           ),
           builder: (context, snapshot) {
-            // Tampilkan loading selagi menunggu
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
@@ -135,8 +138,7 @@ final GoRouter appRoute = GoRouter(
                 ),
               );
             }
-
-            // Jika berhasil, kirim data lengkap ke halaman
+            
             final extra = ForgotPinExtra(
               token: token,
               phoneNumber: phoneNumber,
@@ -154,6 +156,18 @@ final GoRouter appRoute = GoRouter(
         final extra = state.extra as ForgotPinExtra;
         return ConfirmForgotPinPage(extra: extra);
       },
+    ),
+
+    // <<< BARU: Rute untuk alur Ubah PIN >>>
+    GoRoute(
+      path: InitialRoutes.newPin,
+      name: InitialRoutes.newPin,
+      builder: (context, state) => const ChangePinPage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.confirmNewPin,
+      name: InitialRoutes.confirmNewPin,
+      builder: (context, state) => const ConfirmChangePinPage(),
     ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---

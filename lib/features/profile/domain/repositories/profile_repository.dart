@@ -1,10 +1,14 @@
-// lib/features/profile/domain/repositories/profile_repository.dart
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
-import 'package:nusantara_mobile/features/profile/domain/entities/user_entity.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 
 abstract class ProfileRepository {
-  Future<Either<Failures, List<UserEntity>>> getUserProfiles();
-  Future<Either<Failures, UserEntity>> updateUserProfile(UserEntity user);
-  Future<Either<Failures, void>> logoutUser(); 
+  Future<Either<Failures, UserEntity>> updateUserProfile(
+    UserEntity user,
+    File? photoFile,
+  );
+  Future<Either<Failures, void>> logoutUser();
+  Future<Either<Failures, void>> createNewPin(String newPin);
+  Future<Either<Failures, UserEntity>> confirmNewPin(String confirmPin);
 }

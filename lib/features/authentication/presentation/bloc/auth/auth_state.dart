@@ -19,7 +19,7 @@ class AuthLoginLoading extends AuthState {}
 
 class AuthForgotPinLoading extends AuthState {}
 
-class AuthGetProfileLoading extends AuthState {} 
+class AuthGetProfileLoading extends AuthState {}
 
 // --- ---
 
@@ -106,9 +106,19 @@ class AuthLoginRateLimited extends AuthLoginFailure {
   @override
   List<Object?> get props => [message, retryAfterSeconds];
 }
+
 class AuthForgotPinFailure extends AuthState {
   final String message;
   const AuthForgotPinFailure(this.message);
   @override
   List<Object?> get props => [message];
+}
+
+class AuthUpdateSuccess extends AuthState {
+  final UserEntity user;
+
+  const AuthUpdateSuccess(this.user);
+
+  @override
+  List<Object> get props => [user];
 }

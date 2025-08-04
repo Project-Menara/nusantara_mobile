@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+// <<< PERBAIKAN: Cukup impor satu file dialog reusable untuk semua konfirmasi >>>
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
-import 'package:nusantara_mobile/features/profile/presentation/widgets/logout_confirmation_dialog.dart';
+import 'package:nusantara_mobile/features/profile/presentation/widgets/change_pin_confirmation_dialog.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -19,11 +20,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Cek state yang ada saat ini di BLoC.
-    // Panggil API HANYA jika state belum memiliki data user.
     final currentState = context.read<AuthBloc>().state;
     if (currentState is! AuthLoginSuccess &&
-        currentState is! AuthGetUserSuccess) {
+        currentState is! AuthGetUserSuccess &&
+        currentState is! AuthUpdateSuccess) {
       context.read<AuthBloc>().add(AuthCheckStatusRequested());
     }
   }
@@ -45,64 +45,76 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade200,
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                children: [
-                  SizedBox(height: headerHeight + avatarRadius),
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      // Tambahkan pengecekan untuk state loading awal
-                      if (state is AuthGetProfileLoading ||
-                          state is AuthInitial) {
-                        return const Padding(
-                          padding: EdgeInsets.only(top: 16.0),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
+        body: RefreshIndicator(
+          onRefresh: () async {
+            context.read<AuthBloc>().add(AuthCheckStatusRequested());
+          },
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    SizedBox(height: headerHeight + avatarRadius),
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, state) {
+                        if (state is AuthGetProfileLoading ||
+                            state is AuthInitial) {
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
 
-                      UserEntity? user;
-                      if (state is AuthLoginSuccess) {
-                        user = state.user;
-                      } else if (state is AuthGetUserSuccess) {
-                        user = state.user;
-                      }
+                        UserEntity? user;
+                        if (state is AuthLoginSuccess) {
+                          user = state.user;
+                        } else if (state is AuthGetUserSuccess) {
+                          user = state.user;
+                        } else if (state is AuthUpdateSuccess) {
+                          user = state.user;
+                        }
 
-                      if (user != null) {
+                        if (user != null) {
+                          return _buildUserInfo(
+                            name: user.name,
+                            email: user.email,
+                          );
+                        }
+
                         return _buildUserInfo(
-                          name: user.name,
-                          email: user.email,
+                          name: 'Gagal memuat',
+                          email: 'Tarik untuk refresh',
                         );
-                      }
-
-                      return _buildUserInfo(name: 'Loading...', email: '...');
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  _buildProfileCard(context),
-                  const SizedBox(height: 30),
-                ],
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildProfileCard(context),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
-            ),
-            _buildHeader(headerHeight),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                UserEntity? user;
-                if (state is AuthLoginSuccess) {
-                  user = state.user;
-                } else if (state is AuthGetUserSuccess) {
-                  user = state.user;
-                }
+              _buildHeader(headerHeight),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  UserEntity? user;
+                  if (state is AuthLoginSuccess) {
+                    user = state.user;
+                  } else if (state is AuthGetUserSuccess) {
+                    user = state.user;
+                  } else if (state is AuthUpdateSuccess) {
+                    user = state.user;
+                  }
 
-                return _buildProfileAvatar(
-                  headerHeight,
-                  avatarRadius,
-                  user?.photo,
-                );
-              },
-            ),
-          ],
+                  return _buildProfileAvatar(
+                    headerHeight,
+                    avatarRadius,
+                    user?.photo,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -140,49 +152,28 @@ class _ProfilePageState extends State<ProfilePage> {
     double avatarRadius,
     String? photoUrl,
   ) {
+    final bool hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
     return Positioned(
       top: headerHeight - avatarRadius,
       left: 0,
       right: 0,
       child: Align(
         alignment: Alignment.center,
-        child: Stack(
-          children: [
-            CircleAvatar(
-              radius: avatarRadius + 3,
-              backgroundColor: Colors.white,
-              child: CircleAvatar(
-                radius: avatarRadius,
-                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                    ? NetworkImage(photoUrl)
-                    : const NetworkImage('https://i.pravatar.cc/150?img=56')
-                          as ImageProvider,
-              ),
-            ),
-            Positioned(
-              bottom: 5,
-              right: 5,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    size: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
-            ),
-          ],
+        child: CircleAvatar(
+          radius: avatarRadius + 3,
+          backgroundColor: Colors.white,
+          child: CircleAvatar(
+            radius: avatarRadius,
+            backgroundColor: Colors.grey.shade300,
+            backgroundImage: hasPhoto ? NetworkImage(photoUrl) : null,
+            child: !hasPhoto
+                ? Icon(
+                    Icons.person,
+                    size: avatarRadius * 1.2,
+                    color: Colors.white,
+                  )
+                : null,
+          ),
         ),
       ),
     );
@@ -234,16 +225,12 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildListTile(
             icon: Icons.settings_outlined,
             title: 'Settings',
-            onTap: () {
-              /* Navigasi untuk Settings */
-            },
+            onTap: () {},
           ),
           _buildListTile(
             icon: Icons.confirmation_number_outlined,
             title: 'My Voucher',
-            onTap: () {
-              /* Navigasi untuk Voucher */
-            },
+            onTap: () {},
           ),
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(
@@ -253,30 +240,38 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildListTile(
             icon: Icons.support_agent_outlined,
             title: 'Layanan Pelanggan',
-            onTap: () {
-              /* Navigasi */
-            },
+            onTap: () {},
           ),
           _buildListTile(
             icon: Icons.delete_outline,
             title: 'Request Account Deletion',
-            onTap: () {
-              /* Navigasi */
-            },
+            onTap: () {},
           ),
           _buildListTile(
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
             onTap: () {
-              /* Navigasi */
+              // Memanggil helper spesifik yang bersih
+              showChangePinConfirmationDialog(context);
             },
           ),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: OutlinedButton.icon(
-              onPressed: () {
-                showLogoutConfirmationDialog(context);
+              onPressed: () async {
+                // <<< PERBAIKAN: Gunakan dialog konfirmasi generic untuk logout >>>
+                final confirmed = await showConfirmationDialog(
+                  context: context,
+                  title: 'Konfirmasi Keluar',
+                  content: 'Apakah Anda yakin ingin keluar dari akun Anda?',
+                  confirmText: 'Ya, Keluar',
+                  confirmButtonColor: Colors.red,
+                  icon: Icons.logout_rounded,
+                );
+                if (confirmed == true && context.mounted) {
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                }
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: const Text(

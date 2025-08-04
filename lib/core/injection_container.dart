@@ -4,6 +4,11 @@ import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_
 import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/set_confirm_new_pin_forgot_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/set_new_pin_forgot_usecase.dart';
+import 'package:nusantara_mobile/features/profile/domain/usecases/confirm_new_pin_usecase.dart';
+import 'package:nusantara_mobile/features/profile/domain/usecases/create_new_pin_usecase.dart';
+import 'package:nusantara_mobile/features/profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:nusantara_mobile/features/profile/presentation/bloc/change_pin/change_pin_bloc.dart';
+import 'package:nusantara_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -29,7 +34,7 @@ import 'package:nusantara_mobile/features/authentication/data/datasources/auth_r
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource_impl.dart';
 
-// --- Fitur: Profile (PENTING UNTUK LOGOUT) ---
+// --- Fitur: Profile ---
 import 'package:nusantara_mobile/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:nusantara_mobile/features/profile/domain/repositories/profile_repository.dart';
 import 'package:nusantara_mobile/features/profile/data/datasources/profile_remote_data_source.dart';
@@ -55,7 +60,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => OtpBloc(
       verifyCodeUseCase: sl(),
-      resendCodeUseCase: sl(), // <-- Tambahkan ini
+      resendCodeUseCase: sl(),
     ),
   );
   sl.registerFactory(
@@ -67,6 +72,22 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => HomeBloc());
+
+  sl.registerFactory(
+    () => ProfileBloc(
+      updateUserProfileUseCase: sl(),
+      authBloc: sl(),
+    ),
+  );
+
+  // <<< BARU: Daftarkan ChangePinBloc >>>
+  sl.registerFactory(
+    () => ChangePinBloc(
+      createNewPinUseCase: sl(),
+      confirmNewPinUseCase: sl(),
+      authBloc: sl(),
+    ),
+  );
 
   // UseCases
   sl.registerLazySingleton(() => GetLoggedInUserUseCase(sl()));
@@ -81,7 +102,13 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ForgotPinUseCase(sl()));
   sl.registerLazySingleton(() => SetNewPinForgotUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmNewPinForgotUseCase(sl()));
-  // Repositories & DataSources
+  sl.registerLazySingleton(() => UpdateUserProfileUseCase(sl()));
+
+  // <<< BARU: Daftarkan UseCase untuk Ubah PIN >>>
+  sl.registerLazySingleton(() => CreateNewPinUseCase(sl()));
+  sl.registerLazySingleton(() => ConfirmNewPinUseCase(sl()));
+
+  // Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       authRemoteDatasource: sl(),
@@ -96,12 +123,10 @@ Future<void> init() async {
       networkInfo: sl(),
     ),
   );
-
-  // <<< PASTIKAN PEMANGGILAN DI SINI BENAR (TANPA client:) >>>
+  
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
   );
-  // <<< PASTIKAN PEMANGGILAN DI SINI BENAR (TANPA client:) >>>
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(sl()),
   );

@@ -63,3 +63,12 @@ class AuthLoggedIn extends AuthEvent {
   @override
   List<Object> get props => [user];
 }
+
+class AuthUserUpdated extends AuthEvent {
+  final UserEntity newUser;
+
+  const AuthUserUpdated(this.newUser);
+
+  @override
+  List<Object> get props => [newUser];
+}

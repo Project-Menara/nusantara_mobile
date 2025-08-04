@@ -23,6 +23,9 @@ class InitialRoutes {
   static const confirmPinForgot = '/confirm-pin-forgot';
   static const resetPin = '/reset-pin'; 
 
+  //Rute New PIN
+  static const newPin = '/new-pin';
+  static const confirmNewPin = '/confirm-new-pin';
   //Rute Profile
   static const personalData = '/personal-data';
 

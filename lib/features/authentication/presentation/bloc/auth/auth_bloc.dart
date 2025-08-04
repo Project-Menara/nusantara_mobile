@@ -1,8 +1,8 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+// lib/features/authentication/presentation/bloc/auth_bloc.dart
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/entities/register_entity.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
@@ -10,7 +10,7 @@ import 'package:nusantara_mobile/features/authentication/domain/usecases/logout_
 import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
 import 'auth_event.dart';
-import 'auth_state.dart' hide AuthFailure;
+import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetLoggedInUserUseCase getLoggedInUserUseCase;
@@ -35,12 +35,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogout);
     on<AuthForgotPinRequested>(_onForgotPinRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
+
+    // <<< PERBAIKAN KRITIS: Daftarkan event handler di constructor >>>
+    on<AuthUserUpdated>(_onAuthUserUpdated);
+  }
+
+  void _onAuthUserUpdated(AuthUserUpdated event, Emitter<AuthState> emit) {
+    emit(AuthUpdateSuccess(event.newUser));
   }
 
   Future<void> _onCheckStatus(
     AuthCheckStatusRequested event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthGetProfileLoading());
     final result = await getLoggedInUserUseCase(NoParams());
     result.fold(
       (failure) => emit(AuthUnauthenticated()),
@@ -52,7 +60,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckPhonePressed event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthCheckPhoneLoading()); // <-- PERBAIKAN
+    emit(AuthCheckPhoneLoading());
     final result = await checkPhoneUseCase(event.phoneNumber);
     result.fold(
       (failure) => emit(AuthCheckPhoneFailure(failure.message)),
@@ -64,7 +72,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLoginWithPinSubmitted event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoginLoading()); // <-- PERBAIKAN
+    emit(AuthLoginLoading());
     final params = VerifyPinParams(
       phoneNumber: event.phoneNumber,
       pin: event.pin,
@@ -88,7 +96,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRegisterPressed event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthRegisterLoading()); // <-- PERBAIKAN
+    emit(AuthRegisterLoading());
     final result = await registerUseCase(
       RegisterParams(registerEntity: event.registerEntity),
     );
@@ -105,7 +113,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthForgotPinLoading());
     final result = await forgotPinUseCase(event.phoneNumber);
     result.fold(
-      // <<< PERBAIKAN: Gunakan state failure yang spesifik >>>
       (failure) => emit(AuthForgotPinFailure(failure.message)),
       (token) => emit(AuthForgotPinSuccess(token)),
     );
@@ -122,7 +129,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoginLoading());
     final result = await logoutUserUseCase(NoParams());
     result.fold(
-      (failure) => emit(AuthFailure(failure.message) as AuthState),
+      (failure) => emit(AuthLogoutFailure(failure.message)),
       (_) => emit(AuthUnauthenticated()),
     );
   }

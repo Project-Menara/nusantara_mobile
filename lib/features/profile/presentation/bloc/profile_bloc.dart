@@ -1,38 +1,46 @@
+import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
+import 'package:nusantara_mobile/features/profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // Untuk mengakses AuthBloc
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'; // Untuk event AuthUserUpdated
+
 part 'profile_event.dart';
 part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  // final ProfileRepository profileRepository; // Nanti diinjeksi dari domain layer
+  // 1. Definisikan UseCase yang dibutuhkan
+  final UpdateUserProfileUseCase updateUserProfileUseCase;
+  // 2. Tambahkan AuthBloc untuk komunikasi antar BLoC
+  final AuthBloc authBloc;
 
-  ProfileBloc(/*{required this.profileRepository}*/) : super(ProfileInitial()) {
-    on<FetchProfileData>(_onFetchProfileData);
+  // 3. Injeksi UseCase dan AuthBloc melalui constructor
+  ProfileBloc({required this.updateUserProfileUseCase, required this.authBloc})
+    : super(ProfileInitial()) {
+    // 4. Daftarkan event handler
+    on<UpdateProfileButtonPressed>(_onUpdateProfileButtonPressed);
   }
 
-  Future<void> _onFetchProfileData(
-    FetchProfileData event,
+  // 5. Implementasikan handler untuk event
+  Future<void> _onUpdateProfileButtonPressed(
+    UpdateProfileButtonPressed event,
     Emitter<ProfileState> emit,
   ) async {
-    // 1. Keluarkan state Loading
-    emit(ProfileLoading());
-    try {
-      // 2. Simulasi penundaan jaringan
-      await Future.delayed(const Duration(seconds: 1));
+    emit(ProfileUpdateLoading());
+    final params = UpdateUserParams(
+      user: event.user,
+      photoFile: event.photoFile,
+    );
+    final result = await updateUserProfileUseCase(params);
 
-      // 3. Siapkan data palsu (mock data) untuk profil
-      const mockProfile = ProfileEntity(
-        name: 'rivael',
-        email: 'rivael@gmail.com',
-        photoUrl: 'https://i.pravatar.cc/150?img=56',
-      );
-
-      // 4. Jika berhasil, keluarkan state Loaded dengan data profil
-      emit(const ProfileLoaded(profile: mockProfile));
-
-    } catch (e) {
-      // 5. Jika gagal, keluarkan state Error
-      emit(ProfileError('Gagal memuat profil: ${e.toString()}'));
-    }
+    result.fold((failure) => emit(ProfileUpdateFailure(failure.message)), (
+      updatedUser,
+    ) {
+      // Jika sukses, keluarkan state sukses
+      emit(ProfileUpdateSuccess(updatedUser as UserEntity));
+      // Beri tahu AuthBloc bahwa data user telah diperbarui
+      authBloc.add(AuthUserUpdated(updatedUser));
+    });
   }
 }

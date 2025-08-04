@@ -1,67 +1,139 @@
-import 'dart:convert';
+// lib/features/profile/data/datasources/profile_remote_data_source_impl.dart
 
-import 'package:dartz/dartz.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
 import 'package:nusantara_mobile/core/constant/api_constant.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
-import 'package:nusantara_mobile/core/error/failures.dart';
+import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 import 'package:nusantara_mobile/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:nusantara_mobile/features/profile/data/models/user_model.dart';
-import 'package:nusantara_mobile/features/profile/domain/entities/user_entity.dart';
 
-class ProfileRemoteDataSourceImpl extends ProfileRemoteDataSource {
+class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   final http.Client client;
 
   ProfileRemoteDataSourceImpl(this.client);
 
   @override
-  Future<List<UserModel>> getUserProfiles(String token) async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
-    final response = await client.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+  Future<UserModel> updateUserProfile({
+    required UserModel user,
+    File? photoFile,
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/update-profile');
+
+    // PERBAIKAN 1: Ubah metode request menjadi 'POST'
+    var request = http.MultipartRequest('PUT', uri);
+
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+
+    request.fields['_method'] = 'PUT';
+
+    // Tambahkan fields (data teks)
+    request.fields['name'] = user.name;
+    request.fields['username'] = user.username;
+    request.fields['email'] = user.email;
+    request.fields['gender'] = user.gender;
+
+    if (user.dateOfBirth != null) {
+      request.fields['date_of_birth'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(user.dateOfBirth!);
+    }
+
+    // Tambahkan file foto jika ada
+    if (photoFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'photo',
+          photoFile.path,
+          // Sebaiknya biarkan library menebak content-type, atau gunakan 'image/jpeg'/'image/png'
+          // contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final jsonResponse = json.decode(response.body);
+
+    print(
+      "API Response (Update Profile): ${response.statusCode} -> ${response.body}",
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("User Data : ${jsonResponse}");
-      final List<dynamic> data = jsonResponse['data'];
-      final users = data.map((json) => UserModel.fromJson(json)).toList();
-      return users;
+      return UserModel.fromJson(jsonResponse['data']);
     } else {
-      throw ServerException('Failed to load users');
+      throw ServerException(
+        jsonResponse['message'] ?? 'Failed to update profile',
+      );
     }
   }
 
   @override
-  Future<UserModel> updateUserProfile(UserModel user, String token) async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
+  Future<void> createNewPin({
+    required String newPin,
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin-customer');
+    final response = await client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+      body: json.encode({'new_pin': newPin}),
+    );
+
+    // <<< PERBAIKAN 1: Decode JSON di sini >>>
+    final jsonResponse = json.decode(response.body);
+    print(
+      "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
+    );
+
+    if (response.statusCode != 200) {
+      throw ServerException(
+        jsonResponse['message'] ?? 'Failed to save new PIN',
+      );
+    }
+  }
+
+  @override
+  Future<UserModel> confirmNewPin({
+    required String confirmPin,
+    required String token,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/confirm-new-pin-customer',
+    );
     final response = await client.put(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       },
-      body: jsonEncode(user.toJson()),
+      body: json.encode({'confirm_pin': confirmPin}),
     );
 
+    final jsonResponse = json.decode(response.body);
+    print(
+      "API Response (Confirm New PIN): ${response.statusCode} -> ${response.body}",
+    );
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("User Data : ${jsonResponse}");
-      final dynamic data = jsonResponse['data'];
-      final updatedUser = UserModel.fromJson(data);
-      return updatedUser;
+      return UserModel.fromJson(jsonResponse['data']);
     } else {
-      throw const ServerException('Failed to load user');
+      throw ServerException(
+        jsonResponse['message'] ?? 'Failed to confirm new PIN',
+      );
     }
   }
 
   @override
   Future<void> logoutUser(String token) async {
-    // Ganti dengan endpoint logout dari API Anda jika ada
     final uri = Uri.parse('${ApiConstant.baseUrl}/auth/logout');
     final response = await client.post(
       uri,

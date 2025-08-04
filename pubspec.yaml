@@ -56,6 +56,8 @@ dependencies:
   flash: ^3.1.1
   jwt_decoder: ^2.0.1
   elegant_notification: ^2.5.1
+  image_picker: ^1.1.2
+  dio: ^5.8.0+1
 dev_dependencies:
   flutter_test:
     sdk: flutter
