@@ -95,6 +95,51 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<Either<Failures, void>> requestChangePhone(String newPhone) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final token = await localDatasource.getAuthToken();
+        if (token == null) return const Left(AuthFailure('Session expired.'));
+
+        await profileRemoteDataSource.requestChangePhone(
+          newPhone: newPhone,
+          token: token,
+        );
+        return const Right(null);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  // <<< BARU: Implementasi repository untuk verifikasi OTP ganti nomor telepon >>>
+  @override
+  Future<Either<Failures, void>> verifyChangePhone({
+    required String phone,
+    required String code,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final token = await localDatasource.getAuthToken();
+        if (token == null) return const Left(AuthFailure('Session expired.'));
+
+        await profileRemoteDataSource.verifyChangePhone(
+          phone: phone,
+          code: code,
+          token: token,
+        );
+        return const Right(null);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  @override
   Future<Either<Failures, void>> logoutUser() async {
     if (await networkInfo.isConnected) {
       try {

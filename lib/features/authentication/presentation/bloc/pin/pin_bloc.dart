@@ -1,10 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/confirm_pin_use_case.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin_use_case.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/set_confirm_new_pin_forgot_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/set_new_pin_forgot_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin/confirm_pin_use_case.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin/create_pin_use_case.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_confirm_new_pin_forgot_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_new_pin_forgot_usecase.dart';
 
 part 'pin_event.dart';
 part 'pin_state.dart';

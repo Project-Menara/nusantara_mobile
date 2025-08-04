@@ -11,7 +11,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'
     as auth_event;
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
-import 'package:nusantara_mobile/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
 
 class PersonalDataPage extends StatelessWidget {
   const PersonalDataPage({super.key});

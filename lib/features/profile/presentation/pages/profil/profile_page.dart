@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-// <<< PERBAIKAN: Cukup impor satu file dialog reusable untuk semua konfirmasi >>>
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
@@ -58,8 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     SizedBox(height: headerHeight + avatarRadius),
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
-                        if (state is AuthGetProfileLoading ||
-                            state is AuthInitial) {
+                        if (state is AuthGetProfileLoading || state is AuthInitial) {
                           return const Padding(
                             padding: EdgeInsets.only(top: 16.0),
                             child: Center(child: CircularProgressIndicator()),
@@ -83,9 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         }
 
                         return _buildUserInfo(
-                          name: 'Gagal memuat',
-                          email: 'Tarik untuk refresh',
-                        );
+                            name: 'Gagal memuat', email: 'Tarik untuk refresh');
                       },
                     ),
                     const SizedBox(height: 24),
@@ -251,8 +247,27 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
             onTap: () {
-              // Memanggil helper spesifik yang bersih
               showChangePinConfirmationDialog(context);
+            },
+          ),
+          // <<< BARU: ListTile untuk Ubah Nomor Telepon >>>
+          _buildListTile(
+            icon: Icons.phone_iphone_rounded,
+            title: 'Ubah Nomor Telepon',
+            onTap: () async {
+              final confirmed = await showConfirmationDialog(
+                context: context,
+                title: 'Ubah Nomor Telepon',
+                content:
+                    'Anda akan diarahkan ke halaman untuk mengubah nomor telepon. Aksi ini memerlukan verifikasi OTP.',
+                confirmText: 'Lanjutkan',
+                confirmButtonColor: Colors.orange.shade700,
+                icon: Icons.phonelink_setup_rounded,
+              );
+
+              if (confirmed == true && context.mounted) {
+                context.push(InitialRoutes.changePhone);
+              }
             },
           ),
           const SizedBox(height: 16),
@@ -260,7 +275,6 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: OutlinedButton.icon(
               onPressed: () async {
-                // <<< PERBAIKAN: Gunakan dialog konfirmasi generic untuk logout >>>
                 final confirmed = await showConfirmationDialog(
                   context: context,
                   title: 'Konfirmasi Keluar',

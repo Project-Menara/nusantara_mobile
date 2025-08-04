@@ -23,9 +23,14 @@ class InitialRoutes {
   static const confirmPinForgot = '/confirm-pin-forgot';
   static const resetPin = '/reset-pin'; 
 
+  // Rute Ubah Nomor Telepon
+  static const changePhone = '/change-phone';
+  static const confirmChangePhone = '/confirm-change-phone';
+
   //Rute New PIN
   static const newPin = '/new-pin';
   static const confirmNewPin = '/confirm-new-pin';
+
   //Rute Profile
   static const personalData = '/personal-data';
 

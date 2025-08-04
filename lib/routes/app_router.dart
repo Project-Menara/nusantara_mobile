@@ -6,27 +6,29 @@ import 'package:nusantara_mobile/core/presentation/main_screen.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/forgot_pin_extra.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/register_extra.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/confirm_forgot_pin_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/confirm_pin_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/forgot_pin_new_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/login_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/pin_login_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/register_page.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/pages/verify_number.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/forgot_pin/confirm_forgot_pin_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin/confirm_pin_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/create_pin/create_pin_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/forgot_pin/forgot_pin_new_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/login/login_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/login/pin_login_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/register/register_page.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/pages/otp/verify_number.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/profile_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/change_phone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // <<< BARU: Impor halaman ubah PIN >>>
-import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/confirm_change_pin_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/change_pin_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/confirm_change_pin_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -93,6 +95,20 @@ final GoRouter appRoute = GoRouter(
         return ConfirmPinPage(phoneNumber: phoneNumber);
       },
     ),
+    // <<< BARU: Rute untuk alur Ubah Nomor Telepon >>>
+    GoRoute(
+      path: InitialRoutes.changePhone,
+      name: InitialRoutes.changePhone,
+      builder: (context, state) => const ChangePhonePage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.confirmChangePhone,
+      name: InitialRoutes.confirmChangePhone,
+      builder: (context, state) {
+        final phoneNumber = state.extra as String;
+        return VerifyChangePhonePage(phoneNumber: phoneNumber);
+      },
+    ),
     GoRoute(
       path: InitialRoutes.pinLogin,
       name: InitialRoutes.pinLogin,
@@ -138,7 +154,7 @@ final GoRouter appRoute = GoRouter(
                 ),
               );
             }
-            
+
             final extra = ForgotPinExtra(
               token: token,
               phoneNumber: phoneNumber,

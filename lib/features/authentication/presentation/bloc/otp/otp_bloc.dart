@@ -1,8 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code_use_case.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code/resend_code_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code/verify_code_use_case.dart';
 
 part 'otp_event.dart';
 part 'otp_state.dart';

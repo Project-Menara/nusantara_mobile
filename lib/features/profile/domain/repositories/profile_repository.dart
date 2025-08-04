@@ -11,4 +11,9 @@ abstract class ProfileRepository {
   Future<Either<Failures, void>> logoutUser();
   Future<Either<Failures, void>> createNewPin(String newPin);
   Future<Either<Failures, UserEntity>> confirmNewPin(String confirmPin);
+  Future<Either<Failures, void>> requestChangePhone(String newPhone);
+  Future<Either<Failures, void>> verifyChangePhone({
+    required String phone,
+    required String code,
+  });
 }

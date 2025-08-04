@@ -27,9 +27,9 @@ class PhoneCheckResponseModel {
       action: action,
       ttl: ttl,
       // Ambil nomor telepon dari data user jika ada, jika tidak, string kosong
-      phoneNumber: user?.phone ?? '', 
+      phoneNumber: user?.phone ?? '',
       // isRegistered bisa kita tentukan dari ada atau tidaknya data user
-      isRegistered: user != null, 
+      isRegistered: user != null,
     );
   }
 }

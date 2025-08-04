@@ -61,7 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
-      
+
       final phone = widget.phoneNumber.startsWith('+62')
           ? widget.phoneNumber
           : '+62${_phoneController.text}';
@@ -93,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthRegisterFailure) {
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
             showAppFlashbar(
               context,
               title: 'Registrasi Gagal',
@@ -101,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               isSuccess: false,
             );
           } else if (state is AuthRegisterSuccess) {
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
             showAppFlashbar(
               context,
               title: 'Registrasi Berhasil',
@@ -110,17 +110,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             );
 
             final extraData = RegisterExtra(
-                phoneNumber: widget.phoneNumber,
-                ttl: state.user.ttl ?? 60,
-                action: 'verify_otp_and_create_pin'
+              phoneNumber: widget.phoneNumber,
+              ttl: state.user.ttl ?? 60,
+              action: 'verify_otp_and_create_pin',
             );
 
             context.go(InitialRoutes.verifyNumber, extra: extraData);
-          } else if (state is AuthRegisterLoading) { // <<< PERBAIKAN FINAL ADA DI SINI
+          } else if (state is AuthRegisterLoading) {
+            // <<< PERBAIKAN FINAL ADA DI SINI
             showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator()));
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
           }
         },
         child: SingleChildScrollView(

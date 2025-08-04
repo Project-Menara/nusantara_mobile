@@ -1,9 +1,6 @@
-// lib/features/profile/data/datasources/profile_remote_data_source_impl.dart
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'package:intl/intl.dart';
 import 'package:nusantara_mobile/core/constant/api_constant.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
@@ -22,36 +19,23 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String token,
   }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/update-profile');
-
-    // PERBAIKAN 1: Ubah metode request menjadi 'POST'
-    var request = http.MultipartRequest('PUT', uri);
+    var request = http.MultipartRequest('PUT', uri); // Disarankan POST untuk method spoofing
 
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
 
     request.fields['_method'] = 'PUT';
-
-    // Tambahkan fields (data teks)
     request.fields['name'] = user.name;
-    request.fields['username'] = user.username;
-    request.fields['email'] = user.email;
     request.fields['gender'] = user.gender;
 
     if (user.dateOfBirth != null) {
-      request.fields['date_of_birth'] = DateFormat(
-        'yyyy-MM-dd',
-      ).format(user.dateOfBirth!);
+      request.fields['date_of_birth'] =
+          DateFormat('yyyy-MM-dd').format(user.dateOfBirth!);
     }
 
-    // Tambahkan file foto jika ada
     if (photoFile != null) {
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'photo',
-          photoFile.path,
-          // Sebaiknya biarkan library menebak content-type, atau gunakan 'image/jpeg'/'image/png'
-          // contentType: MediaType('image', 'jpeg'),
-        ),
+        await http.MultipartFile.fromPath('photo', photoFile.path),
       );
     }
 
@@ -60,7 +44,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final jsonResponse = json.decode(response.body);
 
     print(
-      "API Response (Update Profile): ${response.statusCode} -> ${response.body}",
+      "API Response (Update Profile): ${response.statusCode} -> $jsonResponse",
     );
 
     if (response.statusCode == 200) {
@@ -87,8 +71,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       },
       body: json.encode({'new_pin': newPin}),
     );
-
-    // <<< PERBAIKAN 1: Decode JSON di sini >>>
+    
     final jsonResponse = json.decode(response.body);
     print(
       "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
@@ -106,10 +89,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String confirmPin,
     required String token,
   }) async {
-    final uri = Uri.parse(
-      '${ApiConstant.baseUrl}/customer/confirm-new-pin-customer',
-    );
-    final response = await client.put(
+    final uri =
+        Uri.parse('${ApiConstant.baseUrl}/customer/confirm-new-pin-customer');
+    final response = await client.put( // Disarankan menggunakan POST
       uri,
       headers: {
         'Content-Type': 'application/json',
@@ -121,7 +103,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
     final jsonResponse = json.decode(response.body);
     print(
-      "API Response (Confirm New PIN): ${response.statusCode} -> ${response.body}",
+      "API Response (Confirm New PIN): ${response.statusCode} -> $jsonResponse",
     );
     if (response.statusCode == 200) {
       return UserModel.fromJson(jsonResponse['data']);
@@ -129,6 +111,62 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw ServerException(
         jsonResponse['message'] ?? 'Failed to confirm new PIN',
       );
+    }
+  }
+
+  @override
+  Future<void> requestChangePhone({
+    required String newPhone,
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-phone-customer');
+    final response = await client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+      body: json.encode({'new_phone': newPhone}),
+    );
+
+    // <<< PERBAIKAN: Tambahkan print response >>>
+    final jsonResponse = json.decode(response.body);
+    print(
+      "API Response (Request Change Phone): ${response.statusCode} -> $jsonResponse",
+    );
+
+    if (response.statusCode != 200) {
+      throw ServerException(jsonResponse['message'] ?? 'Failed to request OTP');
+    }
+  }
+
+  @override
+  Future<void> verifyChangePhone({
+    required String phone,
+    required String code,
+    required String token,
+  }) async {
+    final uri =
+        Uri.parse('${ApiConstant.baseUrl}/customer/verify-otp-customer');
+    final response = await client.put( // Disarankan menggunakan POST
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+      body: json.encode({'phone': phone, 'code': code}),
+    );
+
+    // <<< PERBAIKAN: Tambahkan print response >>>
+    final jsonResponse = json.decode(response.body);
+    print(
+      "API Response (Verify Change Phone): ${response.statusCode} -> $jsonResponse",
+    );
+
+    if (response.statusCode != 200) {
+      throw ServerException(jsonResponse['message'] ?? 'Failed to verify OTP');
     }
   }
 

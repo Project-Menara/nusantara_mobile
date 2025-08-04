@@ -3,12 +3,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/get_logged_in_user_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/logout_user_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/register_usecase.dart';
-import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_pin_and_login_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/check_phone/check_phone_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/forgot_pin_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/logged_in/get_logged_in_user_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/logout/logout_user_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/register/register_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/login/verify_pin_and_login_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 

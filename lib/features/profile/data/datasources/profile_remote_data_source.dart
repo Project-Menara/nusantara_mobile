@@ -14,4 +14,14 @@ abstract class ProfileRemoteDataSource {
     required String confirmPin,
     required String token,
   });
+  Future<void> requestChangePhone({
+    required String newPhone,
+    required String token,
+  });
+
+  Future<void> verifyChangePhone({
+    required String phone,
+    required String code,
+    required String token,
+  });
 }
