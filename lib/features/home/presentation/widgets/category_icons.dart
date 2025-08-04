@@ -20,7 +20,11 @@ class CategoryIcons extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryItem(String title, String? iconPath, {bool isOther = false}) {
+  Widget _buildCategoryItem(
+    String title,
+    String? iconPath, {
+    bool isOther = false,
+  }) {
     return Column(
       children: [
         Container(
@@ -34,7 +38,7 @@ class CategoryIcons extends StatelessWidget {
                 color: Colors.grey.withOpacity(0.1),
                 spreadRadius: 2,
                 blurRadius: 5,
-              )
+              ),
             ],
           ),
           child: isOther

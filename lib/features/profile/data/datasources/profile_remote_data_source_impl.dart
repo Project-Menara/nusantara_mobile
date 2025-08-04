@@ -19,7 +19,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String token,
   }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/update-profile');
-    var request = http.MultipartRequest('PUT', uri); // Disarankan POST untuk method spoofing
+    var request = http.MultipartRequest(
+      'PUT',
+      uri,
+    ); // Disarankan POST untuk method spoofing
 
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
@@ -29,8 +32,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     request.fields['gender'] = user.gender;
 
     if (user.dateOfBirth != null) {
-      request.fields['date_of_birth'] =
-          DateFormat('yyyy-MM-dd').format(user.dateOfBirth!);
+      request.fields['date_of_birth'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(user.dateOfBirth!);
     }
 
     if (photoFile != null) {
@@ -71,7 +75,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       },
       body: json.encode({'new_pin': newPin}),
     );
-    
+
     final jsonResponse = json.decode(response.body);
     print(
       "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
@@ -89,9 +93,11 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String confirmPin,
     required String token,
   }) async {
-    final uri =
-        Uri.parse('${ApiConstant.baseUrl}/customer/confirm-new-pin-customer');
-    final response = await client.put( // Disarankan menggunakan POST
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/confirm-new-pin-customer',
+    );
+    final response = await client.put(
+      // Disarankan menggunakan POST
       uri,
       headers: {
         'Content-Type': 'application/json',
@@ -147,9 +153,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String code,
     required String token,
   }) async {
-    final uri =
-        Uri.parse('${ApiConstant.baseUrl}/customer/verify-otp-customer');
-    final response = await client.put( // Disarankan menggunakan POST
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/verify-otp-customer',
+    );
+    final response = await client.put(
       uri,
       headers: {
         'Content-Type': 'application/json',

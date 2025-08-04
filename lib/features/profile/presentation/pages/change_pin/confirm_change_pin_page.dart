@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
+// <<< PERUBAHAN: Ganti import dari PinInputWidgets ke OtpInputWidgets (sesuaikan path jika perlu)
+import 'package:nusantara_mobile/features/authentication/presentation/widgets/otp_input_widgets.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/change_pin/change_pin_bloc.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 
@@ -36,9 +37,9 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
   }
 
   void _confirmFinalPin(BuildContext blocContext) {
-    blocContext
-        .read<ChangePinBloc>()
-        .add(ConfirmPinSubmitted(confirmPin: _pin));
+    blocContext.read<ChangePinBloc>().add(
+      ConfirmPinSubmitted(confirmPin: _pin),
+    );
   }
 
   @override
@@ -54,7 +55,6 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
               message: 'PIN Anda telah berhasil diubah.',
               isSuccess: true,
             );
-            // <<< PERBAIKAN: Navigasi ke halaman home >>>
             context.go(InitialRoutes.home);
           } else if (state is ConfirmPinFailure) {
             showAppFlashbar(
@@ -95,7 +95,9 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
                       const Text(
                         'Konfirmasi PIN Baru Anda',
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(
@@ -129,15 +131,17 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: (_pin.length == _pinLength && !isLoading)
+                              onPressed:
+                                  (_pin.length == _pinLength && !isLoading)
                                   ? () => _confirmFinalPin(context)
                                   : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
-                                disabledBackgroundColor:
-                                    Colors.orange.withOpacity(0.4),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                disabledBackgroundColor: Colors.orange
+                                    .withOpacity(0.4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -147,14 +151,17 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
                                       height: 24,
                                       width: 24,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 3),
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
                                     )
                                   : const Text(
                                       'Konfirmasi & Simpan',
                                       style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                             ),
                           );
@@ -165,9 +172,13 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
                   ),
                 ),
               ),
-              PinInputWidgets(
+              // <<< PERUBAHAN: Menggunakan OtpInputWidgets sebagai keypad >>>
+              OtpInputWidgets(
                 onNumpadTapped: _onNumpadTapped,
                 onBackspaceTapped: _onBackspaceTapped,
+                otpCode:
+                    _pin, // Meskipun tidak digunakan di UI widget, tetap di-pass
+                otpLength: _pinLength, // Sama seperti di atas
               ),
             ],
           ),
@@ -176,6 +187,9 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
     );
   }
 
+  /// Widget ini TIDAK BERUBAH.
+  /// Tanggung jawab untuk menampilkan PIN (kotak/lingkaran)
+  /// tetap berada di halaman ini.
   Widget _buildPinDisplay() {
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
@@ -188,22 +202,22 @@ class _ConfirmChangePinPageState extends State<ConfirmChangePinPage> {
             child: Center(
               child: i < _pin.length
                   ? (_isPinVisible
-                      ? Text(
-                          _pin[i],
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        )
-                      : Container(
-                          width: 20,
-                          height: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.orange,
-                            shape: BoxShape.circle,
-                          ),
-                        ))
+                        ? Text(
+                            _pin[i],
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          ))
                   : Container(
                       width: 20,
                       height: 20,
