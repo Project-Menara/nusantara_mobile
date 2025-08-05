@@ -5,6 +5,8 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
 // --- TAMBAHKAN IMPORT UNTUK BLOC YANG BARU ---
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
@@ -31,10 +33,13 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => di.sl<HomeBloc>()..add(FetchHomeData())),
         BlocProvider(create: (_) => di.sl<PinBloc>()),
         BlocProvider(create: (_) => di.sl<OtpBloc>()),
-        
+
         BlocProvider(create: (_) => di.sl<ProfileBloc>()),
         BlocProvider(create: (_) => di.sl<ChangePinBloc>()),
         BlocProvider(create: (_) => di.sl<ChangePhoneBloc>()),
+        BlocProvider(
+          create: (_) => di.sl<BannerBloc>()..add(GetAllBannerEvent()),
+        ),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
