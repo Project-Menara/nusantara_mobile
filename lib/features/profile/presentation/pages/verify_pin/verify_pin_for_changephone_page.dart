@@ -63,6 +63,25 @@ class _VerifyPinForChangePhoneViewState
 
   @override
   Widget build(BuildContext context) {
+    // Ambil AppBar sebagai variabel agar kita bisa hitung tingginya
+    final appBar = AppBar(
+      title: const Text(
+        'Verifikasi PIN Anda',
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => context.pop(),
+      ),
+    );
+
     return BlocListener<VerifyPinBloc, VerifyPinState>(
       listener: (context, state) {
         if (state is VerifyPinSuccess) {
@@ -79,59 +98,52 @@ class _VerifyPinForChangePhoneViewState
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        // <<< PERBAIKAN: Mengembalikan AppBar standar yang bersih dan flat >>>
-        appBar: AppBar(
-          title: const Text(
-            'Verifikasi PIN Anda',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+        appBar: appBar,
+        // --- PERBAIKAN UTAMA ANTI-OVERFLOW ---
+        body: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              // Tentukan tinggi minimal body adalah tinggi layar dikurangi tinggi appbar dan status bar
+              minHeight: MediaQuery.of(context).size.height -
+                  appBar.preferredSize.height -
+                  MediaQuery.of(context).padding.top,
             ),
-          ),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => context.pop(),
-          ),
-        ),
-        // <<< PERBAIKAN: Menggunakan layout Column dengan Expanded + Spacer >>>
-        body: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    const Text(
-                      'Masukkan PIN Keamanan',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Posisikan anak di atas dan bawah
+              children: [
+                // === Bagian Atas: Konten Informasi ===
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Masukkan PIN Keamanan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Verifikasi PIN Anda untuk melanjutkan proses ubah nomor telepon.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 60),
-                    _buildPinInputSection(),
-                    const Spacer(flex: 2),
-                  ],
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Verifikasi PIN Anda untuk melanjutkan proses ubah nomor telepon.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 60),
+                      _buildPinInputSection(),
+                    ],
+                  ),
                 ),
-              ),
+                // === Bagian Bawah: Keypad Input ===
+                PinInputWidgets(
+                  onNumpadTapped: _onNumpadTapped,
+                  onBackspaceTapped: _onBackspaceTapped,
+                ),
+              ],
             ),
-            PinInputWidgets(
-              onNumpadTapped: _onNumpadTapped,
-              onBackspaceTapped: _onBackspaceTapped,
-            ),
-          ],
+          ),
         ),
       ),
     );

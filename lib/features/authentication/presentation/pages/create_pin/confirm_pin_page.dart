@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
 import 'package:nusantara_mobile/core/injection_container.dart';
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart'; // <<< TAMBAHAN: Impor AuthBloc
-import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'; // <<< TAMBAHAN: Impor AuthEvent
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/widgets/pin_input_widgets.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
@@ -47,18 +47,35 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
 
   @override
   Widget build(BuildContext context) {
+    final appBar = AppBar(
+      title: const Text(
+        'Konfirmasi PIN',
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => context.pop(),
+      ),
+    );
+
     return BlocProvider(
       create: (context) => sl<PinBloc>(),
       child: BlocListener<PinBloc, PinState>(
         listener: (context, state) {
-          if (state is PinLoading) {
-            showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator()));
-          } else if (state is PinConfirmationSuccess) {
-            // Tutup dialog loading
-            Navigator.of(context, rootNavigator: true).pop();
+          // --- PERBAIKAN: Logika dialog dipindahkan ke dalam BlocBuilder ---
+          // Ini mencegah dialog tetap terbuka saat state berubah
+          if (state is PinConfirmationSuccess) {
+            // Tutup dialog loading jika ada
+            if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
             
             showAppFlashbar(
               context,
@@ -67,14 +84,12 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
               isSuccess: true,
             );
             
-            // <<< PERBAIKAN UTAMA DI SINI >>>
-            // 1. Beri tahu AuthBloc (BLoC global) bahwa login berhasil
             context.read<AuthBloc>().add(AuthLoggedIn(user: state.user));
-            // 2. Navigasi ke halaman home
             context.go(InitialRoutes.home);
-
           } else if (state is PinConfirmationError) {
-            Navigator.of(context, rootNavigator: true).pop();
+             if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
             showAppFlashbar(
               context,
               title: 'PIN Tidak Cocok',
@@ -85,100 +100,106 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
         },
         child: Scaffold(
           backgroundColor: Colors.white,
-          appBar: AppBar(
-            title: const Text(
-              'Konfirmasi PIN',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+          appBar: appBar,
+          // --- PERBAIKAN UTAMA ANTI-OVERFLOW ---
+          body: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height -
+                    appBar.preferredSize.height -
+                    MediaQuery.of(context).padding.top,
               ),
-            ),
-            backgroundColor: Colors.white,
-            elevation: 0,
-            centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => context.pop(),
-            ),
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      const Text(
-                        'Konfirmasi PIN Anda',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Masukkan ulang PIN Anda untuk melanjutkan.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 60),
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          _buildPinDisplay(),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              icon: Icon(
-                                _isPinVisible ? Icons.visibility_off : Icons.visibility,
-                                color: Colors.grey,
-                              ),
-                              onPressed: _togglePinVisibility,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 60),
-                      BlocBuilder<PinBloc, PinState>(
-                        builder: (context, state) {
-                          final isLoading = state is PinLoading;
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: (_pin.length == _pinLength && !isLoading)
-                                  ? () => _confirmFinalPin(context)
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange.withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   // === KONTEN ATAS (INFORMASI & INPUT) ===
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Konfirmasi PIN Anda',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Masukkan ulang PIN Anda untuk melanjutkan.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 60),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            _buildPinDisplay(),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                icon: Icon(
+                                  _isPinVisible
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.grey,
                                 ),
+                                onPressed: _togglePinVisibility,
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                    )
-                                  : const Text(
-                                      'Konfirmasi & Simpan',
-                                      style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
                             ),
-                          );
-                        },
-                      ),
-                      const Spacer(flex: 2),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 60),
+                        BlocBuilder<PinBloc, PinState>(
+                          builder: (context, state) {
+                            final isLoading = state is PinLoading;
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed:
+                                    (_pin.length == _pinLength && !isLoading)
+                                        ? () => _confirmFinalPin(context)
+                                        : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  disabledBackgroundColor:
+                                      Colors.orange.withOpacity(0.4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 3),
+                                      )
+                                    : const Text(
+                                        'Konfirmasi & Simpan',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  // === KEYPAD DI BAWAH ===
+                  PinInputWidgets(
+                    onNumpadTapped: _onNumpadTapped,
+                    onBackspaceTapped: _onBackspaceTapped,
+                  ),
+                ],
               ),
-              PinInputWidgets(
-                onNumpadTapped: _onNumpadTapped,
-                onBackspaceTapped: _onBackspaceTapped,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -186,6 +207,7 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
   }
 
   Widget _buildPinDisplay() {
+    // ... (kode _buildPinDisplay tidak berubah)
     List<Widget> displayWidgets = [];
     for (int i = 0; i < _pinLength; i++) {
       displayWidgets.add(
@@ -226,6 +248,7 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
         ),
       );
     }
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.center, children: displayWidgets);
   }
 }

@@ -78,7 +78,6 @@ class _VerifyPinForChangePinViewState extends State<VerifyPinForChangePinView> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        // <<< PERBAIKAN: AppBar disesuaikan dengan gaya CreatePinPage >>>
         appBar: AppBar(
           title: const Text(
             'Verifikasi PIN Anda',
@@ -96,37 +95,39 @@ class _VerifyPinForChangePinViewState extends State<VerifyPinForChangePinView> {
             onPressed: () => context.pop(),
           ),
         ),
-        // <<< PERBAIKAN: Body disesuaikan dengan layout CreatePinPage >>>
         body: Column(
           children: [
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    const Text(
-                      'Masukkan PIN Keamanan',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+              // --- PERBAIKAN UTAMA DIMULAI DI SINI ---
+              child: SingleChildScrollView( // 1. Bungkus dengan SingleChildScrollView
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: Column(
+                    children: [
+                      // 2. Ganti Spacer dengan SizedBox untuk padding atas
+                      const SizedBox(height: 48), 
+                      const Text(
+                        'Masukkan PIN Keamanan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Verifikasi PIN Anda saat ini untuk dapat membuat PIN baru.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 60),
-                    _buildPinInputSection(), // Ini berisi display PIN atau loading
-                    // Tombol "Lanjutkan" sengaja tidak ada di sini,
-                    // karena halaman ini menggunakan auto-submit.
-                    const Spacer(flex: 2),
-                  ],
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Verifikasi PIN Anda saat ini untuk dapat membuat PIN baru.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 60),
+                      _buildPinInputSection(),
+                      const SizedBox(height: 48), // 3. Ganti Spacer bawah dengan SizedBox
+                    ],
+                  ),
                 ),
               ),
+              // --- AKHIR DARI PERBAIKAN ---
             ),
             PinInputWidgets(
               onNumpadTapped: _onNumpadTapped,

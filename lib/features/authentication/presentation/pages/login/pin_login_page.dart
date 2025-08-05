@@ -46,13 +46,11 @@ class _PinLoginViewState extends State<PinLoginView> {
   int _forgotPinCountdownSeconds = 0;
   bool get _isForgotPinOnCooldown => _forgotPinTimer?.isActive ?? false;
 
-  // <<< BARU: Kunci untuk SharedPreferences >>>
   static const String _rateLimitExpiryKey = 'rate_limit_expiry_timestamp';
 
   @override
   void initState() {
     super.initState();
-    // <<< PERBAIKAN: Periksa rate limit yang aktif saat halaman dibuka >>>
     _checkActiveRateLimit();
   }
 
@@ -64,8 +62,6 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   // --- Functions ---
-
-  // <<< BARU: Fungsi untuk memeriksa SharedPreferences >>>
   void _checkActiveRateLimit() async {
     final prefs = await SharedPreferences.getInstance();
     final expiryTimestamp = prefs.getInt(_rateLimitExpiryKey);
@@ -78,7 +74,6 @@ class _PinLoginViewState extends State<PinLoginView> {
           _startRateLimitCountdown(remainingSeconds);
         }
       } else {
-        // Hapus jika sudah kedaluwarsa
         await prefs.remove(_rateLimitExpiryKey);
       }
     }
@@ -100,7 +95,6 @@ class _PinLoginViewState extends State<PinLoginView> {
         setState(() => _rateLimitCountdownSeconds--);
       } else {
         timer.cancel();
-        // <<< PERBAIKAN: Hapus key dari SharedPreferences saat timer selesai >>>
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove(_rateLimitExpiryKey);
         setState(() {});
@@ -163,13 +157,12 @@ class _PinLoginViewState extends State<PinLoginView> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) async { // Jadikan async
+      listener: (context, state) async {
         if (state is AuthLoginSuccess) {
           context.go(InitialRoutes.home);
         } else if (state is AuthLoginRateLimited) {
           showAppFlashbar(context, title: "Terlalu Banyak Percobaan", message: state.message, isSuccess: false);
           
-          // <<< PERBAIKAN: Simpan waktu kedaluwarsa ke SharedPreferences >>>
           final prefs = await SharedPreferences.getInstance();
           final expiryTime = DateTime.now().add(Duration(seconds: state.retryAfterSeconds));
           await prefs.setInt(_rateLimitExpiryKey, expiryTime.millisecondsSinceEpoch);
@@ -185,7 +178,7 @@ class _PinLoginViewState extends State<PinLoginView> {
           showAppFlashbar(context, title: "Gagal Meminta Reset PIN", message: state.message, isSuccess: false);
         }
       },
-      child: PopScope( // Ganti WillPopScope dengan PopScope untuk Flutter versi baru
+      child: PopScope(
         canPop: false,
         onPopInvoked: (didPop) {
           if (didPop) return;
@@ -208,7 +201,8 @@ class _PinLoginViewState extends State<PinLoginView> {
               if (constraints.maxWidth < 600) {
                 return _buildMobileLayout();
               } else {
-                return _buildTabletLayout();
+                // --- PERUBAHAN 1: Kirim constraints ke _buildTabletLayout ---
+                return _buildTabletLayout(constraints);
               }
             },
           ),
@@ -216,9 +210,8 @@ class _PinLoginViewState extends State<PinLoginView> {
       ),
     );
   }
-
-  // ... sisa kode tidak perlu diubah ...
-    /// Layout untuk layar sempit (Ponsel)
+  
+  /// Layout untuk layar sempit (Ponsel)
   Widget _buildMobileLayout() {
     return Column(
       children: [
@@ -250,7 +243,8 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   /// Layout untuk layar lebar (Tablet, Web, Ponsel Landscape)
-  Widget _buildTabletLayout() {
+  // --- PERUBAHAN 2: Method sekarang menerima BoxConstraints ---
+  Widget _buildTabletLayout(BoxConstraints constraints) {
     return Row(
       children: [
         // Panel Kiri: Informasi / Branding
@@ -258,44 +252,48 @@ class _PinLoginViewState extends State<PinLoginView> {
           flex: 1,
           child: Container(
             color: Colors.grey[50],
+            padding: const EdgeInsets.all(32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 24),
                 Text(
                   'Selamat Datang Kembali!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Text(
-                    'Gunakan keypad di sebelah kanan untuk memasukkan 6-digit PIN Anda dan melanjutkan.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
-                  ),
+                Text(
+                  'Gunakan keypad di sebelah kanan untuk memasukkan 6-digit PIN Anda dan melanjutkan.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
                 ),
               ],
             ),
           ),
         ),
 
-        // Panel Kanan: Input PIN (VERSI PERBAIKAN ANTI-OVERFLOW)
+        // --- PERUBAHAN 3: Struktur Panel Kanan diubah total ---
         Expanded(
           flex: 1,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPinInputSection(),
-                const SizedBox(height: 48),
-                PinInputWidgets(
-                  onNumpadTapped: _onNumpadTapped,
-                  onBackspaceTapped: _onBackspaceTapped,
+          child: SingleChildScrollView( // Dibungkus dengan SingleChildScrollView
+            child: ConstrainedBox( // Dibungkus dengan ConstrainedBox
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight, // Paksa tinggi minimal setinggi layar
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center, // Pusatkan konten secara vertikal
+                  children: [
+                    _buildPinInputSection(),
+                    const SizedBox(height: 48),
+                    PinInputWidgets(
+                      onNumpadTapped: _onNumpadTapped,
+                      onBackspaceTapped: _onBackspaceTapped,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -306,6 +304,7 @@ class _PinLoginViewState extends State<PinLoginView> {
   /// Widget bersama untuk menampilkan display PIN dan tombol 'Lupa PIN'
   Widget _buildPinInputSection() {
     return Column(
+      mainAxisSize: MainAxisSize.min, // Membuat column seukuran isinya saja
       children: [
         BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
@@ -313,7 +312,7 @@ class _PinLoginViewState extends State<PinLoginView> {
               return Text('Coba lagi dalam $_rateLimitCountdownSeconds detik', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
             }
             return SizedBox(
-              height: 48, // Beri tinggi agar layout tidak "loncat"
+              height: 48,
               child: Stack(
                 alignment: Alignment.center,
                 children: [

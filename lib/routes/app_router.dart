@@ -18,14 +18,16 @@ import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/change_phone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/change_phone_page.dart'
+    as change_phone;
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changepin_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_page.dart';
+
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
+import 'package:nusantara_mobile/features/voucher/presentation/pages/voucher/voucher_page.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -93,8 +95,9 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.confirmPin,
       name: InitialRoutes.confirmPin,
       builder: (context, state) {
-        final args = state.extra as Map<String, dynamic>;
-        final phoneNumber = args['phoneNumber'] as String;
+        // --- PERBAIKAN DI SINI ---
+        // Kita sekarang mengharapkan extra berupa String, bukan Map.
+        final phoneNumber = state.extra as String;
         return ConfirmPinPage(phoneNumber: phoneNumber);
       },
     ),
@@ -102,7 +105,7 @@ final GoRouter appRoute = GoRouter(
     GoRoute(
       path: InitialRoutes.changePhone,
       name: InitialRoutes.changePhone,
-      builder: (context, state) => const ChangePhonePage(),
+      builder: (context, state) => const change_phone.ChangePhonePage(),
     ),
     GoRoute(
       path: InitialRoutes.confirmChangePhone,
@@ -228,8 +231,7 @@ final GoRouter appRoute = GoRouter(
         GoRoute(
           path: InitialRoutes.vouchers,
           name: InitialRoutes.vouchers,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Voucher')),
+          builder: (context, state) => const VoucherPage(),
         ),
         GoRoute(
           path: InitialRoutes.profile,

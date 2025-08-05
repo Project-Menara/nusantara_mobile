@@ -99,18 +99,36 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
 
   void _submitOtp() {
     context.read<OtpBloc>().add(
-      OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
-    );
+          OtpSubmitted(phoneNumber: widget.phoneNumber, code: _otpCode),
+        );
   }
 
   void _resendOtp() {
     context.read<OtpBloc>().add(
-      OtpResendRequested(phoneNumber: widget.phoneNumber),
-    );
+          OtpResendRequested(phoneNumber: widget.phoneNumber),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final appBar = AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      title: const Text(
+        'Verifikasi Nomor',
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => context.go(InitialRoutes.loginScreen),
+      ),
+    );
+
     return BlocListener<OtpBloc, OtpState>(
       listener: (context, state) {
         if (state is OtpVerificationSuccess) {
@@ -149,106 +167,109 @@ class _VerifyNumberViewState extends State<VerifyNumberView> {
           );
         }
       },
-      child: WillPopScope(
-        onWillPop: () async {
-          // <<< PERBAIKAN 1: Ganti pop() dengan go() >>>
+      // --- PERBAIKAN: Ganti WillPopScope menjadi PopScope ---
+      child: PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
           context.go(InitialRoutes.loginScreen);
-          return false;
         },
         child: Scaffold(
           backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              // <<< PERBAIKAN 2: Ganti pop() dengan go() >>>
-              onPressed: () => context.go(InitialRoutes.loginScreen),
-            ),
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      const Text(
-                        'Verify Your Number',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+          appBar: appBar,
+          // --- PERBAIKAN UTAMA: Menggunakan layout scrollable ---
+          body: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height -
+                    appBar.preferredSize.height -
+                    MediaQuery.of(context).padding.top,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // === Bagian Atas: Konten Informasi ===
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 24.0),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Verifikasi Nomor Anda',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Enter your OTP code below',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          height: 1.5,
+                        const SizedBox(height: 12),
+                        Text(
+                          'Masukkan 6 digit kode OTP yang dikirimkan ke nomor ${widget.phoneNumber}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            height: 1.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 60),
-                      _buildOtpDisplay(),
-                      const SizedBox(height: 30),
-                      _resendCodeSection(),
-                      const SizedBox(height: 60),
-                      BlocBuilder<OtpBloc, OtpState>(
-                        builder: (context, state) {
-                          final isLoading = state is OtpVerificationLoading;
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed:
-                                  (_otpCode.length == _otpLength && !isLoading)
-                                  ? _submitOtp
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                disabledBackgroundColor: Colors.orange
-                                    .withOpacity(0.4),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                        const SizedBox(height: 60),
+                        _buildOtpDisplay(),
+                        const SizedBox(height: 30),
+                        _resendCodeSection(),
+                        const SizedBox(height: 60),
+                        BlocBuilder<OtpBloc, OtpState>(
+                          builder: (context, state) {
+                            final isLoading = state is OtpVerificationLoading;
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed:
+                                    (_otpCode.length == _otpLength && !isLoading)
+                                        ? _submitOtp
+                                        : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  disabledBackgroundColor:
+                                      Colors.orange.withOpacity(0.4),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 3,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Verifikasi',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Next',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          );
-                        },
-                      ),
-                      const Spacer(flex: 2),
-                    ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  // === Bagian Bawah: Keypad Input ===
+                  OtpInputWidgets(
+                    otpCode: _otpCode,
+                    onNumpadTapped: _onNumpadTapped,
+                    onBackspaceTapped: _onBackspaceTapped,
+                  ),
+                ],
               ),
-              OtpInputWidgets(
-                otpCode: _otpCode,
-                onNumpadTapped: _onNumpadTapped,
-                onBackspaceTapped: _onBackspaceTapped,
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -67,6 +67,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
   assets:
+    # --- PERBAIKAN DI SINI ---
+    # Tambahkan path ke direktori font Anda.
+    # Dengan menambahkan 'assets/fonts/', semua font di dalamnya akan ikut ter-bundle.
     - assets/images/
+    - assets/fonts/Poppins/ # atau lebih baik lagi: - assets/fonts/

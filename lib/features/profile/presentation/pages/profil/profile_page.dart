@@ -53,9 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onRefresh: isLoading
                   ? () async {}
                   : () async {
-                      context
-                          .read<AuthBloc>()
-                          .add(AuthCheckStatusRequested());
+                      context.read<AuthBloc>().add(AuthCheckStatusRequested());
                     },
               // <<< PERUBAHAN: Body tidak lagi menggunakan Stack >>>
               child: _buildProfileContent(context, displayUser, isLoading),
@@ -68,7 +66,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // <<< PERBAIKAN TOTAL: Struktur layout diubah menjadi Column sederhana >>>
   Widget _buildProfileContent(
-      BuildContext context, UserEntity user, bool isLoading) {
+    BuildContext context,
+    UserEntity user,
+    bool isLoading,
+  ) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
@@ -141,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-  
+
   // <<< BARU: Helper untuk avatar inisial >>>
   Widget _buildInitialsAvatar(String fullName) {
     String getInitials(String name) {
@@ -167,7 +168,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
 
   Widget _buildUserInfo({required String name, required String email}) {
     return Column(
@@ -215,13 +215,16 @@ class _ProfilePageState extends State<ProfilePage> {
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(
             padding: EdgeInsets.only(left: 24, bottom: 8),
-            child: Text('Keamanan & Bantuan', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              'Keamanan & Bantuan',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           _buildListTile(
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
             onTap: () {
-              context.push(InitialRoutes.verifyPinForChangePin);
+              showChangePinConfirmationDialog(context);
             },
           ),
           _buildListTile(
