@@ -137,6 +137,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  // <<< TAMBAHAN IMPLEMENTASI VALIDASI TOKEN >>>
+  @override
+  Future<void> validateForgotPinToken(String token) async {
+    final uri = Uri.parse(
+      '${ApiConstant.baseUrl}/customer/validate-forgot-pin?token=$token',
+    );
+    try {
+      final response = await client.get(uri, headers: _headers());
+      _processResponse(response);
+      final jsonResponse = json.decode(response.body);
+      print("API Response validateForgotPinToken: ({$jsonResponse})");
+    } on SocketException {
+      throw const ServerException('Koneksi internet bermasalah');
+    }
+  }
+
   @override
   Future<void> setNewPinForgot({
     required String token,

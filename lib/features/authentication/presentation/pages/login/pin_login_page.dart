@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
@@ -47,6 +46,16 @@ class _PinLoginViewState extends State<PinLoginView> {
   int _forgotPinCountdownSeconds = 0;
   bool get _isForgotPinOnCooldown => _forgotPinTimer?.isActive ?? false;
 
+  // <<< BARU: Kunci untuk SharedPreferences >>>
+  static const String _rateLimitExpiryKey = 'rate_limit_expiry_timestamp';
+
+  @override
+  void initState() {
+    super.initState();
+    // <<< PERBAIKAN: Periksa rate limit yang aktif saat halaman dibuka >>>
+    _checkActiveRateLimit();
+  }
+
   @override
   void dispose() {
     _rateLimitTimer?.cancel();
@@ -55,13 +64,34 @@ class _PinLoginViewState extends State<PinLoginView> {
   }
 
   // --- Functions ---
-  void _startRateLimitCountdown(int seconds) {
+
+  // <<< BARU: Fungsi untuk memeriksa SharedPreferences >>>
+  void _checkActiveRateLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final expiryTimestamp = prefs.getInt(_rateLimitExpiryKey);
+
+    if (expiryTimestamp != null) {
+      final expiryTime = DateTime.fromMillisecondsSinceEpoch(expiryTimestamp);
+      if (expiryTime.isAfter(DateTime.now())) {
+        final remainingSeconds = expiryTime.difference(DateTime.now()).inSeconds;
+        if (remainingSeconds > 0) {
+          _startRateLimitCountdown(remainingSeconds);
+        }
+      } else {
+        // Hapus jika sudah kedaluwarsa
+        await prefs.remove(_rateLimitExpiryKey);
+      }
+    }
+  }
+
+  void _startRateLimitCountdown(int seconds) async {
     _rateLimitTimer?.cancel();
     setState(() {
       _rateLimitCountdownSeconds = seconds;
       _pin = '';
     });
-    _rateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+
+    _rateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
@@ -70,6 +100,9 @@ class _PinLoginViewState extends State<PinLoginView> {
         setState(() => _rateLimitCountdownSeconds--);
       } else {
         timer.cancel();
+        // <<< PERBAIKAN: Hapus key dari SharedPreferences saat timer selesai >>>
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_rateLimitExpiryKey);
         setState(() {});
       }
     });
@@ -127,16 +160,22 @@ class _PinLoginViewState extends State<PinLoginView> {
     }
   }
 
-  // --- UI Build Method ---
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async { // Jadikan async
         if (state is AuthLoginSuccess) {
           context.go(InitialRoutes.home);
         } else if (state is AuthLoginRateLimited) {
           showAppFlashbar(context, title: "Terlalu Banyak Percobaan", message: state.message, isSuccess: false);
+          
+          // <<< PERBAIKAN: Simpan waktu kedaluwarsa ke SharedPreferences >>>
+          final prefs = await SharedPreferences.getInstance();
+          final expiryTime = DateTime.now().add(Duration(seconds: state.retryAfterSeconds));
+          await prefs.setInt(_rateLimitExpiryKey, expiryTime.millisecondsSinceEpoch);
+          
           _startRateLimitCountdown(state.retryAfterSeconds);
+
         } else if (state is AuthLoginFailure) {
           showAppFlashbar(context, title: "Login Gagal", message: state.message, isSuccess: false);
           setState(() => _pin = '');
@@ -146,10 +185,11 @@ class _PinLoginViewState extends State<PinLoginView> {
           showAppFlashbar(context, title: "Gagal Meminta Reset PIN", message: state.message, isSuccess: false);
         }
       },
-      child: WillPopScope(
-        onWillPop: () async {
+      child: PopScope( // Ganti WillPopScope dengan PopScope untuk Flutter versi baru
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
           context.go(InitialRoutes.loginScreen);
-          return false;
         },
         child: Scaffold(
           backgroundColor: Colors.white,
@@ -177,7 +217,8 @@ class _PinLoginViewState extends State<PinLoginView> {
     );
   }
 
-  /// Layout untuk layar sempit (Ponsel)
+  // ... sisa kode tidak perlu diubah ...
+    /// Layout untuk layar sempit (Ponsel)
   Widget _buildMobileLayout() {
     return Column(
       children: [
@@ -220,9 +261,6 @@ class _PinLoginViewState extends State<PinLoginView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // GANTI INI DENGAN LOGO ATAU GAMBAR ASET ANDA
-                // Contoh: Image.asset('assets/images/logo.png', height: 80),
-                // Untuk sekarang, saya hapus logo agar tidak membingungkan
                 const SizedBox(height: 24),
                 Text(
                   'Selamat Datang Kembali!',
@@ -274,22 +312,25 @@ class _PinLoginViewState extends State<PinLoginView> {
             if (_isRateLimited) {
               return Text('Coba lagi dalam $_rateLimitCountdownSeconds detik', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
             }
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                if (state is AuthLoginLoading)
-                  const CircularProgressIndicator(color: Colors.orange)
-                else
-                  _buildPinDisplay(),
-                if (state is! AuthLoginLoading)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                      onPressed: _togglePinVisibility,
+            return SizedBox(
+              height: 48, // Beri tinggi agar layout tidak "loncat"
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (state is AuthLoginLoading)
+                    const CircularProgressIndicator(color: Colors.orange)
+                  else
+                    _buildPinDisplay(),
+                  if (state is! AuthLoginLoading)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                        onPressed: _togglePinVisibility,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             );
           },
         ),

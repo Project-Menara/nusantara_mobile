@@ -34,3 +34,6 @@ class RateLimitFailure extends Failures {
   @override
   List<Object> get props => [message, retryAfterSeconds];
 }
+class TokenExpiredFailure extends Failures {
+  const TokenExpiredFailure(String message) : super(message);
+}

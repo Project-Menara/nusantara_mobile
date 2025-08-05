@@ -38,131 +38,136 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        body: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, authState) {
-            final user = authState.user;
-            final bool isLoading = user == null;
-            final displayUser = user ?? const UserEntity.empty();
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          final user = authState.user;
+          final bool isLoading =
+              authState is AuthGetProfileLoading || user == null;
+          final displayUser = user ?? const UserEntity.empty();
 
-            // Tidak ada Skeletonizer di sini, kita teruskan `isLoading` ke bawah
-            return RefreshIndicator(
+          return Scaffold(
+            // <<< PERUBAHAN: Ganti warna background dan gunakan AppBar biasa >>>
+            backgroundColor: const Color(0xFFF0F2F5),
+            appBar: _buildAppBar(),
+            body: RefreshIndicator(
               onRefresh: isLoading
                   ? () async {}
                   : () async {
-                      context.read<AuthBloc>().add(AuthCheckStatusRequested());
+                      context
+                          .read<AuthBloc>()
+                          .add(AuthCheckStatusRequested());
                     },
-              // <<< PERUBAHAN: Kirim `isLoading` ke `_buildProfileContent` >>>
+              // <<< PERUBAHAN: Body tidak lagi menggunakan Stack >>>
               child: _buildProfileContent(context, displayUser, isLoading),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  // <<< PERUBAHAN: Method ini sekarang menerima `isLoading` >>>
+  // <<< PERBAIKAN TOTAL: Struktur layout diubah menjadi Column sederhana >>>
   Widget _buildProfileContent(
       BuildContext context, UserEntity user, bool isLoading) {
-    final double headerHeight = 120.0;
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24.0),
+      child: Skeletonizer(
+        enabled: isLoading,
+        child: Column(
+          children: [
+            _buildProfileAvatar(user),
+            const SizedBox(height: 16),
+            _buildUserInfo(name: user.name, email: user.email),
+            const SizedBox(height: 24),
+            _buildProfileCard(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // <<< PERBAIKAN: AppBar dibuat terpisah seperti di PersonalDataPage >>>
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.red.shade700,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      automaticallyImplyLeading: false, // Hapus tombol kembali default
+      title: const Text(
+        'Profile',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(20.0), // Tinggi "bayangan" bawah
+        child: Container(),
+      ),
+    );
+  }
+
+  // <<< PERBAIKAN: Avatar tidak lagi di dalam Stack/Positioned >>>
+  Widget _buildProfileAvatar(UserEntity user) {
     const double avatarRadius = 60.0;
+    final photoUrl = user.photo;
 
-    return Stack(
-      children: [
-        // Lapisan konten yang bisa di-scroll
-        SingleChildScrollView(
-          physics: isLoading
-              ? const NeverScrollableScrollPhysics()
-              : const AlwaysScrollableScrollPhysics(),
-          child:
-              // <<< PERUBAHAN: Skeletonizer dipindahkan ke sini >>>
-              // Ia hanya membungkus konten dinamis di bawah header
-              Skeletonizer(
-            enabled: isLoading,
-            child: Column(
-              children: [
-                SizedBox(height: headerHeight + avatarRadius),
-                _buildUserInfo(name: user.name, email: user.email),
-                const SizedBox(height: 24),
-                _buildProfileCard(context),
-                const SizedBox(height: 30),
-              ],
+    Widget avatarChild;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      avatarChild = CircleAvatar(
+        radius: avatarRadius,
+        backgroundImage: NetworkImage(photoUrl),
+      );
+    } else {
+      // Fallback ke inisial nama
+      avatarChild = _buildInitialsAvatar(user.name);
+    }
+
+    return SizedBox(
+      width: (avatarRadius * 2) + 10,
+      height: (avatarRadius * 2) + 10,
+      child: Stack(
+        children: [
+          Center(
+            child: CircleAvatar(
+              radius: avatarRadius + 3,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              child: avatarChild,
             ),
           ),
-        ),
-
-        // Lapisan Header dan Avatar (SEKARANG DI LUAR SKELETONIZER)
-        _buildHeader(headerHeight),
-        _buildProfileAvatar(headerHeight, avatarRadius, user.photo),
-        _buildAppBarContent(),
-      ],
-    );
-  }
-
-  // Sisa method helper lainnya tidak ada yang berubah
-  // ...
-  Widget _buildHeader(double height) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-      child: Container(
-        height: height,
-        width: double.infinity,
-        color: Colors.red.shade700,
+        ],
       ),
     );
   }
+  
+  // <<< BARU: Helper untuk avatar inisial >>>
+  Widget _buildInitialsAvatar(String fullName) {
+    String getInitials(String name) {
+      if (name.trim().isEmpty) return '?';
+      List<String> names = name.trim().split(' ');
+      String initials = names[0].isNotEmpty ? names[0][0] : '';
+      if (names.length > 1 && names.last.isNotEmpty) {
+        initials += names.last[0];
+      }
+      return initials.toUpperCase();
+    }
 
-  Widget _buildAppBarContent() {
-    return const SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Text(
-            'Profile',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Colors.orange.shade700,
+      child: Text(
+        getInitials(fullName),
+        style: const TextStyle(
+          fontSize: 40,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildProfileAvatar(
-    double headerHeight,
-    double avatarRadius,
-    String? photoUrl,
-  ) {
-    final bool hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
-    return Positioned(
-      top: headerHeight - avatarRadius,
-      left: 0,
-      right: 0,
-      child: Align(
-        alignment: Alignment.center,
-        child: CircleAvatar(
-          radius: avatarRadius + 5,
-          backgroundColor: const Color(0xFFF5F5F5),
-          child: CircleAvatar(
-            radius: avatarRadius,
-            backgroundColor: Colors.grey.shade300,
-            backgroundImage: hasPhoto ? NetworkImage(photoUrl) : null,
-            child: !hasPhoto
-                ? Icon(
-                    Icons.person,
-                    size: avatarRadius * 1.2,
-                    color: Colors.white,
-                  )
-                : null,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildUserInfo({required String name, required String email}) {
     return Column(
@@ -180,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildProfileCard(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+      // margin dihapus karena sudah diatur oleh padding di SingleChildScrollView
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -198,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           const Padding(
             padding: EdgeInsets.only(left: 24, bottom: 8),
-            child: Text('Profile', style: TextStyle(color: Colors.grey)),
+            child: Text('Akun', style: TextStyle(color: Colors.grey)),
           ),
           _buildListTile(
             icon: Icons.person_outline,
@@ -206,11 +211,6 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () {
               context.push(InitialRoutes.personalData);
             },
-          ),
-          _buildListTile(
-            icon: Icons.settings_outlined,
-            title: 'Settings',
-            onTap: () {},
           ),
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(

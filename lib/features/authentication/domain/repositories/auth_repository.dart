@@ -10,6 +10,9 @@ abstract class AuthRepository {
   Future<Either<Failures, Unit>> resendCode(String phoneNumber);
   Future<Either<Failures, String>> forgotPin(String phoneNumber);
 
+  // <<< TAMBAHAN UNTUK VALIDASI TOKEN LUPA PIN >>>
+  Future<Either<Failures, void>> validateForgotPinToken(String token);
+
   Future<Either<Failures, Unit>> verifyCode({
     required String phoneNumber,
     required String code,
@@ -31,7 +34,9 @@ abstract class AuthRepository {
     required String phoneNumber,
     required String pin,
   });
+  
   Future<Either<Failures, UserEntity>> getLoggedInUser();
+  
   Future<Either<Failures, void>> setNewPinForgot({
     required String token,
     required String phoneNumber,

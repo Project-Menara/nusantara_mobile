@@ -1,3 +1,5 @@
+// lib/features/authentication/data/repositories/auth_repository_impl.dart
+
 import 'package:dartz/dartz.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
@@ -22,12 +24,17 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.networkInfo,
   });
 
+  // --- PERBAIKAN: _getResponse sekarang bisa mengenali AuthErrorType ---
   Future<Either<Failures, T>> _getResponse<T>(Future<T> Function() call) async {
     if (await networkInfo.isConnected) {
       try {
         final result = await call();
         return Right(result);
       } on AuthException catch (e) {
+        // Jika exception adalah tipe token expired, kembalikan Failure yang spesifik
+        if (e.type == AuthErrorType.tokenExpired) {
+          return Left(TokenExpiredFailure(e.message));
+        }
         return Left(AuthFailure(e.message));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
@@ -38,6 +45,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(NetworkFailure('Tidak ada koneksi internet'));
     }
   }
+  
+  // <<< TAMBAHAN IMPLEMENTASI VALIDASI TOKEN >>>
+  @override
+  Future<Either<Failures, void>> validateForgotPinToken(String token) async {
+    return _getResponse(() => authRemoteDatasource.validateForgotPinToken(token));
+  }
 
   @override
   Future<Either<Failures, void>> setNewPinForgot({
@@ -45,13 +58,12 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String pin,
   }) async {
-    return _getResponse(() async {
-      await authRemoteDatasource.setNewPinForgot(
-        token: token,
-        phoneNumber: phoneNumber,
-        pin: pin,
-      );
-    });
+    // --- PERBAIKAN: Gunakan _getResponse agar lebih bersih dan konsisten ---
+    return _getResponse(() => authRemoteDatasource.setNewPinForgot(
+      token: token,
+      phoneNumber: phoneNumber,
+      pin: pin,
+    ));
   }
 
   @override
@@ -60,13 +72,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String confirmPin,
   }) async {
+    // --- PERBAIKAN: Gunakan _getResponse agar lebih bersih dan konsisten ---
     return _getResponse(() async {
       final userModel = await authRemoteDatasource.confirmNewPinForgot(
         token: token,
         phoneNumber: phoneNumber,
         confirmPin: confirmPin,
       );
-      // <<< TAMBAHAN PENTING: Simpan token baru ke local storage >>>
       await localDatasource.cacheAuthToken(userModel.token!);
       return userModel;
     });
@@ -76,7 +88,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failures, PhoneCheckEntity>> checkPhone(
     String phoneNumber,
   ) async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() async {
       final resultModel = await authRemoteDatasource.checkPhone(phoneNumber);
       return resultModel.toEntity();
@@ -88,7 +99,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String code,
   }) async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() async {
       await authRemoteDatasource.verifyCode(
         phoneNumber: phoneNumber,
@@ -102,7 +112,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failures, RegisterResponseModel>> register(
     RegisterEntity user,
   ) async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() {
       final formModel = RegisterModel.fromEntity(user);
       return authRemoteDatasource.register(formModel);
@@ -114,7 +123,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String pin,
   }) async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() async {
       await authRemoteDatasource.createPin(phoneNumber: phoneNumber, pin: pin);
       return unit;
@@ -127,7 +135,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String confirmPin,
   }) async {
     return _getResponse(() async {
-      // Tambahkan async
       final userModel = await authRemoteDatasource.confirmPin(
         phone: phone,
         confirmPin: confirmPin,
@@ -142,7 +149,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phoneNumber,
     required String pin,
   }) async {
-    // REFACTOR: Jadi lebih ringkas
     return _getResponse(() async {
       final token = await authRemoteDatasource.loginAndGetToken(
         phoneNumber: phoneNumber,
@@ -162,17 +168,19 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Left(AuthFailure('No token found'));
       }
 
-      // Jika ada token, coba ambil profil user (butuh internet)
       if (await networkInfo.isConnected) {
         final user = await authRemoteDatasource.getUserProfile(token: token);
         return Right(user);
       } else {
-        // Opsional: Jika offline, Anda bisa coba ambil data user dari cache jika ada
         return const Left(
           NetworkFailure('No Internet Connection to fetch profile'),
         );
       }
     } on AuthException catch (e) {
+      // --- PERBAIKAN: Tangani juga token expired di sini ---
+      if (e.type == AuthErrorType.tokenExpired) {
+        return Left(TokenExpiredFailure(e.message));
+      }
       return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

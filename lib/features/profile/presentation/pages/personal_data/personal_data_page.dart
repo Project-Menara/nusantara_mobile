@@ -160,49 +160,50 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         final user = authState.user;
-        final bool isLoading = user == null;
+        
+        // <<< PERBAIKAN 1: Logika isLoading diperbarui >>>
+        // Skeleton aktif saat loading awal (user==null) ATAU saat state refresh (AuthGetProfileLoading)
+        final bool isLoading = authState is AuthGetProfileLoading || user == null;
+        
         final displayUser = user ?? const UserEntity.empty();
 
         return Scaffold(
-          // <<< PERBAIKAN: Ganti warna background agar gap terlihat >>>
-          backgroundColor: const Color(0xFFF0F2F5), // Warna abu-abu terang
-          appBar: _buildAppBar(), // <<< PERBAIKAN: Gunakan AppBar biasa >>>
-          body: Skeletonizer(
-            enabled: isLoading,
-            child: MultiBlocListener(
-              listeners: [
-                BlocListener<ProfileBloc, ProfileState>(
-                  listener: (context, state) {
-                    if (state is ProfileUpdateSuccess) {
-                      context
-                          .read<AuthBloc>()
-                          .add(auth_event.AuthUserUpdated(state.updatedUser));
-                      showAppFlashbar(context,
-                          title: "Sukses",
-                          message: "Profil berhasil diperbarui.",
-                          isSuccess: true);
-                      setState(() {
-                        _isEditMode = false;
-                        _photoFile = null;
-                      });
-                    } else if (state is ProfileUpdateFailure) {
-                      showAppFlashbar(context,
-                          title: "Gagal",
-                          message: state.message,
-                          isSuccess: false);
-                    }
-                  },
-                ),
-                BlocListener<AuthBloc, AuthState>(
-                  listener: (context, state) {
-                    if (state is AuthUpdateSuccess) {
-                      _populateControllers(state.user);
-                    }
-                  },
-                ),
-              ],
-              child: _buildContent(context, displayUser),
-            ),
+          backgroundColor: const Color(0xFFF0F2F5),
+          appBar: _buildAppBar(),
+          body: MultiBlocListener(
+            listeners: [
+              BlocListener<ProfileBloc, ProfileState>(
+                listener: (context, state) {
+                  if (state is ProfileUpdateSuccess) {
+                    context
+                        .read<AuthBloc>()
+                        .add(auth_event.AuthUserUpdated(state.updatedUser));
+                    showAppFlashbar(context,
+                        title: "Sukses",
+                        message: "Profil berhasil diperbarui.",
+                        isSuccess: true);
+                    setState(() {
+                      _isEditMode = false;
+                      _photoFile = null;
+                    });
+                  } else if (state is ProfileUpdateFailure) {
+                    showAppFlashbar(context,
+                        title: "Gagal",
+                        message: state.message,
+                        isSuccess: false);
+                  }
+                },
+              ),
+              BlocListener<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthUpdateSuccess) {
+                    _populateControllers(state.user);
+                  }
+                },
+              ),
+            ],
+            // Kirim state `isLoading` ke `_buildContent`
+            child: _buildContent(context, displayUser, isLoading),
           ),
           bottomNavigationBar: Skeletonizer(
             enabled: isLoading,
@@ -217,21 +218,31 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     );
   }
 
-  // <<< PERBAIKAN TOTAL: Struktur layout diubah total menjadi Column sederhana >>>
-  Widget _buildContent(BuildContext context, UserEntity user) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          _buildProfileAvatar(user),
-          const SizedBox(height: 24),
-          _buildForm(),
-        ],
+  Widget _buildContent(BuildContext context, UserEntity user, bool isLoading) {
+    // <<< PERBAIKAN 2: Bungkus konten dengan RefreshIndicator >>>
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Memicu event untuk mengambil ulang data profil
+        context.read<AuthBloc>().add(auth_event.AuthCheckStatusRequested());
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24.0),
+        child: Skeletonizer(
+          enabled: isLoading,
+          child: Column(
+            children: [
+              _buildProfileAvatar(user),
+              const SizedBox(height: 24),
+              _buildForm(),
+            ],
+          ),
+        ),
       ),
     );
   }
-
-  // <<< PERBAIKAN: AppBar dibuat terpisah dan standar >>>
+  
+  // Sisa kode tidak berubah...
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.red.shade700,
@@ -252,7 +263,6 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     );
   }
   
-  // <<< PERBAIKAN: Avatar tidak lagi di dalam Stack/Positioned >>>
   Widget _buildProfileAvatar(UserEntity user) {
     const double avatarRadius = 60.0;
     final photoUrl = user.photo;
@@ -279,7 +289,6 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         height: (avatarRadius * 2) + 10,
         child: Stack(
           children: [
-            // Border putih di sekeliling avatar
             Center(
               child: CircleAvatar(
                 radius: avatarRadius + 3,
@@ -332,7 +341,6 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     );
   }
 
-  // Sisa kode di bawah ini tidak ada perubahan
   Widget _buildForm() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),

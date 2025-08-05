@@ -6,6 +6,9 @@ import 'package:nusantara_mobile/features/authentication/data/models/register_re
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
+  // <<< TAMBAHAN METHOD UNTUK VALIDASI TOKEN >>>
+  Future<void> validateForgotPinToken(String token);
+
   Future<PhoneCheckResponseModel> checkPhone(String phoneNumber);
   Future<void> verifyCode({required String phoneNumber, required String code});
   Future<RegisterResponseModel> register(RegisterModel register);

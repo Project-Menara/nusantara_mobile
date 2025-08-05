@@ -7,6 +7,15 @@ abstract class PinEvent extends Equatable {
   List<Object> get props => [];
 }
 
+// <<< TAMBAHAN EVENT UNTUK VALIDASI TOKEN >>>
+class ValidateForgotPinToken extends PinEvent {
+  final String token;
+  const ValidateForgotPinToken({required this.token});
+
+  @override
+  List<Object> get props => [token];
+}
+
 class CreatePinSubmitted extends PinEvent {
   final String phoneNumber;
   final String pin;

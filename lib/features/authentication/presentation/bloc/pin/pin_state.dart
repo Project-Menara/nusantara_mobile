@@ -1,7 +1,5 @@
 part of 'pin_bloc.dart';
 
-// Import UserModel karena akan digunakan di state sukses
-
 abstract class PinState extends Equatable {
   const PinState();
 
@@ -10,8 +8,17 @@ abstract class PinState extends Equatable {
 }
 
 class PinInitial extends PinState {}
-
 class PinLoading extends PinState {}
+
+// <<< TAMBAHAN STATE UNTUK VALIDASI TOKEN >>>
+class ResetTokenValidationLoading extends PinState {}
+class ResetTokenValid extends PinState {}
+class ResetTokenInvalid extends PinState {
+  final String message;
+  const ResetTokenInvalid(this.message);
+  @override
+  List<Object> get props => [message];
+}
 
 class PinCreationSuccess extends PinState {}
 
@@ -51,6 +58,13 @@ class SetNewPinForgotError extends PinState {
   List<Object> get props => [message];
 }
 
+class SetNewPinForgotTokenExpired extends PinState {
+  final String message;
+  const SetNewPinForgotTokenExpired(this.message);
+  @override
+  List<Object> get props => [message];
+}
+
 class ConfirmNewPinForgotSuccess extends PinState {
   final UserModel user;
   const ConfirmNewPinForgotSuccess(this.user);
@@ -61,6 +75,14 @@ class ConfirmNewPinForgotSuccess extends PinState {
 class ConfirmNewPinForgotError extends PinState {
   final String message;
   const ConfirmNewPinForgotError(this.message);
+  @override
+  List<Object> get props => [message];
+}
+
+// <<< TAMBAHAN STATE (DARI PERCAKAPAN SEBELUMNYA, UNTUK KONSISTENSI) >>>
+class ConfirmNewPinForgotTokenExpired extends PinState {
+  final String message;
+  const ConfirmNewPinForgotTokenExpired(this.message);
   @override
   List<Object> get props => [message];
 }

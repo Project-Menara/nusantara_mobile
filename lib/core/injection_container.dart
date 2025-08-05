@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/forgot_pin_usecase.dart';
+import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/validate_forgot_pin_token_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code/resend_code_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_confirm_new_pin_forgot_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_new_pin_forgot_usecase.dart';
@@ -71,6 +72,7 @@ Future<void> init() async {
       confirmPinUseCase: sl(),
       setNewPinForgotUseCase: sl(),
       confirmNewPinForgotUseCase: sl(),
+      validateForgotPinTokenUseCase: sl(),
     ),
   );
   sl.registerFactory(() => HomeBloc());
@@ -114,10 +116,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreateNewPinUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmNewPinUseCase(sl()));
   sl.registerLazySingleton(() => VerifyPinUsecase(sl()));
-
-  // <<< BARU: Daftarkan UseCase untuk Ubah Nomor Telepon >>>
   sl.registerLazySingleton(() => RequestChangePhoneUseCase(sl()));
   sl.registerLazySingleton(() => VerifyChangePhoneUseCase(sl()));
+  sl.registerLazySingleton(() => ValidateForgotPinTokenUseCase(sl()));
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
