@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
@@ -33,6 +34,7 @@ class PinLoginView extends StatefulWidget {
 }
 
 class _PinLoginViewState extends State<PinLoginView> {
+  // --- State Management ---
   String _pin = '';
   final int _pinLength = 6;
   bool _isPinVisible = false;
@@ -41,7 +43,6 @@ class _PinLoginViewState extends State<PinLoginView> {
   int _rateLimitCountdownSeconds = 0;
   bool get _isRateLimited => _rateLimitTimer?.isActive ?? false;
 
-  // --- BARU: State & Timer untuk Lupa PIN Cooldown ---
   Timer? _forgotPinTimer;
   int _forgotPinCountdownSeconds = 0;
   bool get _isForgotPinOnCooldown => _forgotPinTimer?.isActive ?? false;
@@ -49,10 +50,11 @@ class _PinLoginViewState extends State<PinLoginView> {
   @override
   void dispose() {
     _rateLimitTimer?.cancel();
-    _forgotPinTimer?.cancel(); // <-- Jangan lupa dispose timer baru
+    _forgotPinTimer?.cancel();
     super.dispose();
   }
 
+  // --- Functions ---
   void _startRateLimitCountdown(int seconds) {
     _rateLimitTimer?.cancel();
     setState(() {
@@ -73,22 +75,16 @@ class _PinLoginViewState extends State<PinLoginView> {
     });
   }
   
-  // --- BARU: Fungsi untuk memulai cooldown Lupa PIN ---
   void _startForgotPinCooldown() {
     _forgotPinTimer?.cancel();
-    setState(() {
-      _forgotPinCountdownSeconds = 120;
-    });
+    setState(() => _forgotPinCountdownSeconds = 120);
     _forgotPinTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+      if (!mounted) { timer.cancel(); return; }
       if (_forgotPinCountdownSeconds > 0) {
         setState(() => _forgotPinCountdownSeconds--);
       } else {
         timer.cancel();
-        setState(() {}); // Rebuild untuk menampilkan tombol lagi
+        setState(() {}); 
       }
     });
   }
@@ -118,14 +114,12 @@ class _PinLoginViewState extends State<PinLoginView> {
 
   void _submitLogin() {
     context.read<AuthBloc>().add(
-          AuthLoginWithPinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
-        );
+      AuthLoginWithPinSubmitted(phoneNumber: widget.phoneNumber, pin: _pin),
+    );
   }
 
   void _forgotPin() async {
-    // --- PERBAIKAN: Panggil fungsi cooldown di sini ---
     _startForgotPinCooldown();
-
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('last_forgot_pin_phone', widget.phoneNumber);
     if (mounted) {
@@ -133,6 +127,7 @@ class _PinLoginViewState extends State<PinLoginView> {
     }
   }
 
+  // --- UI Build Method ---
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -146,19 +141,9 @@ class _PinLoginViewState extends State<PinLoginView> {
           showAppFlashbar(context, title: "Login Gagal", message: state.message, isSuccess: false);
           setState(() => _pin = '');
         } else if (state is AuthForgotPinSuccess) {
-          showAppFlashbar(
-            context,
-            title: "Permintaan Terkirim",
-            message: "Link untuk mengatur ulang PIN telah dikirim melalui WhatsApp.",
-            isSuccess: true,
-          );
+          showAppFlashbar(context, title: "Permintaan Terkirim", message: "Link untuk mengatur ulang PIN telah dikirim melalui WhatsApp.", isSuccess: true);
         } else if (state is AuthForgotPinFailure) {
-          showAppFlashbar(
-            context,
-            title: "Gagal Meminta Reset PIN",
-            message: state.message,
-            isSuccess: false,
-          );
+          showAppFlashbar(context, title: "Gagal Meminta Reset PIN", message: state.message, isSuccess: false);
         }
       },
       child: WillPopScope(
@@ -178,63 +163,145 @@ class _PinLoginViewState extends State<PinLoginView> {
               onPressed: () => context.go(InitialRoutes.loginScreen),
             ),
           ),
-          body: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      const Text('Selamat Datang Kembali!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      Text('Masukkan 6-digit PIN Anda untuk melanjutkan.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                      const SizedBox(height: 60),
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          if (_isRateLimited) {
-                            return Text('Coba lagi dalam $_rateLimitCountdownSeconds detik', style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
-                          }
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              if (state is AuthLoginLoading)
-                                const CircularProgressIndicator(color: Colors.orange)
-                              else
-                                _buildPinDisplay(),
-                              if (state is! AuthLoginLoading)
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: IconButton(
-                                    icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                                    onPressed: _togglePinVisibility,
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                      _buildForgotPasswordButton(),
-                      const Spacer(flex: 2),
-                    ],
-                  ),
-                ),
-              ),
-              PinInputWidgets(
-                onNumpadTapped: _onNumpadTapped,
-                onBackspaceTapped: _onBackspaceTapped,
-              ),
-            ],
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return _buildMobileLayout();
+              } else {
+                return _buildTabletLayout();
+              }
+            },
           ),
         ),
       ),
     );
   }
+
+  /// Layout untuk layar sempit (Ponsel)
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+                  const Text('Selamat Datang Kembali!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text('Masukkan 6-digit PIN Anda untuk melanjutkan.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                  const SizedBox(height: 40),
+                  _buildPinInputSection(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+        PinInputWidgets(
+          onNumpadTapped: _onNumpadTapped,
+          onBackspaceTapped: _onBackspaceTapped,
+        ),
+      ],
+    );
+  }
+
+  /// Layout untuk layar lebar (Tablet, Web, Ponsel Landscape)
+  Widget _buildTabletLayout() {
+    return Row(
+      children: [
+        // Panel Kiri: Informasi / Branding
+        Expanded(
+          flex: 1,
+          child: Container(
+            color: Colors.grey[50],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // GANTI INI DENGAN LOGO ATAU GAMBAR ASET ANDA
+                // Contoh: Image.asset('assets/images/logo.png', height: 80),
+                // Untuk sekarang, saya hapus logo agar tidak membingungkan
+                const SizedBox(height: 24),
+                Text(
+                  'Selamat Datang Kembali!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    'Gunakan keypad di sebelah kanan untuk memasukkan 6-digit PIN Anda dan melanjutkan.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Panel Kanan: Input PIN (VERSI PERBAIKAN ANTI-OVERFLOW)
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildPinInputSection(),
+                const SizedBox(height: 48),
+                PinInputWidgets(
+                  onNumpadTapped: _onNumpadTapped,
+                  onBackspaceTapped: _onBackspaceTapped,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
   
+  /// Widget bersama untuk menampilkan display PIN dan tombol 'Lupa PIN'
+  Widget _buildPinInputSection() {
+    return Column(
+      children: [
+        BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (_isRateLimited) {
+              return Text('Coba lagi dalam $_rateLimitCountdownSeconds detik', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold));
+            }
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                if (state is AuthLoginLoading)
+                  const CircularProgressIndicator(color: Colors.orange)
+                else
+                  _buildPinDisplay(),
+                if (state is! AuthLoginLoading)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: Icon(_isPinVisible ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                      onPressed: _togglePinVisibility,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        _buildForgotPasswordButton(),
+      ],
+    );
+  }
+
+  // --- Widget Builders ---
   Widget _buildForgotPasswordButton() {
     return Container(
       alignment: Alignment.centerRight,
-      // --- PERBAIKAN: Tampilkan countdown jika sedang cooldown ---
       child: _isForgotPinOnCooldown
           ? Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -244,31 +311,17 @@ class _PinLoginViewState extends State<PinLoginView> {
               ),
             )
           : BlocBuilder<AuthBloc, AuthState>(
-              buildWhen: (previous, current) {
-                return current is AuthForgotPinLoading ||
-                       current is AuthForgotPinSuccess ||
-                       current is AuthForgotPinFailure;
-              },
+              buildWhen: (p, c) => c is AuthForgotPinLoading || c is AuthForgotPinSuccess || c is AuthForgotPinFailure,
               builder: (context, state) {
                 if (state is AuthForgotPinLoading) {
                   return const Padding(
                     padding: EdgeInsets.all(12.0),
-                    child: SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 3),
-                    ),
+                    child: SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3)),
                   );
                 }
                 return TextButton(
                   onPressed: _forgotPin,
-                  child: const Text(
-                    'Lupa PIN?',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Text('Lupa PIN?', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
                 );
               },
             ),

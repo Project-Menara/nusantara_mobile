@@ -7,8 +7,10 @@ import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_
 import 'package:nusantara_mobile/features/profile/domain/usecases/confirm_new_pin_usecase.dart';
 import 'package:nusantara_mobile/features/profile/domain/usecases/create_new_pin_usecase.dart';
 import 'package:nusantara_mobile/features/profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:nusantara_mobile/features/profile/domain/usecases/verify_pin_usecase.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/change_pin/change_pin_bloc.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
+import 'package:nusantara_mobile/features/profile/presentation/bloc/verify_pin/verify_pin_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -43,7 +45,6 @@ import 'package:nusantara_mobile/features/profile/domain/usecases/request_change
 import 'package:nusantara_mobile/features/profile/domain/usecases/verify_change_phone_usecase.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/change_phone/change_phone_bloc.dart';
 
-
 // --- Fitur: Home ---
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
 
@@ -62,10 +63,7 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(
-    () => OtpBloc(
-      verifyCodeUseCase: sl(),
-      resendCodeUseCase: sl(),
-    ),
+    () => OtpBloc(verifyCodeUseCase: sl(), resendCodeUseCase: sl()),
   );
   sl.registerFactory(
     () => PinBloc(
@@ -76,12 +74,10 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => HomeBloc());
+  sl.registerFactory(() => VerifyPinBloc(verifyPinUsecase: sl()));
 
   sl.registerFactory(
-    () => ProfileBloc(
-      updateUserProfileUseCase: sl(),
-      authBloc: sl(),
-    ),
+    () => ProfileBloc(updateUserProfileUseCase: sl(), authBloc: sl()),
   );
 
   sl.registerFactory(
@@ -91,7 +87,7 @@ Future<void> init() async {
       authBloc: sl(),
     ),
   );
-  
+
   // <<< BARU: Daftarkan ChangePhoneBloc >>>
   sl.registerFactory(
     () => ChangePhoneBloc(
@@ -117,6 +113,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => CreateNewPinUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmNewPinUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyPinUsecase(sl()));
 
   // <<< BARU: Daftarkan UseCase untuk Ubah Nomor Telepon >>>
   sl.registerLazySingleton(() => RequestChangePhoneUseCase(sl()));
@@ -137,7 +134,7 @@ Future<void> init() async {
       networkInfo: sl(),
     ),
   );
-  
+
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
   );

@@ -22,6 +22,9 @@ import 'package:nusantara_mobile/features/profile/presentation/pages/change_phon
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changepin_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_page.dart';
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,7 +177,6 @@ final GoRouter appRoute = GoRouter(
       },
     ),
 
-    // <<< BARU: Rute untuk alur Ubah PIN >>>
     GoRoute(
       path: InitialRoutes.newPin,
       name: InitialRoutes.newPin,
@@ -184,6 +186,16 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.confirmNewPin,
       name: InitialRoutes.confirmNewPin,
       builder: (context, state) => const ConfirmChangePinPage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.verifyPinForChangePhone,
+      name: InitialRoutes.verifyPinForChangePhone,
+      builder: (context, state) => const VerifyPinForChangePhonePage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.verifyPinForChangePin,
+      name: InitialRoutes.verifyPinForChangePin,
+      builder: (context, state) => const VerifyPinForChangePinPage(),
     ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---

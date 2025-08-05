@@ -7,6 +7,8 @@ abstract class AuthState extends Equatable {
   const AuthState();
   @override
   List<Object?> get props => [];
+
+  get user => null;
 }
 
 class AuthInitial extends AuthState {}
@@ -19,7 +21,9 @@ class AuthLoginLoading extends AuthState {}
 
 class AuthForgotPinLoading extends AuthState {}
 
-class AuthGetProfileLoading extends AuthState {}
+class AuthGetProfileLoading extends AuthState {
+  
+} 
 
 // --- ---
 
@@ -33,7 +37,7 @@ class AuthCheckPhoneSuccess extends AuthState {
   List<Object?> get props => [result];
 }
 
-class AuthRegisterSuccess extends AuthState {
+class AuthRegisterSuccess extends AuthState {   
   final RegisterResponseModel user;
   const AuthRegisterSuccess(this.user);
   @override
@@ -106,15 +110,12 @@ class AuthLoginRateLimited extends AuthLoginFailure {
   @override
   List<Object?> get props => [message, retryAfterSeconds];
 }
-
 class AuthForgotPinFailure extends AuthState {
   final String message;
   const AuthForgotPinFailure(this.message);
   @override
   List<Object?> get props => [message];
-}
-
-class AuthUpdateSuccess extends AuthState {
+}class AuthUpdateSuccess extends AuthState {
   final UserEntity user;
 
   const AuthUpdateSuccess(this.user);

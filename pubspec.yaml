@@ -58,6 +58,8 @@ dependencies:
   elegant_notification: ^2.5.1
   image_picker: ^1.1.2
   dio: ^5.8.0+1
+  skeletonizer: ^2.1.0+1
+  shimmer: ^3.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

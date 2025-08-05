@@ -21,11 +21,15 @@ class InitialRoutes {
   static const forgotPin = '/forgot-pin';
   static const forgotPinNew = '/forgot-pin-new';
   static const confirmPinForgot = '/confirm-pin-forgot';
-  static const resetPin = '/reset-pin'; 
+  static const resetPin = '/reset-pin';
 
   // Rute Ubah Nomor Telepon
   static const changePhone = '/change-phone';
   static const confirmChangePhone = '/confirm-change-phone';
+
+  //Verify Pin
+  static const verifyPinForChangePhone = '/verify-pin-change-phone';
+  static const verifyPinForChangePin = '/verify-pin-change-pin';
 
   //Rute New PIN
   static const newPin = '/new-pin';

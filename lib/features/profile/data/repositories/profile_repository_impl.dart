@@ -5,7 +5,6 @@ import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/core/network/network_info.dart';
 import 'package:nusantara_mobile/features/authentication/data/datasources/local_dataSource.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
-// <<< PERBAIKAN: Pastikan UserEntity diimpor dari 'authentication' >>>
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:nusantara_mobile/features/profile/domain/repositories/profile_repository.dart';
@@ -21,7 +20,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required this.localDatasource,
   });
 
-  // <<< PERBAIKAN UTAMA ADA DI SINI >>>
   @override
   Future<Either<Failures, UserEntity>> updateUserProfile(
     UserEntity user,
@@ -42,7 +40,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
           photoFile: photoFile,
           token: token,
         );
-        return Right(result as UserEntity);
+        // Casting dari UserModel ke UserEntity
+        return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on AuthException catch (e) {
@@ -73,7 +72,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
-  // <<< BARU: Implementasi repository untuk konfirmasi PIN baru >>>
   @override
   Future<Either<Failures, UserEntity>> confirmNewPin(String confirmPin) async {
     if (await networkInfo.isConnected) {
@@ -114,7 +112,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
-  // <<< BARU: Implementasi repository untuk verifikasi OTP ganti nomor telepon >>>
   @override
   Future<Either<Failures, void>> verifyChangePhone({
     required String phone,
@@ -140,11 +137,32 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<Either<Failures, void>> verifyPin(String pin) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final token = await localDatasource.getAuthToken();
+        if (token == null) return const Left(AuthFailure('Session expired.'));
+
+        await profileRemoteDataSource.verifyPin(pin: pin, token: token);
+        return const Right(null);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No Internet Connection'));
+    }
+  }
+
+  @override
   Future<Either<Failures, void>> logoutUser() async {
     if (await networkInfo.isConnected) {
       try {
         final token = await localDatasource.getAuthToken();
-        await profileRemoteDataSource.logoutUser(token!);
+        if (token == null) {
+          // Jika token sudah tidak ada, anggap logout sudah berhasil
+          return const Right(null);
+        }
+        await profileRemoteDataSource.logoutUser(token);
         await localDatasource.clearAuthToken();
         return const Right(null);
       } catch (e) {

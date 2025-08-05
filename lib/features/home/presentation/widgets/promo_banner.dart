@@ -21,7 +21,9 @@ class _PromoBannerState extends State<PromoBanner> {
     if (widget.promoImages.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
         if (!mounted) return;
-        int nextPage = _currentPage < widget.promoImages.length - 1 ? _currentPage + 1 : 0;
+        int nextPage = _currentPage < widget.promoImages.length - 1
+            ? _currentPage + 1
+            : 0;
         _pageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 350),
@@ -40,27 +42,31 @@ class _PromoBannerState extends State<PromoBanner> {
 
   @override
   Widget build(BuildContext context) {
-    // Jika tidak ada promo, jangan tampilkan apa-apa
     if (widget.promoImages.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
-          SizedBox(
-            height: 150,
+          // --- PERUBAHAN DARI SIZEDBOX KE ASPECTRATIO ---
+          AspectRatio(
+            aspectRatio: 16 / 6, 
             child: PageView.builder(
               controller: _pageController,
               itemCount: widget.promoImages.length,
               onPageChanged: (int page) => setState(() => _currentPage = page),
               itemBuilder: (context, index) => ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.asset(widget.promoImages[index], fit: BoxFit.cover),
+                child: Image.asset(
+                  widget.promoImages[index],
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
+          // --- AKHIR PERUBAHAN ---
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -72,7 +78,9 @@ class _PromoBannerState extends State<PromoBanner> {
                 height: 8,
                 width: _currentPage == index ? 24 : 8,
                 decoration: BoxDecoration(
-                  color: _currentPage == index ? Colors.orange : Colors.grey.shade400,
+                  color: _currentPage == index
+                      ? Colors.orange
+                      : Colors.grey.shade400,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

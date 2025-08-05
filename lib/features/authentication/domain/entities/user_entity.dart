@@ -27,7 +27,7 @@ class UserEntity extends Equatable {
     required this.status,
     this.token,
   });
- UserEntity copyWith({
+  UserEntity copyWith({
     String? name,
     String? email,
     String? phone,
@@ -49,6 +49,19 @@ class UserEntity extends Equatable {
       token: token,
     );
   }
+
+  const UserEntity.empty()
+    : id = '',
+      name = '          ', // Spasi agar skeleton memiliki lebar
+      username = '',
+      email = '                    ',
+      phone = '             ',
+      photo = null,
+      gender = 'Laki-laki',
+      dateOfBirth = null,
+      role = const RoleEntity.empty(),
+      status = 0,
+      token = null;
 
   @override
   List<Object?> get props => [

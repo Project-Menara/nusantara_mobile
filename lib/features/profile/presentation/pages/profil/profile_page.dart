@@ -5,8 +5,9 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/user_en
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
-import 'package:nusantara_mobile/features/profile/presentation/widgets/change_pin_confirmation_dialog.dart';
+import 'package:nusantara_mobile/features/profile/presentation/widgets/confirmation_dialog.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,18 +21,13 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     final currentState = context.read<AuthBloc>().state;
-    if (currentState is! AuthLoginSuccess &&
-        currentState is! AuthGetUserSuccess &&
-        currentState is! AuthUpdateSuccess) {
+    if (currentState.user == null && currentState is! AuthGetProfileLoading) {
       context.read<AuthBloc>().add(AuthCheckStatusRequested());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final double headerHeight = 150.0;
-    const double avatarRadius = 60.0;
-
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
@@ -43,79 +39,69 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.grey.shade200,
-        body: RefreshIndicator(
-          onRefresh: () async {
-            context.read<AuthBloc>().add(AuthCheckStatusRequested());
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            final user = authState.user;
+            final bool isLoading = user == null;
+            final displayUser = user ?? const UserEntity.empty();
+
+            // Tidak ada Skeletonizer di sini, kita teruskan `isLoading` ke bawah
+            return RefreshIndicator(
+              onRefresh: isLoading
+                  ? () async {}
+                  : () async {
+                      context.read<AuthBloc>().add(AuthCheckStatusRequested());
+                    },
+              // <<< PERUBAHAN: Kirim `isLoading` ke `_buildProfileContent` >>>
+              child: _buildProfileContent(context, displayUser, isLoading),
+            );
           },
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    SizedBox(height: headerHeight + avatarRadius),
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        if (state is AuthGetProfileLoading || state is AuthInitial) {
-                          return const Padding(
-                            padding: EdgeInsets.only(top: 16.0),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-
-                        UserEntity? user;
-                        if (state is AuthLoginSuccess) {
-                          user = state.user;
-                        } else if (state is AuthGetUserSuccess) {
-                          user = state.user;
-                        } else if (state is AuthUpdateSuccess) {
-                          user = state.user;
-                        }
-
-                        if (user != null) {
-                          return _buildUserInfo(
-                            name: user.name,
-                            email: user.email,
-                          );
-                        }
-
-                        return _buildUserInfo(
-                            name: 'Gagal memuat', email: 'Tarik untuk refresh');
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _buildProfileCard(context),
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-              _buildHeader(headerHeight),
-              BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, state) {
-                  UserEntity? user;
-                  if (state is AuthLoginSuccess) {
-                    user = state.user;
-                  } else if (state is AuthGetUserSuccess) {
-                    user = state.user;
-                  } else if (state is AuthUpdateSuccess) {
-                    user = state.user;
-                  }
-
-                  return _buildProfileAvatar(
-                    headerHeight,
-                    avatarRadius,
-                    user?.photo,
-                  );
-                },
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 
+  // <<< PERUBAHAN: Method ini sekarang menerima `isLoading` >>>
+  Widget _buildProfileContent(
+      BuildContext context, UserEntity user, bool isLoading) {
+    final double headerHeight = 120.0;
+    const double avatarRadius = 60.0;
+
+    return Stack(
+      children: [
+        // Lapisan konten yang bisa di-scroll
+        SingleChildScrollView(
+          physics: isLoading
+              ? const NeverScrollableScrollPhysics()
+              : const AlwaysScrollableScrollPhysics(),
+          child:
+              // <<< PERUBAHAN: Skeletonizer dipindahkan ke sini >>>
+              // Ia hanya membungkus konten dinamis di bawah header
+              Skeletonizer(
+            enabled: isLoading,
+            child: Column(
+              children: [
+                SizedBox(height: headerHeight + avatarRadius),
+                _buildUserInfo(name: user.name, email: user.email),
+                const SizedBox(height: 24),
+                _buildProfileCard(context),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+        ),
+
+        // Lapisan Header dan Avatar (SEKARANG DI LUAR SKELETONIZER)
+        _buildHeader(headerHeight),
+        _buildProfileAvatar(headerHeight, avatarRadius, user.photo),
+        _buildAppBarContent(),
+      ],
+    );
+  }
+
+  // Sisa method helper lainnya tidak ada yang berubah
+  // ...
   Widget _buildHeader(double height) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
@@ -123,19 +109,22 @@ class _ProfilePageState extends State<ProfilePage> {
         height: height,
         width: double.infinity,
         color: Colors.red.shade700,
-        child: const SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(top: 16.0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Text(
-                'Profile',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+      ),
+    );
+  }
+
+  Widget _buildAppBarContent() {
+    return const SafeArea(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Text(
+            'Profile',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -156,8 +145,8 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Align(
         alignment: Alignment.center,
         child: CircleAvatar(
-          radius: avatarRadius + 3,
-          backgroundColor: Colors.white,
+          radius: avatarRadius + 5,
+          backgroundColor: const Color(0xFFF5F5F5),
           child: CircleAvatar(
             radius: avatarRadius,
             backgroundColor: Colors.grey.shade300,
@@ -223,52 +212,22 @@ class _ProfilePageState extends State<ProfilePage> {
             title: 'Settings',
             onTap: () {},
           ),
-          _buildListTile(
-            icon: Icons.confirmation_number_outlined,
-            title: 'My Voucher',
-            onTap: () {},
-          ),
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(
             padding: EdgeInsets.only(left: 24, bottom: 8),
-            child: Text('Support', style: TextStyle(color: Colors.grey)),
-          ),
-          _buildListTile(
-            icon: Icons.support_agent_outlined,
-            title: 'Layanan Pelanggan',
-            onTap: () {},
-          ),
-          _buildListTile(
-            icon: Icons.delete_outline,
-            title: 'Request Account Deletion',
-            onTap: () {},
+            child: Text('Keamanan & Bantuan', style: TextStyle(color: Colors.grey)),
           ),
           _buildListTile(
             icon: Icons.lock_outline,
             title: 'Ubah Pin',
             onTap: () {
-              showChangePinConfirmationDialog(context);
+              context.push(InitialRoutes.verifyPinForChangePin);
             },
           ),
-          // <<< BARU: ListTile untuk Ubah Nomor Telepon >>>
           _buildListTile(
-            icon: Icons.phone_iphone_rounded,
-            title: 'Ubah Nomor Telepon',
-            onTap: () async {
-              final confirmed = await showConfirmationDialog(
-                context: context,
-                title: 'Ubah Nomor Telepon',
-                content:
-                    'Anda akan diarahkan ke halaman untuk mengubah nomor telepon. Aksi ini memerlukan verifikasi OTP.',
-                confirmText: 'Lanjutkan',
-                confirmButtonColor: Colors.orange.shade700,
-                icon: Icons.phonelink_setup_rounded,
-              );
-
-              if (confirmed == true && context.mounted) {
-                context.push(InitialRoutes.changePhone);
-              }
-            },
+            icon: Icons.support_agent_outlined,
+            title: 'Layanan Pelanggan',
+            onTap: () {},
           ),
           const SizedBox(height: 16),
           Padding(

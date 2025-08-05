@@ -16,4 +16,7 @@ abstract class ProfileRepository {
     required String phone,
     required String code,
   });
+  
+  // <<< BARU: Tambahkan definisi untuk verifyPin >>>
+  Future<Either<Failures, void>> verifyPin(String pin);
 }

@@ -24,4 +24,5 @@ abstract class ProfileRemoteDataSource {
     required String code,
     required String token,
   });
+  Future<void> verifyPin({required String pin, required String token});
 }

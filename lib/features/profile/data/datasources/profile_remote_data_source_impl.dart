@@ -19,43 +19,48 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String token,
   }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/update-profile');
-    var request = http.MultipartRequest(
-      'PUT',
-      uri,
-    ); // Disarankan POST untuk method spoofing
+    try {
+      var request = http.MultipartRequest('PUT', uri);
 
-    request.headers['Authorization'] = 'Bearer $token';
-    request.headers['Accept'] = 'application/json';
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
 
-    request.fields['_method'] = 'PUT';
-    request.fields['name'] = user.name;
-    request.fields['gender'] = user.gender;
+      request.fields['_method'] = 'PUT';
+      request.fields['name'] = user.name;
+      request.fields['gender'] = user.gender;
 
-    if (user.dateOfBirth != null) {
-      request.fields['date_of_birth'] = DateFormat(
-        'yyyy-MM-dd',
-      ).format(user.dateOfBirth!);
-    }
+      if (user.dateOfBirth != null) {
+        request.fields['date_of_birth'] = DateFormat(
+          'yyyy-MM-dd',
+        ).format(user.dateOfBirth!);
+      }
 
-    if (photoFile != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('photo', photoFile.path),
+      if (photoFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo', photoFile.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final jsonResponse = json.decode(response.body);
+
+      print(
+        "API Response (Update Profile): ${response.statusCode} -> $jsonResponse",
       );
-    }
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    final jsonResponse = json.decode(response.body);
-
-    print(
-      "API Response (Update Profile): ${response.statusCode} -> $jsonResponse",
-    );
-
-    if (response.statusCode == 200) {
-      return UserModel.fromJson(jsonResponse['data']);
-    } else {
-      throw ServerException(
-        jsonResponse['message'] ?? 'Failed to update profile',
+      if (response.statusCode == 200) {
+        final data = jsonResponse['data'];
+        return UserModel.fromJson(data);
+      } else {
+        throw ServerException(
+          jsonResponse['message'] ?? 'Failed to update profile',
+        );
+      }
+    } catch (e) {
+      print('Error updating user profile: $e');
+      throw const ServerException(
+        'Failed to update profile due to server error.',
       );
     }
   }
@@ -66,25 +71,31 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String token,
   }) async {
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/new-pin-customer');
-    final response = await client.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      },
-      body: json.encode({'new_pin': newPin}),
-    );
-
-    final jsonResponse = json.decode(response.body);
-    print(
-      "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
-    );
-
-    if (response.statusCode != 200) {
-      throw ServerException(
-        jsonResponse['message'] ?? 'Failed to save new PIN',
+    try {
+      final response = await client.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'new_pin': newPin}),
       );
+
+      final jsonResponse = json.decode(response.body);
+      print(
+        "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw ServerException(
+          jsonResponse['message'] ?? 'Failed to save new PIN',
+        );
+      }
+    } catch (e) {
+      throw ServerException('Error creating new PIN: $e');
     }
   }
 
@@ -96,27 +107,31 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final uri = Uri.parse(
       '${ApiConstant.baseUrl}/customer/confirm-new-pin-customer',
     );
-    final response = await client.put(
-      // Disarankan menggunakan POST
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      },
-      body: json.encode({'confirm_pin': confirmPin}),
-    );
-
-    final jsonResponse = json.decode(response.body);
-    print(
-      "API Response (Confirm New PIN): ${response.statusCode} -> $jsonResponse",
-    );
-    if (response.statusCode == 200) {
-      return UserModel.fromJson(jsonResponse['data']);
-    } else {
-      throw ServerException(
-        jsonResponse['message'] ?? 'Failed to confirm new PIN',
+    try {
+      final response = await client.put(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'confirm_pin': confirmPin}),
       );
+
+      final jsonResponse = json.decode(response.body);
+      print(
+        "API Response (Confirm New PIN): ${response.statusCode} -> $jsonResponse",
+      );
+      if (response.statusCode == 200) {
+        final data = jsonResponse['data'];
+        return UserModel.fromJson(data);
+      } else {
+        throw ServerException(
+          jsonResponse['message'] ?? 'Failed to confirm new PIN',
+        );
+      }
+    } catch (e) {
+      throw ServerException('Error Confirming New PIN : $e');
     }
   }
 
@@ -136,13 +151,14 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       body: json.encode({'new_phone': newPhone}),
     );
 
-    // <<< PERBAIKAN: Tambahkan print response >>>
     final jsonResponse = json.decode(response.body);
     print(
       "API Response (Request Change Phone): ${response.statusCode} -> $jsonResponse",
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      return;
+    } else {
       throw ServerException(jsonResponse['message'] ?? 'Failed to request OTP');
     }
   }
@@ -166,14 +182,48 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       body: json.encode({'phone': phone, 'code': code}),
     );
 
-    // <<< PERBAIKAN: Tambahkan print response >>>
     final jsonResponse = json.decode(response.body);
     print(
       "API Response (Verify Change Phone): ${response.statusCode} -> $jsonResponse",
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      return;
+    } else {
       throw ServerException(jsonResponse['message'] ?? 'Failed to verify OTP');
+    }
+  }
+
+  @override
+  Future<void> verifyPin({required String pin, required String token}) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/customer/verify-pin');
+    try {
+      final response = await client.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'pin': pin}),
+      );
+
+      final jsonResponse = json.decode(response.body);
+      print(
+        "API Response (Verify PIN): ${response.statusCode} -> $jsonResponse",
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw ServerException(
+          jsonResponse['message'] ?? 'Failed to verify PIN.',
+        );
+      }
+    } catch (e) {
+      print('Error verifying PIN: $e');
+      throw ServerException('An error occurred while verifying the PIN: $e');
     }
   }
 
@@ -188,7 +238,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       },
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      print('Successfully logged out from server.');
+    } else {
       print('Failed to logout from server: ${response.body}');
     }
   }

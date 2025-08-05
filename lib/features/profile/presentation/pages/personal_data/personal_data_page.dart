@@ -5,23 +5,22 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nusantara_mobile/core/helper/flashbar_helper.dart';
-import 'package:nusantara_mobile/core/injection_container.dart';
 import 'package:nusantara_mobile/features/authentication/domain/entities/user_entity.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart'
     as auth_event;
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
+import 'package:nusantara_mobile/features/profile/presentation/widgets/confirmation_dialog.dart';
+import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class PersonalDataPage extends StatelessWidget {
   const PersonalDataPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<ProfileBloc>(),
-      child: const PersonalDataView(),
-    );
+    return const PersonalDataView();
   }
 }
 
@@ -43,18 +42,11 @@ class _PersonalDataViewState extends State<PersonalDataView> {
   bool _isEditMode = false;
   File? _photoFile;
 
-  UserEntity? get currentUser {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is AuthLoginSuccess) return authState.user;
-    if (authState is AuthGetUserSuccess) return authState.user;
-    if (authState is AuthUpdateSuccess) return authState.user;
-    return null;
-  }
-
   @override
   void initState() {
     super.initState();
-    _populateControllers(currentUser);
+    final initialUser = context.read<AuthBloc>().state.user;
+    _populateControllers(initialUser);
   }
 
   @override
@@ -67,7 +59,7 @@ class _PersonalDataViewState extends State<PersonalDataView> {
   }
 
   void _populateControllers(UserEntity? user) {
-    if (user != null) {
+    if (user != null && user.id != 0) {
       _fullNameController.text = user.name;
       _emailController.text = user.email;
       _phoneController.text = user.phone;
@@ -92,12 +84,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     } catch (e) {
       initialDate = DateTime.now();
     }
-
     final lastDate = DateTime.now();
     if (initialDate.isAfter(lastDate)) {
       initialDate = lastDate;
     }
-
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -125,9 +115,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     }
   }
 
-  void _onSaveChanges() {
+  void _onSaveChanges(UserEntity? currentUser) {
     if (currentUser == null) return;
-
     DateTime? newDob;
     if (_dobController.text.isNotEmpty) {
       try {
@@ -140,113 +129,210 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         return;
       }
     }
-
-    final updatedData = currentUser!.copyWith(
+    final updatedData = currentUser.copyWith(
       name: _fullNameController.text,
       gender: _selectedGender,
       dateOfBirth: newDob,
     );
-
     context.read<ProfileBloc>().add(
           UpdateProfileButtonPressed(user: updatedData, photoFile: _photoFile),
         );
   }
 
+  void _startChangePhoneFlow() async {
+    final confirmed = await showConfirmationDialog(
+      context: context,
+      title: 'Ubah Nomor Telepon',
+      content:
+          'Anda akan memulai proses untuk mengubah nomor telepon Anda. Aksi ini memerlukan verifikasi PIN.',
+      confirmText: 'Lanjutkan',
+      confirmButtonColor: Colors.orange.shade700,
+      icon: Icons.phonelink_setup_rounded,
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.push(InitialRoutes.verifyPinForChangePhone);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70.0),
-        child: AppBar(
-          backgroundColor: Colors.red.shade700,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => context.pop(),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final user = authState.user;
+        final bool isLoading = user == null;
+        final displayUser = user ?? const UserEntity.empty();
+
+        return Scaffold(
+          // <<< PERBAIKAN: Ganti warna background agar gap terlihat >>>
+          backgroundColor: const Color(0xFFF0F2F5), // Warna abu-abu terang
+          appBar: _buildAppBar(), // <<< PERBAIKAN: Gunakan AppBar biasa >>>
+          body: Skeletonizer(
+            enabled: isLoading,
+            child: MultiBlocListener(
+              listeners: [
+                BlocListener<ProfileBloc, ProfileState>(
+                  listener: (context, state) {
+                    if (state is ProfileUpdateSuccess) {
+                      context
+                          .read<AuthBloc>()
+                          .add(auth_event.AuthUserUpdated(state.updatedUser));
+                      showAppFlashbar(context,
+                          title: "Sukses",
+                          message: "Profil berhasil diperbarui.",
+                          isSuccess: true);
+                      setState(() {
+                        _isEditMode = false;
+                        _photoFile = null;
+                      });
+                    } else if (state is ProfileUpdateFailure) {
+                      showAppFlashbar(context,
+                          title: "Gagal",
+                          message: state.message,
+                          isSuccess: false);
+                    }
+                  },
+                ),
+                BlocListener<AuthBloc, AuthState>(
+                  listener: (context, state) {
+                    if (state is AuthUpdateSuccess) {
+                      _populateControllers(state.user);
+                    }
+                  },
+                ),
+              ],
+              child: _buildContent(context, displayUser),
+            ),
           ),
-          title: const Text('Profile Settings',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          bottomNavigationBar: Skeletonizer(
+            enabled: isLoading,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                  24, 8, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+              child: _buildActionButtons(displayUser),
+            ),
           ),
-        ),
-      ),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<ProfileBloc, ProfileState>(
-            listener: (context, state) {
-              if (state is ProfileUpdateSuccess) {
-                // <<< PERBAIKAN 1: Hapus `Navigator.pop()` karena dialog tidak ada lagi >>>
-                context
-                    .read<AuthBloc>()
-                    .add(auth_event.AuthUserUpdated(state.updatedUser));
-                showAppFlashbar(context,
-                    title: "Sukses",
-                    message: "Profil berhasil diperbarui.",
-                    isSuccess: true);
-                setState(() {
-                  _isEditMode = false;
-                  _photoFile = null;
-                });
-              } else if (state is ProfileUpdateFailure) {
-                // <<< PERBAIKAN 2: Hapus `Navigator.pop()` >>>
-                showAppFlashbar(context,
-                    title: "Gagal",
-                    message: state.message,
-                    isSuccess: false);
-              } 
-              // <<< PERBAIKAN 3: Hapus seluruh blok `else if (state is ProfileUpdateLoading)` >>>
-            },
-          ),
-          BlocListener<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthUpdateSuccess) {
-                _populateControllers(state.user);
-              }
-            },
-          ),
+        );
+      },
+    );
+  }
+
+  // <<< PERBAIKAN TOTAL: Struktur layout diubah total menjadi Column sederhana >>>
+  Widget _buildContent(BuildContext context, UserEntity user) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          _buildProfileAvatar(user),
+          const SizedBox(height: 24),
+          _buildForm(),
         ],
-        child: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, authState) {
-            if (authState is! AuthLoginSuccess &&
-                authState is! AuthGetUserSuccess &&
-                authState is! AuthUpdateSuccess) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final UserEntity user;
-            if (authState is AuthLoginSuccess) {
-              user = authState.user;
-            } else if (authState is AuthGetUserSuccess) {
-              user = authState.user;
-            } else {
-              user = (authState as AuthUpdateSuccess).user;
-            }
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 120.0),
-              child: Column(
-                children: [
-                  _buildProfileAvatar(user.photo),
-                  const SizedBox(height: 32),
-                  _buildForm(),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-            24, 8, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: _buildActionButtons(),
       ),
     );
   }
 
+  // <<< PERBAIKAN: AppBar dibuat terpisah dan standar >>>
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.red.shade700,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      title: const Text(
+        'Profile Settings',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(20.0),
+        child: Container(),
+      ),
+    );
+  }
+  
+  // <<< PERBAIKAN: Avatar tidak lagi di dalam Stack/Positioned >>>
+  Widget _buildProfileAvatar(UserEntity user) {
+    const double avatarRadius = 60.0;
+    final photoUrl = user.photo;
+
+    Widget avatarChild;
+    if (_photoFile != null) {
+      avatarChild = CircleAvatar(
+        radius: avatarRadius,
+        backgroundImage: FileImage(_photoFile!),
+      );
+    } else if (photoUrl != null && photoUrl.isNotEmpty) {
+      avatarChild = CircleAvatar(
+        radius: avatarRadius,
+        backgroundImage: NetworkImage(photoUrl),
+      );
+    } else {
+      avatarChild = _buildInitialsAvatar(user.name);
+    }
+
+    return GestureDetector(
+      onTap: _pickImage,
+      child: SizedBox(
+        width: (avatarRadius * 2) + 10,
+        height: (avatarRadius * 2) + 10,
+        child: Stack(
+          children: [
+            // Border putih di sekeliling avatar
+            Center(
+              child: CircleAvatar(
+                radius: avatarRadius + 3,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                child: avatarChild,
+              ),
+            ),
+            if (_isEditMode)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.orange,
+                    child: Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitialsAvatar(String fullName) {
+    String getInitials(String name) {
+      if (name.trim().isEmpty) return '?';
+      List<String> names = name.trim().split(' ');
+      String initials = names[0].isNotEmpty ? names[0][0] : '';
+      if (names.length > 1 && names.last.isNotEmpty) {
+        initials += names.last[0];
+      }
+      return initials.toUpperCase();
+    }
+
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Colors.orange.shade700,
+      child: Text(
+        getInitials(fullName),
+        style: const TextStyle(
+          fontSize: 40,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Sisa kode di bawah ini tidak ada perubahan
   Widget _buildForm() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -255,8 +341,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
+              color: Colors.grey.withOpacity(0.05),
+              spreadRadius: 2,
               blurRadius: 10)
         ],
       ),
@@ -281,6 +367,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
             label: 'Phone',
             controller: _phoneController,
             readOnly: true,
+            onTap: _isEditMode ? _startChangePhoneFlow : null,
+            suffixIcon: _isEditMode
+                ? const Icon(Icons.chevron_right, color: Colors.grey)
+                : null,
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -297,6 +387,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     required String label,
     required TextEditingController controller,
     bool readOnly = false,
+    VoidCallback? onTap,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,10 +405,12 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         TextFormField(
           controller: controller,
           readOnly: readOnly,
+          onTap: onTap,
           style: const TextStyle(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             filled: true,
             fillColor: readOnly ? const Color(0xFFEEEEEE) : Colors.white,
+            suffixIcon: suffixIcon,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             border: OutlineInputBorder(
@@ -329,15 +423,17 @@ class _PersonalDataViewState extends State<PersonalDataView> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+              borderSide: BorderSide(
+                  color: onTap != null ? Colors.orange : Colors.orange,
+                  width: 1.5),
             ),
           ),
         ),
       ],
     );
   }
-
-  Widget _buildDateField({
+  
+    Widget _buildDateField({
     required String label,
     required TextEditingController controller,
     VoidCallback? onTap,
@@ -420,7 +516,7 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(UserEntity? currentUser) {
     const buttonStyle =
         TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold);
     return BlocBuilder<ProfileBloc, ProfileState>(
@@ -452,7 +548,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _onSaveChanges,
+                  onPressed:
+                      isLoading ? null : () => _onSaveChanges(currentUser),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -486,46 +583,6 @@ class _PersonalDataViewState extends State<PersonalDataView> {
           );
         }
       },
-    );
-  }
-
-  Widget _buildProfileAvatar(String? photoUrl) {
-    const double avatarRadius = 50;
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircleAvatar(
-            radius: avatarRadius + 4,
-            backgroundColor: const Color(0xFFF5F5F5),
-            child: CircleAvatar(
-              radius: avatarRadius,
-              backgroundImage: (_photoFile != null
-                  ? FileImage(_photoFile!)
-                  : (photoUrl != null && photoUrl.isNotEmpty)
-                      ? NetworkImage(photoUrl)
-                      : const NetworkImage(
-                          'https://i.pravatar.cc/150?img=56')) as ImageProvider,
-            ),
-          ),
-          if (_isEditMode)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: const CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white,
-                child: CircleAvatar(
-                  radius: 15,
-                  backgroundColor: Colors.orange,
-                  child:
-                      Icon(Icons.camera_alt, size: 16, color: Colors.white),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

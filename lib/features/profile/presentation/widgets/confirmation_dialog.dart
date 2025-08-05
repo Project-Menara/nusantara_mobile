@@ -126,10 +126,6 @@ class ConfirmationDialog extends StatelessWidget {
   }
 }
 
-//===========================================================================
-// HELPER SPESIFIK UNTUK UBAH PIN
-//===========================================================================
-
 /// Menampilkan dialog konfirmasi khusus untuk ubah PIN.
 Future<void> showChangePinConfirmationDialog(BuildContext context) async {
   final confirmed = await showConfirmationDialog(
@@ -143,6 +139,6 @@ Future<void> showChangePinConfirmationDialog(BuildContext context) async {
   );
 
   if (confirmed == true && context.mounted) {
-    context.push(InitialRoutes.newPin);
+    context.push(InitialRoutes.verifyPinForChangePin);
   }
 }
