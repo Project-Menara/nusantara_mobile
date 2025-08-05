@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nusantara_mobile/core/constant/color_constant.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
 import '../bloc/home_bloc.dart';
 import '../widgets/promo_banner.dart';
 import '../widgets/category_icons.dart';
@@ -24,6 +28,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Panggil data saat pertama kali halaman dibuat
     context.read<HomeBloc>().add(FetchHomeData());
+    context.read<BannerBloc>().add(GetAllBannerEvent());
 
     // Tambahkan listener ke controller
     _scrollController.addListener(_scrollListener);
@@ -35,6 +40,10 @@ class _HomePageState extends State<HomePage> {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    context.read<BannerBloc>().add(GetAllBannerEvent());
   }
 
   // PERUBAHAN 3: Fungsi yang akan dipanggil setiap kali ada scroll
@@ -67,7 +76,10 @@ class _HomePageState extends State<HomePage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is HomeLoaded) {
-            return _buildContentWithSlivers(context, state);
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: _buildContentWithSlivers(context, state),
+            );
           }
           if (state is HomeError) {
             return Center(child: Text('Gagal memuat data: ${state.message}'));
@@ -90,10 +102,29 @@ class _HomePageState extends State<HomePage> {
       controller: _scrollController,
       slivers: [
         _buildSliverHeader(),
-        SliverToBoxAdapter(
-          child: PromoBanner(
-            promoImages: state.promos.map((e) => e.imageUrl).toList(),
-          ),
+        BlocBuilder<BannerBloc, BannerState>(
+          builder: (context, state) {
+            if (state is BannerAllLoading) {
+              return const SliverToBoxAdapter(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: ColorConstant.whiteColor,
+                  ),
+                ),
+              );
+            } else if (state is BannerAllLoaded) {
+              return SliverToBoxAdapter(
+                child: PromoBanner(banners: state.banners),
+              );
+            } else if (state is BannerAllError) {
+              return Text(
+                state.message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
         const SliverToBoxAdapter(child: CategoryIcons()),
         const SliverToBoxAdapter(

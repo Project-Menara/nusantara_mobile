@@ -5,6 +5,12 @@ import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_
 import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code/resend_code_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_confirm_new_pin_forgot_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_new_pin_forgot_usecase.dart';
+import 'package:nusantara_mobile/features/home/data/dataSource/banner_remote_dataSource.dart';
+import 'package:nusantara_mobile/features/home/data/repositories/banner_repository_impl.dart';
+import 'package:nusantara_mobile/features/home/domain/repositories/banner_repository.dart';
+import 'package:nusantara_mobile/features/home/domain/usecases/get_all_banner_usecase.dart';
+import 'package:nusantara_mobile/features/home/domain/usecases/get_banner_by_id_usecase.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
 import 'package:nusantara_mobile/features/profile/domain/usecases/confirm_new_pin_usecase.dart';
 import 'package:nusantara_mobile/features/profile/domain/usecases/create_new_pin_usecase.dart';
 import 'package:nusantara_mobile/features/profile/domain/usecases/update_user_profile_usecase.dart';
@@ -99,6 +105,10 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerFactory(
+    () => BannerBloc(getAllBannerUsecase: sl(), getBannerByIdUsecase: sl()),
+  );
+
   // UseCases
   sl.registerLazySingleton(() => GetLoggedInUserUseCase(sl()));
   sl.registerLazySingleton(() => CheckPhoneUseCase(sl()));
@@ -119,6 +129,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => RequestChangePhoneUseCase(sl()));
   sl.registerLazySingleton(() => VerifyChangePhoneUseCase(sl()));
   sl.registerLazySingleton(() => ValidateForgotPinTokenUseCase(sl()));
+  sl.registerLazySingleton(() => GetAllBannerUsecase(sl()));
+  sl.registerLazySingleton(() => GetBannerByIdUsecase(sl()));
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -135,6 +147,9 @@ Future<void> init() async {
       networkInfo: sl(),
     ),
   );
+  sl.registerLazySingleton<BannerRepository>(
+    () => BannerRepositoryImpl(bannerRemoteDatasource: sl(), networkInfo: sl()),
+  );
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
@@ -142,6 +157,10 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(sl()),
   );
+  sl.registerLazySingleton<BannerRemoteDatasource>(
+    () => BannerRemoteDatasourceImpl(client: sl()),
+  );
+
   sl.registerLazySingleton<LocalDatasource>(() => LocalDatasourceImpl(sl()));
 
   // CORE & EXTERNAL

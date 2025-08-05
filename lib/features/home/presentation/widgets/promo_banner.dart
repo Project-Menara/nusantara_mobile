@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:nusantara_mobile/features/home/domain/entities/banner_entity.dart';
 
 class PromoBanner extends StatefulWidget {
-  final List<String> promoImages;
-  const PromoBanner({super.key, required this.promoImages});
+  final List<BannerEntity> banners;
+  const PromoBanner({super.key, required this.banners});
 
   @override
   State<PromoBanner> createState() => _PromoBannerState();
@@ -18,10 +19,10 @@ class _PromoBannerState extends State<PromoBanner> {
   void initState() {
     super.initState();
     // Hanya mulai timer jika ada lebih dari 1 gambar
-    if (widget.promoImages.length > 1) {
+    if (widget.banners.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
         if (!mounted) return;
-        int nextPage = _currentPage < widget.promoImages.length - 1
+        int nextPage = _currentPage < widget.banners.length - 1
             ? _currentPage + 1
             : 0;
         _pageController.animateToPage(
@@ -42,7 +43,7 @@ class _PromoBannerState extends State<PromoBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.promoImages.isEmpty) {
+    if (widget.banners.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -52,18 +53,18 @@ class _PromoBannerState extends State<PromoBanner> {
         children: [
           // --- PERUBAHAN DARI SIZEDBOX KE ASPECTRATIO ---
           AspectRatio(
-            aspectRatio: 16 / 6, 
+            aspectRatio: 16 / 6,
             child: PageView.builder(
               controller: _pageController,
-              itemCount: widget.promoImages.length,
+              itemCount: widget.banners.length,
               onPageChanged: (int page) => setState(() => _currentPage = page),
-              itemBuilder: (context, index) => ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  widget.promoImages[index],
-                  fit: BoxFit.cover,
-                ),
-              ),
+              itemBuilder: (context, index) {
+                final banner = widget.banners[index];
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(banner.photo, fit: BoxFit.cover),
+                );
+              },
             ),
           ),
           // --- AKHIR PERUBAHAN ---
@@ -71,7 +72,7 @@ class _PromoBannerState extends State<PromoBanner> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              widget.promoImages.length,
+              widget.banners.length,
               (index) => AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(right: 5),
