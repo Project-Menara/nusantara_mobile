@@ -1,23 +1,22 @@
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
 import 'package:nusantara_mobile/core/constant/api_constant.dart';
 import 'package:nusantara_mobile/core/error/exceptions.dart';
-import 'package:nusantara_mobile/features/home/data/models/banner_model.dart';
-import 'package:http/http.dart' as http;
+import 'package:nusantara_mobile/features/home/data/models/category_model.dart';
 
-abstract class BannerRemoteDatasource {
-  Future<List<BannerModel>> getBanners();
-  Future<BannerModel> getBannerById(String id);
+abstract class CategoryRemoteDatasource {
+  Future<List<CategoryModel>> getAllCategories();
+  Future<CategoryModel> getCategoryById(String id);
 }
 
-class BannerRemoteDatasourceImpl implements BannerRemoteDatasource {
+class CategoryRemoteDatasourceImpl implements CategoryRemoteDatasource {
   final http.Client client;
 
-  BannerRemoteDatasourceImpl({required this.client});
+  CategoryRemoteDatasourceImpl({required this.client});
 
   @override
-  Future<List<BannerModel>> getBanners() async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/banner/customer');
+  Future<List<CategoryModel>> getAllCategories() async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/type-product/customer');
     try {
       final response = await client.get(
         uri,
@@ -25,17 +24,17 @@ class BannerRemoteDatasourceImpl implements BannerRemoteDatasource {
       );
 
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data banners: $jsonResponse");
+      print("data categories: $jsonResponse");
 
       if (response.statusCode == 200) {
         try {
           final List<dynamic> data = jsonResponse['data'];
-          return data.map((json) => BannerModel.fromJson(json)).toList();
+          return data.map((json) => CategoryModel.fromJson(json)).toList();
         } catch (e) {
           throw ServerException(e.toString());
         }
       } else {
-        throw const ServerException('Failed to get banners');
+        throw const ServerException('Failed to get categories');
       }
     } catch (e) {
       throw ServerException(e.toString());
@@ -43,25 +42,25 @@ class BannerRemoteDatasourceImpl implements BannerRemoteDatasource {
   }
 
   @override
-  Future<BannerModel> getBannerById(String id) async {
-    final uri = Uri.parse('${ApiConstant.baseUrl}/banner/$id/customer');
+  Future<CategoryModel> getCategoryById(String id) async {
+    final uri = Uri.parse('${ApiConstant.baseUrl}/type-product/$id/customer');
     try {
       final response = await client.get(
         uri,
         headers: {'Content-Type': 'application/json'},
       );
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data banners by id: $jsonResponse");
+      print("data categories by id: $jsonResponse");
 
       if (response.statusCode == 200) {
         try {
-          final data = BannerModel.fromJson(jsonResponse['data']);
+          final data = CategoryModel.fromJson(jsonResponse['data']);
           return data;
         } catch (e) {
           throw ServerException(e.toString());
         }
       } else {
-        throw const ServerException('Failed to get banner detail');
+        throw const ServerException('Failed to get category detail');
       }
     } catch (e) {
       throw ServerException(e.toString());

@@ -7,6 +7,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/o
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
 // --- TAMBAHKAN IMPORT UNTUK BLOC YANG BARU ---
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
@@ -39,6 +40,9 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => di.sl<ChangePhoneBloc>()),
         BlocProvider(
           create: (_) => di.sl<BannerBloc>()..add(GetAllBannerEvent()),
+        ),
+        BlocProvider(
+          create: (_) => di.sl<CategoryBloc>()..add(GetAllCategoryEvent()),
         ),
       ],
       child: MaterialApp.router(

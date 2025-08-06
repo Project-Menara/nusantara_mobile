@@ -4,6 +4,7 @@ import 'package:nusantara_mobile/core/constant/color_constant.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
 import '../bloc/home_bloc.dart';
 import '../widgets/promo_banner.dart';
 import '../widgets/category_icons.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     // Panggil data saat pertama kali halaman dibuat
     context.read<HomeBloc>().add(FetchHomeData());
     context.read<BannerBloc>().add(GetAllBannerEvent());
+    context.read<CategoryBloc>().add(GetAllCategoryEvent());
 
     // Tambahkan listener ke controller
     _scrollController.addListener(_scrollListener);
@@ -44,6 +46,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _onRefresh() async {
     context.read<BannerBloc>().add(GetAllBannerEvent());
+    context.read<CategoryBloc>().add(GetAllCategoryEvent());
   }
 
   // PERUBAHAN 3: Fungsi yang akan dipanggil setiap kali ada scroll

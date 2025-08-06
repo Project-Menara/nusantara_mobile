@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/core/error/map_failure_toMessage.dart';
 import 'package:nusantara_mobile/core/usecase/usecase.dart';
-import 'package:nusantara_mobile/features/home/domain/usecases/get_all_banner_usecase.dart';
-import 'package:nusantara_mobile/features/home/domain/usecases/get_banner_by_id_usecase.dart';
+import 'package:nusantara_mobile/features/home/domain/usecases/banner/get_all_banner_usecase.dart';
+import 'package:nusantara_mobile/features/home/domain/usecases/banner/get_banner_by_id_usecase.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
 
