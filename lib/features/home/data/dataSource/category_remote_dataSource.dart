@@ -24,7 +24,7 @@ class CategoryRemoteDatasourceImpl implements CategoryRemoteDatasource {
       );
 
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data categories: $jsonResponse");
+      // print("data categories: $jsonResponse");
 
       if (response.statusCode == 200) {
         try {

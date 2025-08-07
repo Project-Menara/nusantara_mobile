@@ -101,7 +101,6 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildContentWithSlivers(BuildContext context, HomeLoaded state) {
     return CustomScrollView(
-      // PERUBAHAN 4: Hubungkan controller ke CustomScrollView
       controller: _scrollController,
       slivers: [
         _buildSliverHeader(),
@@ -117,16 +116,24 @@ class _HomePageState extends State<HomePage> {
               );
             } else if (state is BannerAllLoaded) {
               return SliverToBoxAdapter(
+                // Sudah benar
                 child: PromoBanner(banners: state.banners),
               );
             } else if (state is BannerAllError) {
-              return Text(
-                state.message,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
+              // PERBAIKAN: Bungkus Text dengan SliverToBoxAdapter
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    state.message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
               );
             }
-            return const SizedBox.shrink();
+            // PERBAIKAN: Bungkus SizedBox.shrink dengan SliverToBoxAdapter
+            return const SliverToBoxAdapter(child: SizedBox.shrink());
           },
         ),
         const SliverToBoxAdapter(child: CategoryIcons()),
@@ -159,79 +166,84 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+  // file: home_page.dart
+// file: home_page.dart
 
-  Widget _buildSliverHeader() {
-    // PERUBAHAN 5: Tentukan warna berdasarkan status scroll
-    final ColorTween colorTween = ColorTween(
-      begin: Colors.orange,
-      end: Colors.white,
-    );
-    final Color textColor = _isScrolled ? Colors.black87 : Colors.white;
-    final Color iconColor = _isScrolled ? Colors.orange : Colors.white;
+Widget _buildSliverHeader() {
+  // DIHAPUS: Variabel warna kondisional tidak diperlukan lagi
+  // final Color textColor = _isScrolled ? Colors.black87 : Colors.white;
+  // final Color iconColor = _isScrolled ? Colors.orange : Colors.white;
 
-    return SliverAppBar(
-      automaticallyImplyLeading: false,
-      // Gunakan warna dinamis, defaultnya oranye
-      backgroundColor: _isScrolled ? Colors.white : Colors.orange,
-      elevation: _isScrolled ? 2 : 0, // Beri shadow saat sudah menjadi putih
-      pinned: true,
-      stretch: true,
-      expandedHeight: 200.0,
+  return SliverAppBar(
+    automaticallyImplyLeading: false,
+    // DIUBAH: Atur backgroundColor menjadi oranye secara permanen
+    backgroundColor: Colors.orange,
+    // DIUBAH: Atur elevation ke nilai konstan, atau 0 jika tidak ingin shadow
+    elevation: 2.0,
+    pinned: true,
+    stretch: true,
+    expandedHeight: 200.0,
+    
+    // DIHAPUS: Shape kondisional tidak diperlukan lagi
+    // shape: _isScrolled ? ... : null,
 
-      title: Row(
-        children: [
-          Icon(Icons.location_on, color: iconColor, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            "Pematang Siantar",
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+    title: Row(
+      children: [
+        // DIUBAH: Atur warna ikon menjadi putih secara permanen
+        const Icon(Icons.location_on, color: Colors.white, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          "Pematang Siantar",
+          style: const TextStyle(
+            // DIUBAH: Atur warna teks menjadi putih secara permanen
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.notifications_none, color: textColor),
-          onPressed: () {},
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        stretchModes: const [StretchMode.zoomBackground],
-        background: SafeArea(
+    ),
+    actions: [
+      IconButton(
+        // DIUBAH: Atur warna ikon menjadi putih secara permanen
+        icon: const Icon(Icons.notifications_none, color: Colors.white),
+        onPressed: () {},
+      ),
+    ],
+    flexibleSpace: FlexibleSpaceBar(
+      stretchModes: const [StretchMode.zoomBackground],
+      background: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(top: kToolbarHeight),
           child: Padding(
-            padding: const EdgeInsets.only(top: 5), // Jarak standard app bar
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Expanded(
-                    child: Text(
-                      "Yuk beli oleh-oleh untuk kerabat lewat Nusantara App!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
-                      ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Expanded(
+                  child: Text(
+                    "Yuk beli oleh-oleh untuk kerabat lewat Nusantara App!",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
                     ),
                   ),
-                  SizedBox(
-                    height: 130,
-                    child: Image.asset(
-                      'assets/images/character.png',
-                      fit: BoxFit.contain,
-                    ),
+                ),
+                SizedBox(
+                  height: 110,
+                  child: Image.asset(
+                    'assets/images/character.png',
+                    fit: BoxFit.contain,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

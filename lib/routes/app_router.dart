@@ -14,6 +14,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/pages/logi
 import 'package:nusantara_mobile/features/authentication/presentation/pages/login/pin_login_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/register/register_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/otp/verify_number.dart';
+import 'package:nusantara_mobile/features/home/presentation/pages/banner/banner_detail_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
@@ -199,6 +200,29 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.verifyPinForChangePin,
       name: InitialRoutes.verifyPinForChangePin,
       builder: (context, state) => const VerifyPinForChangePinPage(),
+    ),
+
+    // GoRoute(
+    //   path: InitialRoutes.bannerDetail,
+    //   name: InitialRoutes.bannerDetail,
+    //   builder: (context, state) {
+    //     final bannerId = state.pathParameters['bannerId'];
+    //     if (bannerId == null || bannerId.isEmpty) {
+    //       return const Scaffold(
+    //         body: Center(child: Text('ID Banner tidak valid')),
+    //       );
+    //     }
+    //     return BannerDetailPage(bannerId: bannerId);
+    //   },
+    // ),
+    GoRoute(
+      // Path harus cocok: '/banner-detail' + '/:bannerId'
+      path: '${InitialRoutes.bannerDetail}/:bannerId',
+      builder: (context, state) {
+        // Ambil ID dari parameter URL
+        final bannerId = state.pathParameters['bannerId']!;
+        return BannerDetailPage(bannerId: bannerId);
+      },
     ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---

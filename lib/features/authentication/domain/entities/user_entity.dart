@@ -63,6 +63,23 @@ class UserEntity extends Equatable {
       status = 0,
       token = null;
 
+  UserEntity.fromJson(Map<String, dynamic> json)
+    : id = json['id'] ?? '',
+      name = json['name'] ?? '          ', // Spasi agar skeleton memiliki lebar
+      username = json['username'] ?? '',
+      email = json['email'] ?? '                    ',
+      phone = json['phone'] ?? '             ',
+      gender = json['gender'] ?? 'Laki-laki',
+      dateOfBirth = json['dateOfBirth'] != null
+          ? DateTime.tryParse(json['dateOfBirth'].toString())
+          : null,
+      photo = json['photo'],
+      role = json['role'] != null
+          ? RoleEntity.fromJson(json['role'])
+          : const RoleEntity.empty(),
+      status = json['status'] ?? 0,
+      token = json['token'];
+
   @override
   List<Object?> get props => [
     id,

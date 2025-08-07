@@ -2,6 +2,7 @@
 
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:nusantara_mobile/features/home/presentation/bloc/banner_detail/banner_detail_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -144,6 +145,7 @@ Future<void> init() async {
     () =>
         CategoryBloc(getAllCategoryUsecase: sl(), getCategoryByIdUsecase: sl()),
   );
+  sl.registerFactory(() => BannerDetailBloc(getBannerByIdUseCase: sl()));
 
   // --- Usecases ---
   sl.registerLazySingleton(() => GetAllBannerUsecase(sl()));
@@ -213,6 +215,6 @@ Future<void> init() async {
   // --- Datasources ---
   // <<< PERBAIKAN: Membuat panggilan konsisten dengan menambahkan `client:` >>>
   sl.registerLazySingleton<ProfileRemoteDataSource>(
-    () => ProfileRemoteDataSourceImpl( sl()),
+    () => ProfileRemoteDataSourceImpl(sl()),
   );
 }

@@ -25,7 +25,7 @@ class BannerRemoteDatasourceImpl implements BannerRemoteDatasource {
       );
 
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data banners: $jsonResponse");
+      // print("data banners: $jsonResponse");
 
       if (response.statusCode == 200) {
         try {
@@ -51,7 +51,7 @@ class BannerRemoteDatasourceImpl implements BannerRemoteDatasource {
         headers: {'Content-Type': 'application/json'},
       );
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("data banners by id: $jsonResponse");
+      // print("data banners by id: $jsonResponse");
 
       if (response.statusCode == 200) {
         try {

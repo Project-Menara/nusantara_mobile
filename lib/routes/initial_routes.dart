@@ -35,6 +35,11 @@ class InitialRoutes {
   static const newPin = '/new-pin';
   static const confirmNewPin = '/confirm-new-pin';
 
+  // Rute Detail Banner
+  static const bannerDetail = '/banner-detail';
+
+
+
   //Rute Profile
   static const personalData = '/personal-data';
 

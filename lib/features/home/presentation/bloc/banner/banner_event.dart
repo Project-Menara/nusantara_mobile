@@ -17,3 +17,4 @@ class GetByIdBannerEvent extends BannerEvent {
   @override
   List<Object?> get props => [id];
 }
+
