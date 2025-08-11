@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nusantara_mobile/core/constant/color_constant.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
-import '../bloc/home_bloc.dart';
-import '../widgets/promo_banner.dart';
-import '../widgets/category_icons.dart';
-import '../widgets/event_list.dart';
-import '../widgets/nearby_store_list.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/widgets/category_icons.dart';
+import 'package:nusantara_mobile/features/home/presentation/widgets/event_list.dart';
+import 'package:nusantara_mobile/features/home/presentation/widgets/nearby_store_list.dart';
+import 'package:nusantara_mobile/features/home/presentation/widgets/promo_banner.dart';
 
-// PERUBAHAN 1: Ubah menjadi StatefulWidget
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -20,8 +18,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // PERUBAHAN 2: Buat ScrollController untuk mendeteksi scroll
+  // Controller untuk mendeteksi posisi scroll
   final ScrollController _scrollController = ScrollController();
+  // State untuk menandai apakah header sudah mengecil/di-scroll
   bool _isScrolled = false;
 
   @override
@@ -32,28 +31,30 @@ class _HomePageState extends State<HomePage> {
     context.read<BannerBloc>().add(GetAllBannerEvent());
     context.read<CategoryBloc>().add(GetAllCategoryEvent());
 
-    // Tambahkan listener ke controller
+    // Tambahkan listener untuk mendeteksi perubahan scroll
     _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
-    // Jangan lupa hapus controller saat widget dihancurkan
+    // Hapus listener dan controller untuk mencegah memory leak
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
   }
 
+  // Fungsi untuk refresh halaman
   Future<void> _onRefresh() async {
     context.read<BannerBloc>().add(GetAllBannerEvent());
     context.read<CategoryBloc>().add(GetAllCategoryEvent());
+    // Anda juga bisa menambahkan refresh untuk HomeBloc jika diperlukan
+    // context.read<HomeBloc>().add(FetchHomeData());
   }
 
-  // PERUBAHAN 3: Fungsi yang akan dipanggil setiap kali ada scroll
+  // Fungsi yang akan dipanggil setiap kali ada scroll
   void _scrollListener() {
     // kToolbarHeight adalah tinggi standar AppBar (sekitar 56.0)
-    // Jika posisi scroll sudah melewati tinggi header yang besar dikurangi 2x tinggi AppBar,
-    // maka kita anggap header sudah mengecil.
+    // Jika posisi scroll sudah melewati batas, ubah state _isScrolled
     if (_scrollController.offset > 200 - (kToolbarHeight * 2)) {
       if (!_isScrolled) {
         setState(() {
@@ -99,6 +100,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Widget untuk membangun konten utama dengan CustomScrollView
   Widget _buildContentWithSlivers(BuildContext context, HomeLoaded state) {
     return CustomScrollView(
       controller: _scrollController,
@@ -108,31 +110,20 @@ class _HomePageState extends State<HomePage> {
           builder: (context, state) {
             if (state is BannerAllLoading) {
               return const SliverToBoxAdapter(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: ColorConstant.whiteColor,
-                  ),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               );
             } else if (state is BannerAllLoaded) {
               return SliverToBoxAdapter(
-                // Sudah benar
                 child: PromoBanner(banners: state.banners),
               );
             } else if (state is BannerAllError) {
-              // PERBAIKAN: Bungkus Text dengan SliverToBoxAdapter
               return SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    state.message,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
+                  child: Text(state.message, textAlign: TextAlign.center),
                 ),
               );
             }
-            // PERBAIKAN: Bungkus SizedBox.shrink dengan SliverToBoxAdapter
             return const SliverToBoxAdapter(child: SizedBox.shrink());
           },
         ),
@@ -162,88 +153,82 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SliverToBoxAdapter(child: NearbyStoreList()),
+        // Memberi ruang agar tidak tertutup FAB
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
   }
-  // file: home_page.dart
-// file: home_page.dart
 
-Widget _buildSliverHeader() {
-  // DIHAPUS: Variabel warna kondisional tidak diperlukan lagi
-  // final Color textColor = _isScrolled ? Colors.black87 : Colors.white;
-  // final Color iconColor = _isScrolled ? Colors.orange : Colors.white;
-
-  return SliverAppBar(
-    automaticallyImplyLeading: false,
-    // DIUBAH: Atur backgroundColor menjadi oranye secara permanen
-    backgroundColor: Colors.orange,
-    // DIUBAH: Atur elevation ke nilai konstan, atau 0 jika tidak ingin shadow
-    elevation: 2.0,
-    pinned: true,
-    stretch: true,
-    expandedHeight: 200.0,
-    
-    // DIHAPUS: Shape kondisional tidak diperlukan lagi
-    // shape: _isScrolled ? ... : null,
-
-    title: Row(
-      children: [
-        // DIUBAH: Atur warna ikon menjadi putih secara permanen
-        const Icon(Icons.location_on, color: Colors.white, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          "Pematang Siantar",
-          style: const TextStyle(
-            // DIUBAH: Atur warna teks menjadi putih secara permanen
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+  /// Widget untuk membangun header (SliverAppBar) yang dinamis
+  Widget _buildSliverHeader() {
+    return SliverAppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.orange,
+      elevation: _isScrolled ? 4.0 : 0.0,
+      pinned: true,
+      stretch: true,
+      expandedHeight: 200.0,
+      shape: _isScrolled
+          ? const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            )
+          : null,
+      title: Row(
+        children: const [
+          Icon(Icons.location_on, color: Colors.white, size: 20),
+          SizedBox(width: 8),
+          Text(
+            "Pematang Siantar",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none, color: Colors.white),
+          onPressed: () {},
         ),
       ],
-    ),
-    actions: [
-      IconButton(
-        // DIUBAH: Atur warna ikon menjadi putih secara permanen
-        icon: const Icon(Icons.notifications_none, color: Colors.white),
-        onPressed: () {},
-      ),
-    ],
-    flexibleSpace: FlexibleSpaceBar(
-      stretchModes: const [StretchMode.zoomBackground],
-      background: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: kToolbarHeight),
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Yuk beli oleh-oleh untuk kerabat lewat Nusantara App!",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
+            padding: const EdgeInsets.only(top: kToolbarHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Yuk beli oleh-oleh untuk kerabat lewat Nusantara App!",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: 110,
-                  child: Image.asset(
-                    'assets/images/character.png',
-                    fit: BoxFit.contain,
+                  SizedBox(
+                    height: 110,
+                    child: Image.asset(
+                      'assets/images/character.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

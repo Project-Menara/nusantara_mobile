@@ -45,11 +45,13 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(NetworkFailure('Tidak ada koneksi internet'));
     }
   }
-  
+
   // <<< TAMBAHAN IMPLEMENTASI VALIDASI TOKEN >>>
   @override
   Future<Either<Failures, void>> validateForgotPinToken(String token) async {
-    return _getResponse(() => authRemoteDatasource.validateForgotPinToken(token));
+    return _getResponse(
+      () => authRemoteDatasource.validateForgotPinToken(token),
+    );
   }
 
   @override
@@ -59,11 +61,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String pin,
   }) async {
     // --- PERBAIKAN: Gunakan _getResponse agar lebih bersih dan konsisten ---
-    return _getResponse(() => authRemoteDatasource.setNewPinForgot(
-      token: token,
-      phoneNumber: phoneNumber,
-      pin: pin,
-    ));
+    return _getResponse(
+      () => authRemoteDatasource.setNewPinForgot(
+        token: token,
+        phoneNumber: phoneNumber,
+        pin: pin,
+      ),
+    );
   }
 
   @override

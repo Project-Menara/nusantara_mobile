@@ -35,10 +35,11 @@ class InitialRoutes {
   static const newPin = '/new-pin';
   static const confirmNewPin = '/confirm-new-pin';
 
-  // Rute Detail Banner
+  // Rute Detail Banner821817475
   static const bannerDetail = '/banner-detail';
 
-
+  // Rute My vouchers
+  static const myVouchers = '/my-vouchers';
 
   //Rute Profile
   static const personalData = '/personal-data';

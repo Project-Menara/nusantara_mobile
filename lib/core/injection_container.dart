@@ -37,9 +37,9 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/p
 import 'package:nusantara_mobile/features/home/data/dataSource/banner_remote_dataSource.dart';
 import 'package:nusantara_mobile/features/home/data/dataSource/category_remote_dataSource.dart';
 import 'package:nusantara_mobile/features/home/data/repositories/banner_repository_impl.dart';
-import 'package:nusantara_mobile/features/home/data/repositories/category_repository_impl.dart'; // <<< PERLU DI-IMPORT
+import 'package:nusantara_mobile/features/home/data/repositories/category_repository_impl.dart';
 import 'package:nusantara_mobile/features/home/domain/repositories/banner_repository.dart';
-import 'package:nusantara_mobile/features/home/domain/repositories/category_repository.dart'; // <<< PERLU DI-IMPORT
+import 'package:nusantara_mobile/features/home/domain/repositories/category_repository.dart';
 import 'package:nusantara_mobile/features/home/domain/usecases/banner/get_all_banner_usecase.dart';
 import 'package:nusantara_mobile/features/home/domain/usecases/banner/get_banner_by_id_usecase.dart';
 import 'package:nusantara_mobile/features/home/domain/usecases/category/get_all_category_usecase.dart';
@@ -64,11 +64,19 @@ import 'package:nusantara_mobile/features/profile/presentation/bloc/change_pin/c
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/verify_pin/verify_pin_bloc.dart';
 
+// <<< BARU: Import untuk Voucher >>>
+import 'package:nusantara_mobile/features/voucher/data/datasources/voucher_remote_data_source.dart';
+import 'package:nusantara_mobile/features/voucher/data/repositories/voucher_repository_impl.dart';
+import 'package:nusantara_mobile/features/voucher/domain/repositories/voucher_repository.dart';
+import 'package:nusantara_mobile/features/voucher/domain/usecases/get_all_voucher_usecase.dart';
+import 'package:nusantara_mobile/features/voucher/domain/usecases/get_voucher_by_id_usecase.dart';
+import 'package:nusantara_mobile/features/voucher/presentation/bloc/voucher/voucher_bloc.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // =======================================================
-  //                 EXTERNAL & CORE
+  //                       EXTERNAL & CORE
   // =======================================================
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
@@ -77,7 +85,7 @@ Future<void> init() async {
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 
   // =======================================================
-  //         FITUR: OTENTIKASI (AUTHENTICATION)
+  //               FITUR: OTENTIKASI (AUTHENTICATION)
   // =======================================================
   // --- Bloc ---
   sl.registerFactory(
@@ -134,7 +142,7 @@ Future<void> init() async {
   sl.registerLazySingleton<LocalDatasource>(() => LocalDatasourceImpl(sl()));
 
   // =======================================================
-  //                 FITUR: HOME
+  //                       FITUR: HOME
   // =======================================================
   // --- Bloc ---
   sl.registerFactory(() => HomeBloc());
@@ -173,7 +181,30 @@ Future<void> init() async {
   );
 
   // =======================================================
-  //                 FITUR: PROFILE
+  //                       FITUR: VOUCHER
+  // =======================================================
+  // --- Bloc ---
+  sl.registerFactory(
+    () => VoucherBloc(getAllVoucherUsecase: sl(), getVoucherByIdUsecase: sl()),
+  );
+
+  // --- Usecases ---
+  sl.registerLazySingleton(() => GetAllVoucherUsecase(sl()));
+  sl.registerLazySingleton(() => GetVoucherByIdUsecase(sl()));
+
+  // --- Repository ---
+  sl.registerLazySingleton<VoucherRepository>(
+    () =>
+        VoucherRepositoryImpl(voucherRemoteDataSource: sl(), networkInfo: sl()),
+  );
+
+  // <<< PERBAIKAN: Tambahkan registrasi VoucherRemoteDataSource yang hilang di sini >>>
+  sl.registerLazySingleton<VoucherRemoteDataSource>(
+    () => VoucherRemoteDataSourceImpl(client: sl()),
+  );
+
+  // =======================================================
+  //                       FITUR: PROFILE
   // =======================================================
   // --- Bloc ---
   sl.registerFactory(
@@ -212,6 +243,7 @@ Future<void> init() async {
     ),
   );
 
+  // --- Datasources ---
   // --- Datasources ---
   // <<< PERBAIKAN: Membuat panggilan konsisten dengan menambahkan `client:` >>>
   sl.registerLazySingleton<ProfileRemoteDataSource>(

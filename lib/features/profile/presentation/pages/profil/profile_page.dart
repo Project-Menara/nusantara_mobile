@@ -212,6 +212,13 @@ class _ProfilePageState extends State<ProfilePage> {
               context.push(InitialRoutes.personalData);
             },
           ),
+          _buildListTile(
+            icon: Icons.card_giftcard,
+            title: 'My Vouchers',
+            onTap: () {
+              context.push(InitialRoutes.myVouchers);
+            },
+          ),
           const Divider(indent: 24, endIndent: 24, height: 24),
           const Padding(
             padding: EdgeInsets.only(left: 24, bottom: 8),

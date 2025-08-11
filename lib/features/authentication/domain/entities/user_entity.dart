@@ -13,6 +13,7 @@ class UserEntity extends Equatable {
   final RoleEntity role;
   final int status;
   final String? token;
+  final DateTime? deletedAt;
 
   const UserEntity({
     required this.id,
@@ -26,6 +27,7 @@ class UserEntity extends Equatable {
     required this.role,
     required this.status,
     this.token,
+    this.deletedAt,
   });
   UserEntity copyWith({
     String? name,
@@ -34,6 +36,7 @@ class UserEntity extends Equatable {
     String? gender,
     DateTime? dateOfBirth,
     String? photo,
+    DateTime? deletedAt,
   }) {
     return UserEntity(
       id: id,
@@ -47,6 +50,7 @@ class UserEntity extends Equatable {
       role: role,
       status: status,
       token: token,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -61,7 +65,8 @@ class UserEntity extends Equatable {
       dateOfBirth = null,
       role = const RoleEntity.empty(),
       status = 0,
-      token = null;
+      token = null,
+      deletedAt = null;
 
   UserEntity.fromJson(Map<String, dynamic> json)
     : id = json['id'] ?? '',
@@ -78,7 +83,10 @@ class UserEntity extends Equatable {
           ? RoleEntity.fromJson(json['role'])
           : const RoleEntity.empty(),
       status = json['status'] ?? 0,
-      token = json['token'];
+      token = json['token'],
+      deletedAt = json['deleted_at'] != null
+          ? DateTime.tryParse(json['deleted_at'].toString())
+          : null;
 
   @override
   List<Object?> get props => [

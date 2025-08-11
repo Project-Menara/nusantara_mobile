@@ -14,6 +14,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/pages/logi
 import 'package:nusantara_mobile/features/authentication/presentation/pages/login/pin_login_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/register/register_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/otp/verify_number.dart';
+import 'package:nusantara_mobile/features/favorite/presentation/pages/favorite/favorites_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/banner/banner_detail_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
@@ -22,6 +23,7 @@ import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/change_phone_page.dart'
     as change_phone;
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/my_voucher/my_voucher_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
@@ -201,20 +203,6 @@ final GoRouter appRoute = GoRouter(
       name: InitialRoutes.verifyPinForChangePin,
       builder: (context, state) => const VerifyPinForChangePinPage(),
     ),
-
-    // GoRoute(
-    //   path: InitialRoutes.bannerDetail,
-    //   name: InitialRoutes.bannerDetail,
-    //   builder: (context, state) {
-    //     final bannerId = state.pathParameters['bannerId'];
-    //     if (bannerId == null || bannerId.isEmpty) {
-    //       return const Scaffold(
-    //         body: Center(child: Text('ID Banner tidak valid')),
-    //       );
-    //     }
-    //     return BannerDetailPage(bannerId: bannerId);
-    //   },
-    // ),
     GoRoute(
       // Path harus cocok: '/banner-detail' + '/:bannerId'
       path: '${InitialRoutes.bannerDetail}/:bannerId',
@@ -223,6 +211,11 @@ final GoRouter appRoute = GoRouter(
         final bannerId = state.pathParameters['bannerId']!;
         return BannerDetailPage(bannerId: bannerId);
       },
+    ),
+    GoRoute(
+      path: InitialRoutes.myVouchers,
+      name: InitialRoutes.myVouchers,
+      builder: (context, state) => const MyVoucherPage(),
     ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---
@@ -249,8 +242,7 @@ final GoRouter appRoute = GoRouter(
         GoRoute(
           path: InitialRoutes.favorites,
           name: InitialRoutes.favorites,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Favorit')),
+          builder: (context, state) => const FavoritesPage(),
         ),
         GoRoute(
           path: InitialRoutes.vouchers,

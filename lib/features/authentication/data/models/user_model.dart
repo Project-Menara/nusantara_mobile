@@ -16,7 +16,8 @@ class UserModel extends UserEntity {
     super.photo,
     required super.role,
     required super.status,
-    super.token, // Tambahkan token jika belum ada
+    super.token,
+    required super.deletedAt,
   });
 
   // <<< PERBAIKAN: Tambahkan factory constructor ini >>>
@@ -33,6 +34,8 @@ class UserModel extends UserEntity {
       role: entity.role,
       status: entity.status,
       token: entity.token,
+      deletedAt:
+          entity.deletedAt ?? DateTime.now(), // Gunakan default value jika null
     );
   }
 
@@ -51,6 +54,9 @@ class UserModel extends UserEntity {
       role: RoleModel.fromJson(json['role']),
       status: json['status'] ?? 0,
       token: token,
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.parse(json['deleted_at'])
+          : DateTime.now(), // Gunakan default value jika null
     );
   }
 

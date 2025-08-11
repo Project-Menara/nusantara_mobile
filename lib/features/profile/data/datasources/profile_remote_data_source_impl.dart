@@ -12,6 +12,25 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   ProfileRemoteDataSourceImpl(this.client);
 
+  // Helper method untuk check response status dan throw appropriate exception
+  void _checkResponseStatus(
+    http.Response response,
+    Map<String, dynamic> jsonResponse,
+  ) {
+    if (response.statusCode == 401) {
+      final message = jsonResponse['message'] ?? 'Unauthorized';
+      if (message.toLowerCase().contains('token') &&
+          (message.toLowerCase().contains('expired') ||
+              message.toLowerCase().contains('invalid') ||
+              message.toLowerCase().contains('not found'))) {
+        throw AuthException(message, type: AuthErrorType.tokenExpired);
+      }
+      throw AuthException(message);
+    } else if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ServerException(jsonResponse['message'] ?? 'Request failed');
+    }
+  }
+
   @override
   Future<UserModel> updateUserProfile({
     required UserModel user,
@@ -49,14 +68,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         "API Response (Update Profile): ${response.statusCode} -> $jsonResponse",
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonResponse['data'];
-        return UserModel.fromJson(data);
-      } else {
-        throw ServerException(
-          jsonResponse['message'] ?? 'Failed to update profile',
-        );
-      }
+      _checkResponseStatus(response, jsonResponse);
+
+      final data = jsonResponse['data'];
+      return UserModel.fromJson(data);
     } catch (e) {
       print('Error updating user profile: $e');
       throw const ServerException(

@@ -20,6 +20,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required this.localDatasource,
   });
 
+  // Helper method untuk menangani token expired
+  Failures _handleAuthException(AuthException e) {
+    if (e.type == AuthErrorType.tokenExpired) {
+      return TokenExpiredFailure(e.message);
+    }
+    return AuthFailure(e.message);
+  }
+
   @override
   Future<Either<Failures, UserEntity>> updateUserProfile(
     UserEntity user,
@@ -45,7 +53,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on AuthException catch (e) {
-        return Left(AuthFailure(e.message));
+        return Left(_handleAuthException(e));
       }
     } else {
       return const Left(NetworkFailure('Tidak ada koneksi internet'));

@@ -37,3 +37,7 @@ class RateLimitFailure extends Failures {
 class TokenExpiredFailure extends Failures {
   const TokenExpiredFailure(String message) : super(message);
 }
+
+class SessionExpiredFailure extends Failures {
+  const SessionExpiredFailure(String message) : super(message);
+}

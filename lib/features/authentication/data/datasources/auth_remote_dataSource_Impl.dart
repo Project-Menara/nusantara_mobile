@@ -36,7 +36,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } else if (response.statusCode == 400) {
       throw ServerException(jsonResponse['message'] ?? 'Bad Request');
     } else if (response.statusCode == 401) {
-      throw AuthException(jsonResponse['message'] ?? 'Unauthorized');
+      // Check if it's token expired
+      final message = jsonResponse['message'] ?? 'Unauthorized';
+      if (message.toLowerCase().contains('token') &&
+          (message.toLowerCase().contains('expired') ||
+              message.toLowerCase().contains('invalid') ||
+              message.toLowerCase().contains('not found'))) {
+        throw AuthException(message, type: AuthErrorType.tokenExpired);
+      }
+      throw AuthException(message);
     } else if (response.statusCode == 429) {
       final retrySeconds = jsonResponse['error']?['retry_after_seconds'] ?? 60;
       throw RateLimitException(
