@@ -20,9 +20,33 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    final currentState = context.read<AuthBloc>().state;
-    if (currentState.user == null && currentState is! AuthGetProfileLoading) {
-      context.read<AuthBloc>().add(AuthCheckStatusRequested());
+    print("📱 ProfilePage: initState called");
+
+    final authBloc = context.read<AuthBloc>();
+    print("📱 ProfilePage: AuthBloc instance hashCode: ${authBloc.hashCode}");
+
+    final currentState = authBloc.state;
+    print(
+      "📱 ProfilePage: Current AuthBloc state: ${currentState.runtimeType}",
+    );
+    print("📱 ProfilePage: Current user: ${currentState.user?.name ?? 'null'}");
+    print(
+      "📱 ProfilePage: Is loading: ${currentState is AuthGetProfileLoading}",
+    );
+
+    // PERBAIKAN: Hanya panggil AuthCheckStatusRequested jika state adalah AuthInitial atau AuthUnauthenticated
+    // dan tidak sedang loading, dan user benar-benar null
+    if ((currentState is AuthInitial || currentState is AuthUnauthenticated) &&
+        currentState is! AuthGetProfileLoading &&
+        currentState.user == null) {
+      print(
+        "📱 ProfilePage: State is Initial/Unauthenticated and user is null, triggering AuthCheckStatusRequested",
+      );
+      authBloc.add(AuthCheckStatusRequested());
+    } else {
+      print(
+        "📱 ProfilePage: User exists or state is valid, skipping AuthCheckStatusRequested",
+      );
     }
   }
 
@@ -30,31 +54,70 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        final authBloc = context.read<AuthBloc>();
+        print(
+          "📱 ProfilePage: Listener - AuthBloc instance hashCode: ${authBloc.hashCode}",
+        );
+        print("📱 ProfilePage: State changed to ${state.runtimeType}");
+
         if (state is AuthUnauthenticated) {
+          print("📱 ProfilePage: User unauthenticated, navigating to login");
           context.go(InitialRoutes.loginScreen);
         } else if (state is AuthLogoutFailure) {
+          print("📱 ProfilePage: Logout failed: ${state.message}");
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Gagal Logout: ${state.message}')),
           );
+        } else if (state is AuthGetUserSuccess) {
+          print(
+            "📱 ProfilePage: User data loaded successfully: ${state.user.name}",
+          );
+        } else if (state is AuthGetProfileLoading) {
+          print("📱 ProfilePage: Profile loading...");
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
+          final authBloc = context.read<AuthBloc>();
+          print(
+            "📱 ProfilePage: Builder - AuthBloc instance hashCode: ${authBloc.hashCode}",
+          );
+          print(
+            "📱 ProfilePage: Building UI with state: ${authState.runtimeType}",
+          );
+
           final user = authState.user;
-          final bool isLoading =
-              authState is AuthGetProfileLoading || user == null;
+
+          // PERBAIKAN: Logic loading yang lebih spesifik
+          final bool isLoading = authState is AuthGetProfileLoading;
+          final bool hasError =
+              authState is AuthUnauthenticated && user == null;
+
           final displayUser = user ?? const UserEntity.empty();
+
+          print("📱 ProfilePage: isLoading: $isLoading");
+          print("📱 ProfilePage: hasError: $hasError");
+          print("📱 ProfilePage: user: ${user?.name ?? 'null'}");
+          print("📱 ProfilePage: displayUser: ${displayUser.name}");
+
+          // Jika ada error dan tidak ada user, tampilkan error state
+          if (hasError && !isLoading) {
+            return Scaffold(
+              backgroundColor: const Color(0xFFF0F2F5),
+              appBar: _buildAppBar(),
+              body: _buildErrorContent(context),
+            );
+          }
 
           return Scaffold(
             // <<< PERUBAHAN: Ganti warna background dan gunakan AppBar biasa >>>
             backgroundColor: const Color(0xFFF0F2F5),
             appBar: _buildAppBar(),
             body: RefreshIndicator(
-              onRefresh: isLoading
-                  ? () async {}
-                  : () async {
-                      context.read<AuthBloc>().add(AuthCheckStatusRequested());
-                    },
+              onRefresh: () async {
+                print("📱 ProfilePage: Refresh triggered");
+                context.read<AuthBloc>().add(AuthCheckStatusRequested());
+              },
               // <<< PERUBAHAN: Body tidak lagi menggunakan Stack >>>
               child: _buildProfileContent(context, displayUser, isLoading),
             ),
@@ -91,21 +154,20 @@ class _ProfilePageState extends State<ProfilePage> {
   // <<< PERBAIKAN: AppBar dibuat terpisah seperti di PersonalDataPage >>>
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.red.shade700,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.orange,
       elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      ),
       centerTitle: true,
       automaticallyImplyLeading: false, // Hapus tombol kembali default
       title: const Text(
         'Profile',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-      ),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(20.0), // Tinggi "bayangan" bawah
-        child: Container(),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -271,6 +333,54 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // TAMBAHAN: Method untuk menampilkan error state
+  Widget _buildErrorContent(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Gagal Memuat Profile',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Terjadi kesalahan saat memuat data profile. Silakan coba lagi.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                print("📱 ProfilePage: Retry button pressed");
+                context.read<AuthBloc>().add(AuthCheckStatusRequested());
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

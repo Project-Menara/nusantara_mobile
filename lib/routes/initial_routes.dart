@@ -40,6 +40,10 @@ class InitialRoutes {
 
   // Rute My vouchers
   static const myVouchers = '/my-vouchers';
+  static const myVoucherDetail = '/my-voucher-detail';
+
+  // Rute Point History
+  static const pointHistory = '/point-history';
 
   //Rute Profile
   static const personalData = '/personal-data';
@@ -51,7 +55,9 @@ class InitialRoutes {
   // Rute Utama di dalam MainScreen (Shell)
   static const home = '/home';
   static const orders = '/orders';
+  static const orderDetail = '/order-detail';
   static const favorites = '/favorites';
   static const vouchers = '/vouchers';
+  static const voucherDetail = '/voucher-detail';
   static const profile = '/profile';
 }

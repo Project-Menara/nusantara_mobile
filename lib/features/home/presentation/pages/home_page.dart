@@ -5,10 +5,13 @@ import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_e
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/pages/location/location_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/category_icons.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/event_list.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/nearby_store_list.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/promo_banner.dart';
+import 'package:nusantara_mobile/features/home/presentation/widgets/recent_orders.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,43 +21,36 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Controller untuk mendeteksi posisi scroll
   final ScrollController _scrollController = ScrollController();
-  // State untuk menandai apakah header sudah mengecil/di-scroll
   bool _isScrolled = false;
+  
+  // Tambahkan state untuk menyimpan nama lokasi
+  String _currentLocation = "Pematang Siantar";
 
   @override
   void initState() {
     super.initState();
-    // Panggil data saat pertama kali halaman dibuat
     context.read<HomeBloc>().add(FetchHomeData());
     context.read<BannerBloc>().add(GetAllBannerEvent());
     context.read<CategoryBloc>().add(GetAllCategoryEvent());
 
-    // Tambahkan listener untuk mendeteksi perubahan scroll
     _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
-    // Hapus listener dan controller untuk mencegah memory leak
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
   }
 
-  // Fungsi untuk refresh halaman
   Future<void> _onRefresh() async {
     context.read<BannerBloc>().add(GetAllBannerEvent());
     context.read<CategoryBloc>().add(GetAllCategoryEvent());
-    // Anda juga bisa menambahkan refresh untuk HomeBloc jika diperlukan
     // context.read<HomeBloc>().add(FetchHomeData());
   }
 
-  // Fungsi yang akan dipanggil setiap kali ada scroll
   void _scrollListener() {
-    // kToolbarHeight adalah tinggi standar AppBar (sekitar 56.0)
-    // Jika posisi scroll sudah melewati batas, ubah state _isScrolled
     if (_scrollController.offset > 200 - (kToolbarHeight * 2)) {
       if (!_isScrolled) {
         setState(() {
@@ -67,6 +63,23 @@ class _HomePageState extends State<HomePage> {
           _isScrolled = false;
         });
       }
+    }
+  }
+
+  // Fungsi baru untuk menangani pemilihan lokasi
+  void _selectLocation() async {
+    final newLocation = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LocationPage()),
+    );
+
+    // Jika user memilih lokasi baru, update state
+    if (newLocation != null && newLocation is String) {
+      setState(() {
+        _currentLocation = newLocation;
+      });
+      // Opsional: muat ulang data berdasarkan lokasi baru
+      _onRefresh();
     }
   }
 
@@ -100,7 +113,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Widget untuk membangun konten utama dengan CustomScrollView
   Widget _buildContentWithSlivers(BuildContext context, HomeLoaded state) {
     return CustomScrollView(
       controller: _scrollController,
@@ -128,6 +140,7 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         const SliverToBoxAdapter(child: CategoryIcons()),
+        const SliverToBoxAdapter(child: RecentOrders()),
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -153,13 +166,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SliverToBoxAdapter(child: NearbyStoreList()),
-        // Memberi ruang agar tidak tertutup FAB
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
   }
 
-  /// Widget untuk membangun header (SliverAppBar) yang dinamis
   Widget _buildSliverHeader() {
     return SliverAppBar(
       automaticallyImplyLeading: false,
@@ -170,24 +181,25 @@ class _HomePageState extends State<HomePage> {
       expandedHeight: 200.0,
       shape: _isScrolled
           ? const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(20),
-              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
             )
           : null,
-      title: Row(
-        children: const [
-          Icon(Icons.location_on, color: Colors.white, size: 20),
-          SizedBox(width: 8),
-          Text(
-            "Pematang Siantar",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+      title: GestureDetector(
+        onTap: _selectLocation, // Aksi ketika teks lokasi diklik
+        child: Row(
+          children: [
+            const Icon(Icons.location_on, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              _currentLocation, // Menggunakan state dinamis
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         IconButton(

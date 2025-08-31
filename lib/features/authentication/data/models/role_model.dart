@@ -5,8 +5,8 @@ class RoleModel extends RoleEntity {
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
     return RoleModel(
-      id: json['id'],
-      name: json['name'],
+      id: (json['id'] ?? json['ID'])?.toString() ?? '',
+      name: (json['name'] ?? json['Name'])?.toString() ?? '',
     );
   }
 }

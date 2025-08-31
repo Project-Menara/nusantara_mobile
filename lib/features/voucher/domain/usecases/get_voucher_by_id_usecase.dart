@@ -12,7 +12,17 @@ class GetVoucherByIdUsecase implements Usecase<VoucherEntity, DetailParams> {
 
   @override
   Future<Either<Failures, VoucherEntity>> call(DetailParams params) async {
-    return await voucherRepository.getVoucherById(params.id);
+    print(
+      "🎯 GetVoucherByIdUsecase: Calling repository.getVoucherById() with ID: ${params.id}",
+    );
+    final result = await voucherRepository.getVoucherById(params.id);
+    result.fold(
+      (failure) => print("❌ GetVoucherByIdUsecase: Failed with: $failure"),
+      (voucher) => print(
+        "✅ GetVoucherByIdUsecase: Success with voucher: ${voucher.code}",
+      ),
+    );
+    return result;
   }
 }
 

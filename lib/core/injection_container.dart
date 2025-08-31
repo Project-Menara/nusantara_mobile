@@ -30,6 +30,7 @@ import 'package:nusantara_mobile/features/authentication/domain/usecases/registe
 import 'package:nusantara_mobile/features/authentication/domain/usecases/resend_code/resend_code_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/verify_code/verify_code_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/otp/otp_bloc.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/pin/pin_bloc.dart';
 
@@ -70,7 +71,18 @@ import 'package:nusantara_mobile/features/voucher/data/repositories/voucher_repo
 import 'package:nusantara_mobile/features/voucher/domain/repositories/voucher_repository.dart';
 import 'package:nusantara_mobile/features/voucher/domain/usecases/get_all_voucher_usecase.dart';
 import 'package:nusantara_mobile/features/voucher/domain/usecases/get_voucher_by_id_usecase.dart';
+import 'package:nusantara_mobile/features/voucher/domain/usecases/claim_voucher_usecase.dart';
+import 'package:nusantara_mobile/features/voucher/domain/usecases/get_claimed_vouchers_usecase.dart';
 import 'package:nusantara_mobile/features/voucher/presentation/bloc/voucher/voucher_bloc.dart';
+
+// --- Fitur: Point ---
+import 'package:nusantara_mobile/features/point/data/datasources/point_remote_datasource.dart';
+import 'package:nusantara_mobile/features/point/data/datasources/point_remote_datasource_impl.dart';
+import 'package:nusantara_mobile/features/point/data/repositories/point_repository_impl.dart';
+import 'package:nusantara_mobile/features/point/domain/repositories/point_repository.dart';
+import 'package:nusantara_mobile/features/point/domain/usecases/get_customer_point_usecase.dart';
+import 'package:nusantara_mobile/features/point/domain/usecases/get_customer_point_history_usecase.dart';
+import 'package:nusantara_mobile/features/point/presentation/bloc/point/point_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -84,20 +96,30 @@ Future<void> init() async {
   sl.registerLazySingleton(() => Connectivity());
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 
+  // --- Shared Dependencies ---
+  sl.registerLazySingleton<LocalDatasource>(() => LocalDatasourceImpl(sl()));
+
   // =======================================================
   //               FITUR: OTENTIKASI (AUTHENTICATION)
   // =======================================================
   // --- Bloc ---
-  sl.registerFactory(
-    () => AuthBloc(
+  // PERBAIKAN: Gunakan registerLazySingleton untuk AuthBloc agar state tidak hilang
+  sl.registerLazySingleton(() {
+    print("🏭 InjectionContainer: Creating AuthBloc singleton instance");
+    final authBloc = AuthBloc(
       checkPhoneUseCase: sl(),
       verifyPinAndLoginUseCase: sl(),
       registerUseCase: sl(),
       getLoggedInUserUseCase: sl(),
       logoutUserUseCase: sl(),
       forgotPinUseCase: sl(),
-    ),
-  );
+      localDatasource: sl(),
+    );
+    print(
+      "🏭 InjectionContainer: AuthBloc singleton created with hashCode: ${authBloc.hashCode}",
+    );
+    return authBloc;
+  });
   sl.registerFactory(
     () => OtpBloc(verifyCodeUseCase: sl(), resendCodeUseCase: sl()),
   );
@@ -139,7 +161,6 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
   );
-  sl.registerLazySingleton<LocalDatasource>(() => LocalDatasourceImpl(sl()));
 
   // =======================================================
   //                       FITUR: HOME
@@ -183,25 +204,116 @@ Future<void> init() async {
   // =======================================================
   //                       FITUR: VOUCHER
   // =======================================================
+  print("🔧 Registering Voucher dependencies...");
+
   // --- Bloc ---
-  sl.registerFactory(
-    () => VoucherBloc(getAllVoucherUsecase: sl(), getVoucherByIdUsecase: sl()),
-  );
+  // Note: Menggunakan registerFactory untuk memastikan instance baru setiap kali
+  sl.registerFactory(() {
+    print("🔧 Creating NEW VoucherBloc instance...");
+    try {
+      final bloc = VoucherBloc(
+        getAllVoucherUsecase: sl(),
+        getVoucherByIdUsecase: sl(),
+        claimVoucherUsecase: sl(),
+        getClaimedVouchersUsecase: sl(),
+      );
+      print(
+        "✅ NEW VoucherBloc instance created successfully with initial state: ${bloc.state.runtimeType}",
+      );
+      return bloc;
+    } catch (e) {
+      print("❌ Error creating VoucherBloc: $e");
+      rethrow;
+    }
+  });
 
   // --- Usecases ---
-  sl.registerLazySingleton(() => GetAllVoucherUsecase(sl()));
-  sl.registerLazySingleton(() => GetVoucherByIdUsecase(sl()));
+  sl.registerLazySingleton(() {
+    print("🔧 Creating GetAllVoucherUsecase...");
+    try {
+      final usecase = GetAllVoucherUsecase(sl());
+      print("✅ GetAllVoucherUsecase created successfully");
+      return usecase;
+    } catch (e) {
+      print("❌ Error creating GetAllVoucherUsecase: $e");
+      rethrow;
+    }
+  });
+  sl.registerLazySingleton(() {
+    print("🔧 Creating GetVoucherByIdUsecase...");
+    try {
+      final usecase = GetVoucherByIdUsecase(sl());
+      print("✅ GetVoucherByIdUsecase created successfully");
+      return usecase;
+    } catch (e) {
+      print("❌ Error creating GetVoucherByIdUsecase: $e");
+      rethrow;
+    }
+  });
+  sl.registerLazySingleton(() {
+    print("🔧 Creating ClaimVoucherUsecase...");
+    try {
+      final usecase = ClaimVoucherUsecase(sl());
+      print("✅ ClaimVoucherUsecase created successfully");
+      return usecase;
+    } catch (e) {
+      print("❌ Error creating ClaimVoucherUsecase: $e");
+      rethrow;
+    }
+  });
+  sl.registerLazySingleton(() {
+    print("🔧 Creating GetClaimedVouchersUsecase...");
+    try {
+      final usecase = GetClaimedVouchersUsecase(sl());
+      print("✅ GetClaimedVouchersUsecase created successfully");
+      return usecase;
+    } catch (e) {
+      print("❌ Error creating GetClaimedVouchersUsecase: $e");
+      rethrow;
+    }
+  });
 
   // --- Repository ---
-  sl.registerLazySingleton<VoucherRepository>(
-    () =>
-        VoucherRepositoryImpl(voucherRemoteDataSource: sl(), networkInfo: sl()),
-  );
+  sl.registerLazySingleton<VoucherRepository>(() {
+    print("🔧 Creating VoucherRepository...");
+    try {
+      final repo = VoucherRepositoryImpl(
+        voucherRemoteDataSource: sl(),
+        networkInfo: sl(),
+      );
+      print("✅ VoucherRepository created successfully");
+      return repo;
+    } catch (e) {
+      print("❌ Error creating VoucherRepository: $e");
+      rethrow;
+    }
+  });
 
   // <<< PERBAIKAN: Tambahkan registrasi VoucherRemoteDataSource yang hilang di sini >>>
-  sl.registerLazySingleton<VoucherRemoteDataSource>(
-    () => VoucherRemoteDataSourceImpl(client: sl()),
-  );
+  sl.registerLazySingleton<VoucherRemoteDataSource>(() {
+    print("🔧 Creating VoucherRemoteDataSource...");
+    try {
+      final dataSource = VoucherRemoteDataSourceImpl(
+        client: sl(),
+        localDatasource: sl(),
+        onTokenExpired: () {
+          // Trigger AuthTokenExpired event via AuthBloc
+          print("🔐 Token expired callback triggered");
+          try {
+            final authBloc = sl<AuthBloc>();
+            authBloc.add(const AuthTokenExpired());
+          } catch (e) {
+            print("❌ Error triggering token expired: $e");
+          }
+        },
+      );
+      print("✅ VoucherRemoteDataSource created successfully");
+      return dataSource;
+    } catch (e) {
+      print("❌ Error creating VoucherRemoteDataSource: $e");
+      rethrow;
+    }
+  });
 
   // =======================================================
   //                       FITUR: PROFILE
@@ -249,4 +361,52 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(sl()),
   );
+
+  // =======================================================
+  //                       FITUR: POINT
+  // =======================================================
+  // --- Bloc ---
+  sl.registerFactory(
+    () => PointBloc(
+      getCustomerPointUseCase: sl(),
+      getCustomerPointHistoryUseCase: sl(),
+    ),
+  );
+
+  // --- Use Cases ---
+  sl.registerLazySingleton(() => GetCustomerPointUseCase(sl()));
+  sl.registerLazySingleton(() => GetCustomerPointHistoryUseCase(sl()));
+
+  // --- Repository ---
+  sl.registerLazySingleton<PointRepository>(
+    () => PointRepositoryImpl(remoteDatasource: sl(), networkInfo: sl()),
+  );
+
+  // --- Datasources ---
+  sl.registerLazySingleton<PointRemoteDatasource>(() {
+    print("🔧 Creating PointRemoteDatasource...");
+    try {
+      final dataSource = PointRemoteDatasourceImpl(
+        client: sl(),
+        localDatasource: sl(),
+        onTokenExpired: () {
+          // Trigger AuthTokenExpired event via AuthBloc
+          print(
+            "🔐 Token expired callback triggered from PointRemoteDatasource",
+          );
+          try {
+            final authBloc = sl<AuthBloc>();
+            authBloc.add(const AuthTokenExpired());
+          } catch (e) {
+            print("❌ Error triggering token expired: $e");
+          }
+        },
+      );
+      print("✅ PointRemoteDatasource created successfully");
+      return dataSource;
+    } catch (e) {
+      print("❌ Error creating PointRemoteDatasource: $e");
+      rethrow;
+    }
+  });
 }

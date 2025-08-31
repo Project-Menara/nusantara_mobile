@@ -166,30 +166,53 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failures, UserEntity>> getLoggedInUser() async {
+    print("👤 AuthRepository: getLoggedInUser started");
+
     try {
+      print("👤 AuthRepository: Getting token from local storage...");
       final token = await localDatasource.getAuthToken();
+
       if (token == null) {
+        print("❌ AuthRepository: No token found in local storage");
         return const Left(AuthFailure('No token found'));
       }
 
+      print("✅ AuthRepository: Token found: ${token.substring(0, 20)}...");
+      print("👤 AuthRepository: Checking network connection...");
+
       if (await networkInfo.isConnected) {
+        print("✅ AuthRepository: Network connected, fetching user profile...");
         final user = await authRemoteDatasource.getUserProfile(token: token);
+        print(
+          "✅ AuthRepository: User profile fetched successfully: ${user.name}",
+        );
         return Right(user);
       } else {
+        print("❌ AuthRepository: No internet connection");
         return const Left(
           NetworkFailure('No Internet Connection to fetch profile'),
         );
       }
     } on AuthException catch (e) {
+      print("❌ AuthRepository: AuthException occurred: ${e.message}");
+      print("❌ AuthRepository: AuthException type: ${e.type}");
       // --- PERBAIKAN: Tangani juga token expired di sini ---
       if (e.type == AuthErrorType.tokenExpired) {
+        print("⏰ AuthRepository: Token expired, returning TokenExpiredFailure");
         return Left(TokenExpiredFailure(e.message));
       }
+      print("❌ AuthRepository: Returning AuthFailure");
       return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
+      print("❌ AuthRepository: ServerException occurred: ${e.message}");
       return Left(ServerFailure(e.message));
     } on CacheException catch (e) {
+      print("❌ AuthRepository: CacheException occurred: ${e.message}");
       return Left(CacheFailure(e.message));
+    } catch (e) {
+      print("💥 AuthRepository: Unexpected exception: $e");
+      print("💥 AuthRepository: Exception type: ${e.runtimeType}");
+      return Left(ServerFailure('Unexpected error: $e'));
     }
   }
 

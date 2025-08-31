@@ -8,25 +8,22 @@ class FavoritesPage extends StatelessWidget {
     return Scaffold(
       // Mengatur warna latar belakang halaman
       backgroundColor: Colors.grey[100],
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80.0), // Atur tinggi AppBar
-        child: AppBar(
-          backgroundColor: Colors.red,
-          // Menghapus bayangan di bawah AppBar
-          elevation: 0,
-          // Mengatur bentuk AppBar dengan sudut bawah yang membulat
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-          ),
-          // Mengatur judul di tengah
-          centerTitle: true,
-          title: const Text(
-            'Favorite',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          // Menghilangkan tombol kembali jika tidak diperlukan
-          automaticallyImplyLeading: false,
+      appBar: AppBar(
+        backgroundColor: Colors.orange,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
+        centerTitle: true,
+        title: const Text(
+          'Favorite',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        automaticallyImplyLeading: false,
       ),
       // Menggunakan ListView.builder untuk membuat daftar yang efisien
       body: ListView.builder(

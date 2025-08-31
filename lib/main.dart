@@ -36,7 +36,11 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) {
-            final authBloc = di.sl<AuthBloc>()..add(AuthCheckStatusRequested());
+            print("🏗️ Main: Creating AuthBloc instance");
+            final authBloc = di.sl<AuthBloc>();
+            print("🏗️ Main: AuthBloc instance hashCode: ${authBloc.hashCode}");
+            print("🏗️ Main: Adding AuthCheckStatusRequested event");
+            authBloc.add(AuthCheckStatusRequested());
             return authBloc;
           },
         ),

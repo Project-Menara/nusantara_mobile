@@ -19,3 +19,16 @@ class GetVoucherByIdEvent extends VoucherEvent {
   @override
   List<Object?> get props => [id];
 }
+
+/// Event untuk claim voucher berdasarkan ID voucher.
+class ClaimVoucherEvent extends VoucherEvent {
+  final String voucherId;
+
+  const ClaimVoucherEvent(this.voucherId);
+
+  @override
+  List<Object?> get props => [voucherId];
+}
+
+/// Event untuk mengambil semua voucher yang sudah diklaim user.
+class GetClaimedVouchersEvent extends VoucherEvent {}

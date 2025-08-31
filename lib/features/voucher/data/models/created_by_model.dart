@@ -21,23 +21,69 @@ class CreatedByModel extends UserEntity {
   });
 
   factory CreatedByModel.fromJson(Map<String, dynamic> json) {
-    return CreatedByModel(
-      id: json['id'],
-      name: json['name'],
-      username: json['username'],
-      email: json['email'],
-      phone: json['phone'] ?? '',
-      gender: json['gender'] ?? '',
-      status: json['status'] ?? 1,
-      deletedAt: json['deleted_at'] != null
-          ? DateTime.parse(json['deleted_at'])
-          : null,
-      dateOfBirth: json['date_of_birth'] != null
-          ? DateTime.parse(json['date_of_birth'])
-          : null,
-      photo: json['photo'],
-      role: RoleModel.fromJson(json['role']),
-      token: json['token'],
+    print("👤 Parsing created_by JSON: $json");
+
+    try {
+      return CreatedByModel(
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        username: json['username']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        phone: json['phone']?.toString() ?? '',
+        gender: json['gender']?.toString() ?? '',
+        status: _parseToInt(json['status'], 'status', defaultValue: 1),
+        deletedAt: json['deleted_at'] != null
+            ? _parseDateTime(json['deleted_at'], 'deleted_at')
+            : null,
+        dateOfBirth: json['date_of_birth'] != null
+            ? _parseDateTime(json['date_of_birth'], 'date_of_birth')
+            : null,
+        photo: json['photo']?.toString(),
+        role: json['role'] != null
+            ? RoleModel.fromJson(json['role'])
+            : RoleModel.fromJson({'id': '', 'name': 'unknown'}), // Default role
+        token: json['token']?.toString(),
+      );
+    } catch (e) {
+      print("❌ Error parsing created_by: $e");
+      print("📄 JSON that failed: $json");
+      rethrow;
+    }
+  }
+
+  static int _parseToInt(
+    dynamic value,
+    String fieldName, {
+    int defaultValue = 0,
+  }) {
+    if (value == null) {
+      print("⚠️ Field '$fieldName' is null, using default $defaultValue");
+      return defaultValue;
+    }
+    if (value is int) return value;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    print(
+      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value, using default $defaultValue",
     );
+    return defaultValue;
+  }
+
+  static DateTime? _parseDateTime(dynamic value, String fieldName) {
+    if (value == null) return null;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        print("❌ Failed to parse '$fieldName' datetime: $value, error: $e");
+        return null;
+      }
+    }
+    print(
+      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value",
+    );
+    return null;
   }
 }

@@ -71,3 +71,20 @@ class AuthUserUpdated extends AuthEvent {
   @override
   List<Object> get props => [newUser];
 }
+
+class AuthTokenExpired extends AuthEvent {
+  final String? message;
+
+  const AuthTokenExpired({this.message});
+
+  @override
+  List<Object> get props => [message ?? ''];
+}
+
+// Event untuk testing - force token expired
+class AuthForceTokenExpiredTest extends AuthEvent {
+  const AuthForceTokenExpiredTest();
+
+  @override
+  List<Object> get props => [];
+}

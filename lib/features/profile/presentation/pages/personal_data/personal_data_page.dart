@@ -67,8 +67,9 @@ class _PersonalDataViewState extends State<PersonalDataView> {
           ? 'Laki-laki'
           : 'Perempuan';
       if (user.dateOfBirth != null) {
-        _dobController.text =
-            DateFormat('dd/MM/yyyy').format(user.dateOfBirth!);
+        _dobController.text = DateFormat(
+          'dd/MM/yyyy',
+        ).format(user.dateOfBirth!);
       } else {
         _dobController.text = '';
       }
@@ -122,10 +123,12 @@ class _PersonalDataViewState extends State<PersonalDataView> {
       try {
         newDob = DateFormat('dd/MM/yyyy').parse(_dobController.text);
       } catch (e) {
-        showAppFlashbar(context,
-            title: "Format Tanggal Salah",
-            message: "Silakan periksa kembali tanggal lahir Anda.",
-            isSuccess: false);
+        showAppFlashbar(
+          context,
+          title: "Format Tanggal Salah",
+          message: "Silakan periksa kembali tanggal lahir Anda.",
+          isSuccess: false,
+        );
         return;
       }
     }
@@ -135,8 +138,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
       dateOfBirth: newDob,
     );
     context.read<ProfileBloc>().add(
-          UpdateProfileButtonPressed(user: updatedData, photoFile: _photoFile),
-        );
+      UpdateProfileButtonPressed(user: updatedData, photoFile: _photoFile),
+    );
   }
 
   void _startChangePhoneFlow() async {
@@ -160,11 +163,12 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         final user = authState.user;
-        
+
         // <<< PERBAIKAN 1: Logika isLoading diperbarui >>>
         // Skeleton aktif saat loading awal (user==null) ATAU saat state refresh (AuthGetProfileLoading)
-        final bool isLoading = authState is AuthGetProfileLoading || user == null;
-        
+        final bool isLoading =
+            authState is AuthGetProfileLoading || user == null;
+
         final displayUser = user ?? const UserEntity.empty();
 
         return Scaffold(
@@ -175,22 +179,26 @@ class _PersonalDataViewState extends State<PersonalDataView> {
               BlocListener<ProfileBloc, ProfileState>(
                 listener: (context, state) {
                   if (state is ProfileUpdateSuccess) {
-                    context
-                        .read<AuthBloc>()
-                        .add(auth_event.AuthUserUpdated(state.updatedUser));
-                    showAppFlashbar(context,
-                        title: "Sukses",
-                        message: "Profil berhasil diperbarui.",
-                        isSuccess: true);
+                    context.read<AuthBloc>().add(
+                      auth_event.AuthUserUpdated(state.updatedUser),
+                    );
+                    showAppFlashbar(
+                      context,
+                      title: "Sukses",
+                      message: "Profil berhasil diperbarui.",
+                      isSuccess: true,
+                    );
                     setState(() {
                       _isEditMode = false;
                       _photoFile = null;
                     });
                   } else if (state is ProfileUpdateFailure) {
-                    showAppFlashbar(context,
-                        title: "Gagal",
-                        message: state.message,
-                        isSuccess: false);
+                    showAppFlashbar(
+                      context,
+                      title: "Gagal",
+                      message: state.message,
+                      isSuccess: false,
+                    );
                   }
                 },
               ),
@@ -209,7 +217,11 @@ class _PersonalDataViewState extends State<PersonalDataView> {
             enabled: isLoading,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                  24, 8, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+                24,
+                8,
+                24,
+                MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
               child: _buildActionButtons(displayUser),
             ),
           ),
@@ -241,28 +253,27 @@ class _PersonalDataViewState extends State<PersonalDataView> {
       ),
     );
   }
-  
+
   // Sisa kode tidak berubah...
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.red.shade700,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.orange,
       elevation: 0,
-      centerTitle: true,
-      title: const Text(
-        'Profile Settings',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
       ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(20.0),
-        child: Container(),
+      centerTitle: true,
+      title: const Text(
+        'Profile Settings',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
-  
+
   Widget _buildProfileAvatar(UserEntity user) {
     const double avatarRadius = 60.0;
     final photoUrl = user.photo;
@@ -306,7 +317,11 @@ class _PersonalDataViewState extends State<PersonalDataView> {
                   child: CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.orange,
-                    child: Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                    child: Icon(
+                      Icons.camera_alt,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -349,9 +364,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              spreadRadius: 2,
-              blurRadius: 10)
+            color: Colors.grey.withOpacity(0.05),
+            spreadRadius: 2,
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Column(
@@ -419,8 +435,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
             filled: true,
             fillColor: readOnly ? const Color(0xFFEEEEEE) : Colors.white,
             suffixIcon: suffixIcon,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -432,16 +450,17 @@ class _PersonalDataViewState extends State<PersonalDataView> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                  color: onTap != null ? Colors.orange : Colors.orange,
-                  width: 1.5),
+                color: onTap != null ? Colors.orange : Colors.orange,
+                width: 1.5,
+              ),
             ),
           ),
         ),
       ],
     );
   }
-  
-    Widget _buildDateField({
+
+  Widget _buildDateField({
     required String label,
     required TextEditingController controller,
     VoidCallback? onTap,
@@ -466,10 +485,14 @@ class _PersonalDataViewState extends State<PersonalDataView> {
           decoration: InputDecoration(
             filled: true,
             fillColor: onTap != null ? Colors.white : const Color(0xFFEEEEEE),
-            suffixIcon:
-                const Icon(Icons.calendar_today_outlined, color: Colors.grey),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            suffixIcon: const Icon(
+              Icons.calendar_today_outlined,
+              color: Colors.grey,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -491,9 +514,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
         const Text(
           'Gender',
           style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF616161),
-              fontSize: 14),
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF616161),
+            fontSize: 14,
+          ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
@@ -505,7 +529,10 @@ class _PersonalDataViewState extends State<PersonalDataView> {
               ? (newValue) => setState(() => _selectedGender = newValue)
               : null,
           style: const TextStyle(
-              fontWeight: FontWeight.w500, color: Colors.black, fontSize: 16),
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+            fontSize: 16,
+          ),
           decoration: InputDecoration(
             filled: true,
             fillColor: _isEditMode ? Colors.white : const Color(0xFFEEEEEE),
@@ -525,8 +552,11 @@ class _PersonalDataViewState extends State<PersonalDataView> {
   }
 
   Widget _buildActionButtons(UserEntity? currentUser) {
-    const buttonStyle =
-        TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold);
+    const buttonStyle = TextStyle(
+      fontSize: 16,
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    );
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         final isLoading = state is ProfileUpdateLoading;
@@ -545,31 +575,40 @@ class _PersonalDataViewState extends State<PersonalDataView> {
                           });
                         },
                   style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      side: BorderSide(color: Colors.grey.shade400)),
-                  child: Text('Batal',
-                      style: buttonStyle.copyWith(color: Colors.grey.shade700)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(color: Colors.grey.shade400),
+                  ),
+                  child: Text(
+                    'Batal',
+                    style: buttonStyle.copyWith(color: Colors.grey.shade700),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed:
-                      isLoading ? null : () => _onSaveChanges(currentUser),
+                  onPressed: isLoading
+                      ? null
+                      : () => _onSaveChanges(currentUser),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 3))
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
                       : const Text('Simpan', style: buttonStyle),
                 ),
               ),
@@ -584,7 +623,8 @@ class _PersonalDataViewState extends State<PersonalDataView> {
                 backgroundColor: Colors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Edit Profile', style: buttonStyle),
             ),

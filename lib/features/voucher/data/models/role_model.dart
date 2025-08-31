@@ -5,17 +5,21 @@ import 'package:nusantara_mobile/features/authentication/domain/entities/role_en
 
 // 2. Tambahkan "extends RoleEntity"
 class RoleModel extends RoleEntity {
-
   // 3. Gunakan 'super' untuk mengisi properti dari RoleEntity
-  const RoleModel({
-    required super.id,
-    required super.name,
-  });
+  const RoleModel({required super.id, required super.name});
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
-    return RoleModel(
-      id: json['id'],
-      name: json['name'],
-    );
+    print("👑 Parsing role JSON: $json");
+
+    try {
+      return RoleModel(
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+      );
+    } catch (e) {
+      print("❌ Error parsing role: $e");
+      print("📄 JSON that failed: $json");
+      rethrow;
+    }
   }
 }

@@ -24,6 +24,10 @@ import 'package:nusantara_mobile/features/profile/presentation/pages/change_phon
     as change_phone;
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/my_voucher/my_voucher_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/voucher_detail/voucher_detail_page.dart'
+    as profile_voucher_detail;
+import 'package:nusantara_mobile/features/voucher/domain/entities/claimed_voucher_entity.dart';
+import 'package:nusantara_mobile/features/point/presentation/pages/point_history_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
@@ -31,12 +35,17 @@ import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/
 
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
 import 'package:nusantara_mobile/features/voucher/presentation/pages/voucher/voucher_page.dart';
+import 'package:nusantara_mobile/features/voucher/presentation/pages/voucher_detail/voucher_detail_index.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // <<< BARU: Impor halaman ubah PIN >>>
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/change_pin_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/confirm_change_pin_page.dart';
+
+// <<< BARU: Impor halaman orders >>>
+import 'package:nusantara_mobile/features/orders/presentation/pages/orders_page.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/order_detail_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -217,6 +226,33 @@ final GoRouter appRoute = GoRouter(
       name: InitialRoutes.myVouchers,
       builder: (context, state) => const MyVoucherPage(),
     ),
+    GoRoute(
+      path: InitialRoutes.myVoucherDetail,
+      name: InitialRoutes.myVoucherDetail,
+      builder: (context, state) {
+        print('🔍 Debug: myVoucherDetail route called');
+        print('🔍 Debug: path = ${InitialRoutes.myVoucherDetail}');
+        print('🔍 Debug: state.extra = ${state.extra}');
+        final claimedVoucher = state.extra as ClaimedVoucherEntity;
+        print('🔍 Debug: claimedVoucher = ${claimedVoucher.voucher.code}');
+        return profile_voucher_detail.VoucherDetailPage(
+          claimedVoucher: claimedVoucher,
+        );
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.pointHistory,
+      name: InitialRoutes.pointHistory,
+      builder: (context, state) => const PointHistoryPage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.orderDetail,
+      name: InitialRoutes.orderDetail,
+      builder: (context, state) {
+        final orderId = state.extra as String;
+        return OrderDetailPage(orderId: orderId);
+      },
+    ),
 
     // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---
     ShellRoute(
@@ -236,8 +272,17 @@ final GoRouter appRoute = GoRouter(
         GoRoute(
           path: InitialRoutes.orders,
           name: InitialRoutes.orders,
-          builder: (context, state) =>
-              const Center(child: Text('Halaman Pesanan')),
+          builder: (context, state) => const OrdersPage(),
+          routes: [
+            GoRoute(
+              path: 'detail/:orderId',
+              name: 'order-detail',
+              builder: (context, state) {
+                final orderId = state.pathParameters['orderId']!;
+                return OrderDetailPage(orderId: orderId);
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: InitialRoutes.favorites,
@@ -248,6 +293,16 @@ final GoRouter appRoute = GoRouter(
           path: InitialRoutes.vouchers,
           name: InitialRoutes.vouchers,
           builder: (context, state) => const VoucherPage(),
+          routes: [
+            GoRoute(
+              path: 'detail/:id',
+              name: InitialRoutes.voucherDetail,
+              builder: (context, state) {
+                final voucherId = state.pathParameters['id'] ?? '';
+                return VoucherDetailPage(voucherId: voucherId);
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: InitialRoutes.profile,

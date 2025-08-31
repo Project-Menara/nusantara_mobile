@@ -48,3 +48,43 @@ class VoucherByIdError extends VoucherState {
   @override
   List<Object?> get props => [message];
 }
+
+// States for claiming a voucher
+class VoucherClaimLoading extends VoucherState {}
+
+class VoucherClaimSuccess extends VoucherState {
+  final ClaimedVoucherEntity claimedVoucher;
+
+  const VoucherClaimSuccess({required this.claimedVoucher});
+
+  @override
+  List<Object?> get props => [claimedVoucher];
+}
+
+class VoucherClaimError extends VoucherState {
+  final String message;
+  const VoucherClaimError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+// States for getting claimed vouchers
+class ClaimedVouchersLoading extends VoucherState {}
+
+class ClaimedVouchersLoaded extends VoucherState {
+  final List<ClaimedVoucherEntity> claimedVouchers;
+
+  const ClaimedVouchersLoaded({required this.claimedVouchers});
+
+  @override
+  List<Object?> get props => [claimedVouchers];
+}
+
+class ClaimedVouchersError extends VoucherState {
+  final String message;
+  const ClaimedVouchersError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

@@ -41,21 +41,23 @@ class UserModel extends UserEntity {
 
   factory UserModel.fromJson(Map<String, dynamic> json, {String? token}) {
     return UserModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      username: json['username'],
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      gender: json['gender'],
-      dateOfBirth: json['date_of_birth'] != null
-          ? DateTime.tryParse(json['date_of_birth'])
+      id: (json['id'] ?? json['ID'])?.toString() ?? '',
+      name: (json['name'] ?? json['Name'])?.toString() ?? '',
+      username: (json['username'] ?? json['Username'])?.toString() ?? '',
+      email: (json['email'] ?? json['Email'])?.toString() ?? '',
+      phone: (json['phone'] ?? json['Phone'])?.toString() ?? '',
+      gender: (json['gender'] ?? json['Gender'])?.toString() ?? '',
+      dateOfBirth: (json['date_of_birth'] ?? json['DateOfBirth']) != null
+          ? DateTime.tryParse(
+              (json['date_of_birth'] ?? json['DateOfBirth']).toString(),
+            )
           : null,
-      photo: json['photo'],
-      role: RoleModel.fromJson(json['role']),
-      status: json['status'] ?? 0,
+      photo: (json['photo'] ?? json['Photo'])?.toString(),
+      role: RoleModel.fromJson((json['role'] ?? json['Role']) ?? {}),
+      status: ((json['status'] ?? json['Status']) as num?)?.toInt() ?? 0,
       token: token,
-      deletedAt: json['deleted_at'] != null
-          ? DateTime.parse(json['deleted_at'])
+      deletedAt: (json['deleted_at'] ?? json['DeletedAt']) != null
+          ? DateTime.parse((json['deleted_at'] ?? json['DeletedAt']).toString())
           : DateTime.now(), // Gunakan default value jika null
     );
   }

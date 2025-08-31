@@ -233,13 +233,36 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> getUserProfile({required String token}) async {
+    print("🌐 AuthRemoteDataSource: getUserProfile started");
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
+    print("🌐 AuthRemoteDataSource: Request URL: $uri");
+    print(
+      "🌐 AuthRemoteDataSource: Token (first 20 chars): ${token.substring(0, 20)}...",
+    );
+
     try {
+      print("🌐 AuthRemoteDataSource: Making GET request...");
       final response = await client.get(uri, headers: _headers(token: token));
+      print("🌐 AuthRemoteDataSource: Response status: ${response.statusCode}");
+      print("🌐 AuthRemoteDataSource: Response body: ${response.body}");
+
+      print("🌐 AuthRemoteDataSource: Processing response...");
       final jsonResponse = _processResponse(response);
-      return UserModel.fromJson(jsonResponse['data'], token: token);
-    } on SocketException {
+
+      print("🌐 AuthRemoteDataSource: Creating UserModel from JSON...");
+      final userModel = UserModel.fromJson(jsonResponse['data'], token: token);
+      print(
+        "✅ AuthRemoteDataSource: UserModel created successfully: ${userModel.name}",
+      );
+
+      return userModel;
+    } on SocketException catch (e) {
+      print("❌ AuthRemoteDataSource: SocketException: $e");
       throw const ServerException('Koneksi internet bermasalah');
+    } catch (e) {
+      print("💥 AuthRemoteDataSource: Unexpected exception: $e");
+      print("💥 AuthRemoteDataSource: Exception type: ${e.runtimeType}");
+      rethrow;
     }
   }
 

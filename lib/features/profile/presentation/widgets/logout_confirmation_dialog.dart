@@ -12,9 +12,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     // Menggunakan Dialog untuk kustomisasi penuh, bukan AlertDialog
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24.0),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: _buildDialogContent(context),
@@ -29,7 +27,8 @@ class LogoutConfirmationDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.0),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Penting agar dialog tidak memenuhi layar
+        mainAxisSize:
+            MainAxisSize.min, // Penting agar dialog tidak memenuhi layar
         children: [
           // Icon dengan background
           Container(
@@ -62,10 +61,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
           Text(
             'Apakah Anda yakin ingin keluar dari akun Anda?',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 32),
 
@@ -84,7 +80,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
                   child: const Text(
                     'Batal',
                     style: TextStyle(
-                        color: Colors.black87, fontWeight: FontWeight.bold),
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -92,7 +90,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade700,
+                    backgroundColor: Colors.orange.shade700,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

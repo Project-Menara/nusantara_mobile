@@ -13,7 +13,8 @@ class VoucherEntity extends Equatable {
   final int quota;
   final String description;
   final String discountType;
-  final UserEntity? createdBy; // Menggunakan UserEntity dari auth
+  final bool isClaimed;
+  final UserEntity? createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -29,12 +30,20 @@ class VoucherEntity extends Equatable {
     required this.quota,
     required this.description,
     required this.discountType,
+    this.isClaimed = false, // Default to false
     this.createdBy,
     required this.createdAt,
     required this.updatedAt,
   });
-  
 
   @override
-  List<Object?> get props => [id, code, discountAmount, discountPercent, startDate, endDate];
+  List<Object?> get props => [
+    id,
+    code,
+    discountAmount,
+    discountPercent,
+    startDate,
+    endDate,
+    isClaimed,
+  ];
 }
