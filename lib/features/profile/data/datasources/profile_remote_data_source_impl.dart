@@ -64,16 +64,14 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final response = await http.Response.fromStream(streamedResponse);
       final jsonResponse = json.decode(response.body);
 
-      print(
-        "API Response (Update Profile): ${response.statusCode} -> $jsonResponse",
-      );
+      // debug: API Response (Update Profile): ${response.statusCode} -> $jsonResponse
 
       _checkResponseStatus(response, jsonResponse);
 
       final data = jsonResponse['data'];
       return UserModel.fromJson(data);
     } catch (e) {
-      print('Error updating user profile: $e');
+      // debug: Error updating user profile: $e
       throw const ServerException(
         'Failed to update profile due to server error.',
       );
@@ -98,9 +96,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
-      print(
-        "API Response (Create New PIN): ${response.statusCode} -> $jsonResponse",
-      );
+      // debug: API Response (Create New PIN): ${response.statusCode} -> $jsonResponse
 
       if (response.statusCode == 200) {
         return;
@@ -110,6 +106,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         );
       }
     } catch (e) {
+      // debug: Error creating new PIN: $e
       throw ServerException('Error creating new PIN: $e');
     }
   }
@@ -134,9 +131,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
-      print(
-        "API Response (Confirm New PIN): ${response.statusCode} -> $jsonResponse",
-      );
+      // debug: API Response (Confirm New PIN): ${response.statusCode} -> $jsonResponse
       if (response.statusCode == 200) {
         final data = jsonResponse['data'];
         return UserModel.fromJson(data);
@@ -146,6 +141,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         );
       }
     } catch (e) {
+      // debug: Error Confirming New PIN : $e
       throw ServerException('Error Confirming New PIN : $e');
     }
   }
@@ -167,9 +163,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     );
 
     final jsonResponse = json.decode(response.body);
-    print(
-      "API Response (Request Change Phone): ${response.statusCode} -> $jsonResponse",
-    );
+    // debug: API Response (Request Change Phone): ${response.statusCode} -> $jsonResponse
 
     if (response.statusCode == 200) {
       return;
@@ -198,9 +192,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     );
 
     final jsonResponse = json.decode(response.body);
-    print(
-      "API Response (Verify Change Phone): ${response.statusCode} -> $jsonResponse",
-    );
+    // debug: API Response (Verify Change Phone): ${response.statusCode} -> $jsonResponse
 
     if (response.statusCode == 200) {
       return;
@@ -225,9 +217,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       );
 
       final jsonResponse = json.decode(response.body);
-      print(
-        "API Response (Verify PIN): ${response.statusCode} -> $jsonResponse",
-      );
+      // debug: API Response (Verify PIN): ${response.statusCode} -> $jsonResponse
 
       if (response.statusCode == 200) {
         return;
@@ -237,7 +227,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         );
       }
     } catch (e) {
-      print('Error verifying PIN: $e');
+      // debug: Error verifying PIN: $e
       throw ServerException('An error occurred while verifying the PIN: $e');
     }
   }
@@ -254,9 +244,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     );
 
     if (response.statusCode == 200) {
-      print('Successfully logged out from server.');
+      // debug: Successfully logged out from server.
     } else {
-      print('Failed to logout from server: ${response.body}');
+      // debug: Failed to logout from server: ${response.body}
     }
   }
 }

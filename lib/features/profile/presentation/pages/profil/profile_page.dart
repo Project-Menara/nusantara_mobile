@@ -6,6 +6,7 @@ import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_event.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/profile/presentation/widgets/confirmation_dialog.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/profil/terms_and_conditions_page.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -20,33 +21,30 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    print("📱 ProfilePage: initState called");
+    // debug: 📱 ProfilePage: initState called
 
     final authBloc = context.read<AuthBloc>();
-    print("📱 ProfilePage: AuthBloc instance hashCode: ${authBloc.hashCode}");
+    // debug: 📱 ProfilePage: AuthBloc instance hashCode: ${authBloc.hashCode}
 
     final currentState = authBloc.state;
-    print(
-      "📱 ProfilePage: Current AuthBloc state: ${currentState.runtimeType}",
-    );
-    print("📱 ProfilePage: Current user: ${currentState.user?.name ?? 'null'}");
-    print(
-      "📱 ProfilePage: Is loading: ${currentState is AuthGetProfileLoading}",
-    );
+    // debug: 📱 ProfilePage: Current AuthBloc state: ${currentState.runtimeType}
+    // debug: 📱 ProfilePage: Current user: ${currentState.user?.name ?? 'null'}
+    // debug: 📱 ProfilePage: Is loading: ${currentState is AuthGetProfileLoading}
 
-    // PERBAIKAN: Hanya panggil AuthCheckStatusRequested jika state adalah AuthInitial atau AuthUnauthenticated
-    // dan tidak sedang loading, dan user benar-benar null
-    if ((currentState is AuthInitial || currentState is AuthUnauthenticated) &&
+    // If the user is unauthenticated (guest), redirect to login screen instead
+    // of trying to send events to a possibly closed bloc.
+    if (currentState is AuthUnauthenticated || currentState.user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(InitialRoutes.loginScreen);
+      });
+      return;
+    }
+
+    // Only request status check when appropriate and when bloc is open
+    if ((currentState is AuthInitial) &&
         currentState is! AuthGetProfileLoading &&
-        currentState.user == null) {
-      print(
-        "📱 ProfilePage: State is Initial/Unauthenticated and user is null, triggering AuthCheckStatusRequested",
-      );
+        authBloc.isClosed == false) {
       authBloc.add(AuthCheckStatusRequested());
-    } else {
-      print(
-        "📱 ProfilePage: User exists or state is valid, skipping AuthCheckStatusRequested",
-      );
     }
   }
 
@@ -54,71 +52,57 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        final authBloc = context.read<AuthBloc>();
-        print(
-          "📱 ProfilePage: Listener - AuthBloc instance hashCode: ${authBloc.hashCode}",
-        );
-        print("📱 ProfilePage: State changed to ${state.runtimeType}");
+        // debug: 📱 ProfilePage: Listener - AuthBloc instance hashCode: ${authBloc.hashCode}
+        // debug: 📱 ProfilePage: State changed to ${state.runtimeType}
 
         if (state is AuthUnauthenticated) {
-          print("📱 ProfilePage: User unauthenticated, navigating to login");
+          // debug: 📱 ProfilePage: User unauthenticated, navigating to login
           context.go(InitialRoutes.loginScreen);
         } else if (state is AuthLogoutFailure) {
-          print("📱 ProfilePage: Logout failed: ${state.message}");
+          // debug: 📱 ProfilePage: Logout failed: ${state.message}
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Gagal Logout: ${state.message}')),
           );
         } else if (state is AuthGetUserSuccess) {
-          print(
-            "📱 ProfilePage: User data loaded successfully: ${state.user.name}",
-          );
+          // debug: 📱 ProfilePage: User data loaded successfully: ${state.user.name}
         } else if (state is AuthGetProfileLoading) {
-          print("📱 ProfilePage: Profile loading...");
+          // debug: 📱 ProfilePage: Profile loading...
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
-          final authBloc = context.read<AuthBloc>();
-          print(
-            "📱 ProfilePage: Builder - AuthBloc instance hashCode: ${authBloc.hashCode}",
-          );
-          print(
-            "📱 ProfilePage: Building UI with state: ${authState.runtimeType}",
-          );
+          // debug: 📱 ProfilePage: Builder - AuthBloc instance hashCode: ${authBloc.hashCode}
+          // debug: 📱 ProfilePage: Building UI with state: ${authState.runtimeType}
 
           final user = authState.user;
 
-          // PERBAIKAN: Logic loading yang lebih spesifik
           final bool isLoading = authState is AuthGetProfileLoading;
           final bool hasError =
               authState is AuthUnauthenticated && user == null;
 
           final displayUser = user ?? const UserEntity.empty();
 
-          print("📱 ProfilePage: isLoading: $isLoading");
-          print("📱 ProfilePage: hasError: $hasError");
-          print("📱 ProfilePage: user: ${user?.name ?? 'null'}");
-          print("📱 ProfilePage: displayUser: ${displayUser.name}");
+          // debug: 📱 ProfilePage: isLoading: $isLoading
+          // debug: 📱 ProfilePage: hasError: $hasError
+          // debug: 📱 ProfilePage: user: ${user?.name ?? 'null'}
+          // debug: 📱 ProfilePage: displayUser: ${displayUser.name}
 
-          // Jika ada error dan tidak ada user, tampilkan error state
           if (hasError && !isLoading) {
             return Scaffold(
               backgroundColor: const Color(0xFFF0F2F5),
-              appBar: _buildAppBar(),
+              appBar: _buildAppBar(context),
               body: _buildErrorContent(context),
             );
           }
 
           return Scaffold(
-            // <<< PERUBAHAN: Ganti warna background dan gunakan AppBar biasa >>>
             backgroundColor: const Color(0xFFF0F2F5),
-            appBar: _buildAppBar(),
+            appBar: _buildAppBar(context),
             body: RefreshIndicator(
               onRefresh: () async {
-                print("📱 ProfilePage: Refresh triggered");
+                // debug: 📱 ProfilePage: Refresh triggered
                 context.read<AuthBloc>().add(AuthCheckStatusRequested());
               },
-              // <<< PERUBAHAN: Body tidak lagi menggunakan Stack >>>
               child: _buildProfileContent(context, displayUser, isLoading),
             ),
           );
@@ -127,7 +111,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // <<< PERBAIKAN TOTAL: Struktur layout diubah menjadi Column sederhana >>>
   Widget _buildProfileContent(
     BuildContext context,
     UserEntity user,
@@ -151,8 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // <<< PERBAIKAN: AppBar dibuat terpisah seperti di PersonalDataPage >>>
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.orange,
       elevation: 0,
@@ -161,9 +143,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       centerTitle: true,
       automaticallyImplyLeading: false, // Hapus tombol kembali default
-      title: const Text(
+      title: Text(
         'Profile',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
           color: Colors.white,
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -181,7 +163,17 @@ class _ProfilePageState extends State<ProfilePage> {
     if (photoUrl != null && photoUrl.isNotEmpty) {
       avatarChild = CircleAvatar(
         radius: avatarRadius,
-        backgroundImage: NetworkImage(photoUrl),
+        backgroundColor: Colors.transparent,
+        child: ClipOval(
+          child: Image.network(
+            photoUrl,
+            width: avatarRadius * 2,
+            height: avatarRadius * 2,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildInitialsAvatar(user.name),
+          ),
+        ),
       );
     } else {
       // Fallback ke inisial nama
@@ -237,10 +229,18 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 8),
         Text(
           name,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(email, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(
+          email,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontSize: 14, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -263,9 +263,15 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 24, bottom: 8),
-            child: Text('Akun', style: TextStyle(color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, bottom: 8),
+            child: Text(
+              'Akun',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           _buildListTile(
             icon: Icons.person_outline,
@@ -282,11 +288,14 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           const Divider(indent: 24, endIndent: 24, height: 24),
-          const Padding(
-            padding: EdgeInsets.only(left: 24, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, bottom: 8),
             child: Text(
               'Keamanan & Bantuan',
-              style: TextStyle(color: Colors.grey),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           _buildListTile(
@@ -300,6 +309,18 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.support_agent_outlined,
             title: 'Layanan Pelanggan',
             onTap: () {},
+          ),
+          _buildListTile(
+            icon: Icons.description_outlined,
+            title: 'Terms & Conditions',
+            onTap: () {
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (ctx) => const TermsAndConditionsPage(),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           Padding(
@@ -315,13 +336,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.logout_rounded,
                 );
                 if (confirmed == true && context.mounted) {
-                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                  final b = context.read<AuthBloc>();
+                  if (!b.isClosed) b.add(AuthLogoutRequested());
                 }
               },
               icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text(
+              label: Text(
                 'Sign Out',
-                style: TextStyle(color: Colors.red),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
@@ -365,8 +390,9 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                print("📱 ProfilePage: Retry button pressed");
-                context.read<AuthBloc>().add(AuthCheckStatusRequested());
+                // debug: 📱 ProfilePage: Retry button pressed
+                final b = context.read<AuthBloc>();
+                if (!b.isClosed) b.add(AuthCheckStatusRequested());
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Coba Lagi'),
@@ -392,7 +418,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return ListTile(
       leading: Icon(icon, color: Colors.grey.shade700),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+      title: Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+      ),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
     );

@@ -113,7 +113,7 @@ class OrderTrackingWidget extends StatelessWidget {
             final isLast = index == trackingSteps.length - 1;
 
             return _buildTrackingStep(step, isLast);
-          }).toList(),
+          }),
         ],
       ),
     );

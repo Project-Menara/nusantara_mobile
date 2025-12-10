@@ -1,3 +1,5 @@
+// Salin dan ganti seluruh isi file router Anda dengan kode ini
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,47 +16,163 @@ import 'package:nusantara_mobile/features/authentication/presentation/pages/logi
 import 'package:nusantara_mobile/features/authentication/presentation/pages/login/pin_login_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/register/register_page.dart';
 import 'package:nusantara_mobile/features/authentication/presentation/pages/otp/verify_number.dart';
-import 'package:nusantara_mobile/features/favorite/presentation/pages/favorite/favorites_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/banner/banner_detail_page.dart';
 import 'package:nusantara_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_1.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_2.dart';
 import 'package:nusantara_mobile/features/onBoarding_screen/onboarding_screen_3.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/order_detail_page.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/orders_page.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/checkout_page.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/payment_page.dart';
+import 'package:nusantara_mobile/features/orders/presentation/pages/tracking_page.dart';
+import 'package:nusantara_mobile/features/point/presentation/bloc/point/point_bloc.dart';
+import 'package:nusantara_mobile/features/point/presentation/pages/point_history_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/change_pin_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/confirm_change_pin_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/change_phone_page.dart'
     as change_phone;
 import 'package:nusantara_mobile/features/profile/presentation/pages/change_phone/verify_change_phone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/my_voucher/my_voucher_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/voucher_detail/voucher_detail_page.dart'
-    as profile_voucher_detail;
-import 'package:nusantara_mobile/features/voucher/domain/entities/claimed_voucher_entity.dart';
-import 'package:nusantara_mobile/features/point/presentation/pages/point_history_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/personal_data/personal_data_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/profil/profile_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
 import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changepin_page.dart';
-
+import 'package:nusantara_mobile/features/profile/presentation/pages/verify_pin/verify_pin_for_changephone_page.dart';
+import 'package:nusantara_mobile/features/profile/presentation/pages/voucher_detail/voucher_detail_page.dart'
+    as profile_voucher_detail;
+import 'package:nusantara_mobile/features/shop/presentation/pages/nearby_shops_page.dart';
+import 'package:nusantara_mobile/features/shop/presentation/pages/shop_detail_page.dart';
+import 'package:nusantara_mobile/features/shop/domain/entities/shop_entity.dart';
+import 'package:nusantara_mobile/features/cart/presentation/pages/cart_page.dart';
+import 'package:nusantara_mobile/features/cart/presentation/bloc/cart/cart_bloc.dart';
+import 'package:nusantara_mobile/features/favorite/presentation/pages/favorite_page.dart';
+import 'package:nusantara_mobile/features/favorite/presentation/bloc/favorite/favorite_bloc.dart';
 import 'package:nusantara_mobile/features/splash_screen/splash_screen.dart';
+import 'package:nusantara_mobile/features/voucher/domain/entities/claimed_voucher_entity.dart';
+import 'package:nusantara_mobile/features/voucher/presentation/bloc/voucher/voucher_bloc.dart';
 import 'package:nusantara_mobile/features/voucher/presentation/pages/voucher/voucher_page.dart';
 import 'package:nusantara_mobile/features/voucher/presentation/pages/voucher_detail/voucher_detail_index.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart';
+import 'package:nusantara_mobile/features/home/presentation/pages/event_detail_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// <<< BARU: Impor halaman ubah PIN >>>
-import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/change_pin_page.dart';
-import 'package:nusantara_mobile/features/profile/presentation/pages/change_pin/confirm_change_pin_page.dart';
-
-// <<< BARU: Impor halaman orders >>>
-import 'package:nusantara_mobile/features/orders/presentation/pages/orders_page.dart';
-import 'package:nusantara_mobile/features/orders/presentation/pages/order_detail_page.dart';
-
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRoute = GoRouter(
   initialLocation: InitialRoutes.splashScreen,
   navigatorKey: _rootNavigatorKey,
   routes: [
-    // --- RUTE-RUTE TANPA NAVBAR ---
+    // --- RUTE-RUTE DENGAN NAVBAR (MENGGUNAKAN STATEFULSHELLROUTE) ---
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        // Bungkus MainScreen dengan MultiBlocProvider untuk menyediakan BLoC
+        // ke semua halaman di dalam shell/tab.
+        return MultiBlocProvider(
+          providers: [
+            // Provide DI-managed singleton AuthBloc without letting the
+            // BlocProvider auto-close it when the route tree updates.
+            BlocProvider.value(value: sl<AuthBloc>()),
+            BlocProvider(create: (context) => sl<VoucherBloc>()),
+            BlocProvider(create: (context) => sl<PointBloc>()),
+            // Shared FavoriteBloc (singleton) untuk semua tab
+            BlocProvider.value(
+              value: sl<FavoriteBloc>()..add(const GetMyFavoriteEvent()),
+            ),
+            // Shared CartBloc (singleton) untuk semua tab
+            BlocProvider.value(
+              value: sl<CartBloc>()..add(const GetMyCartEvent()),
+            ),
+            // AddressBloc is provided at the top-level in main.dart
+          ],
+          child: MainScreen(navigationShell: navigationShell),
+        );
+      },
+      branches: [
+        // Branch 0: Beranda
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: InitialRoutes.home,
+              name: InitialRoutes.home,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: HomePage()),
+            ),
+          ],
+        ),
+
+        // Branch 1: Pesanan
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: InitialRoutes.orders,
+              name: InitialRoutes.orders,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: OrdersPage()),
+            ),
+          ],
+        ),
+
+        // Branch 2: Favorit
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: InitialRoutes.favorites,
+              name: InitialRoutes.favorites,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: FavoritePage()),
+            ),
+          ],
+        ),
+
+        // Branch 3: Reward / Voucher
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: InitialRoutes.vouchers,
+              name: InitialRoutes.vouchers,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: VoucherPage()),
+              routes: [
+                GoRoute(
+                  path: 'detail/:id',
+                  name: InitialRoutes.voucherDetail,
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) {
+                    final voucherId = state.pathParameters['id'] ?? '';
+                    return VoucherDetailPage(voucherId: voucherId);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        // Branch 4: Profil
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: InitialRoutes.profile,
+              name: InitialRoutes.profile,
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage(child: ProfilePage()),
+            ),
+          ],
+        ),
+      ],
+    ),
+    // --- PERBAIKAN: Tambahkan rute detail sebagai TOP-LEVEL ROUTE ---
+    GoRoute(
+      path:
+          '${InitialRoutes.orders}/detail/:orderId', // Path: /orders/detail/ORD-123
+      name: 'order-detail', // Beri nama agar mudah dipanggil
+      parentNavigatorKey:
+          _rootNavigatorKey, // Penting agar tampil di atas BottomNavBar
+      builder: (context, state) {
+        final orderId = state.pathParameters['orderId']!;
+        return OrderDetailPage(orderId: orderId);
+      },
+    ),
+    // --- RUTE-RUTE TANPA NAVBAR (FULLSCREEN) ---
     GoRoute(
       path: InitialRoutes.splashScreen,
       builder: (context, state) => const SplashScreen(),
@@ -107,13 +225,10 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.confirmPin,
       name: InitialRoutes.confirmPin,
       builder: (context, state) {
-        // --- PERBAIKAN DI SINI ---
-        // Kita sekarang mengharapkan extra berupa String, bukan Map.
         final phoneNumber = state.extra as String;
         return ConfirmPinPage(phoneNumber: phoneNumber);
       },
     ),
-    // <<< BARU: Rute untuk alur Ubah Nomor Telepon >>>
     GoRoute(
       path: InitialRoutes.changePhone,
       name: InitialRoutes.changePhone,
@@ -140,19 +255,16 @@ final GoRouter appRoute = GoRouter(
       name: InitialRoutes.personalData,
       builder: (context, state) => const PersonalDataPage(),
     ),
-
     GoRoute(
       path: InitialRoutes.resetPin,
       name: InitialRoutes.forgotPinNew,
       builder: (context, state) {
         final token = state.uri.queryParameters['token'];
-
         if (token == null || token.isEmpty) {
           return const Scaffold(
             body: Center(child: Text('Token tidak valid atau hilang')),
           );
         }
-
         return FutureBuilder<String?>(
           future: SharedPreferences.getInstance().then(
             (prefs) => prefs.getString('last_forgot_pin_phone'),
@@ -163,7 +275,6 @@ final GoRouter appRoute = GoRouter(
                 body: Center(child: CircularProgressIndicator()),
               );
             }
-
             final phoneNumber = snapshot.data;
             if (phoneNumber == null || phoneNumber.isEmpty) {
               return const Scaffold(
@@ -172,7 +283,6 @@ final GoRouter appRoute = GoRouter(
                 ),
               );
             }
-
             final extra = ForgotPinExtra(
               token: token,
               phoneNumber: phoneNumber,
@@ -182,7 +292,6 @@ final GoRouter appRoute = GoRouter(
         );
       },
     ),
-
     GoRoute(
       path: InitialRoutes.confirmPinForgot,
       name: InitialRoutes.confirmPinForgot,
@@ -191,7 +300,6 @@ final GoRouter appRoute = GoRouter(
         return ConfirmForgotPinPage(extra: extra);
       },
     ),
-
     GoRoute(
       path: InitialRoutes.newPin,
       name: InitialRoutes.newPin,
@@ -213,10 +321,8 @@ final GoRouter appRoute = GoRouter(
       builder: (context, state) => const VerifyPinForChangePinPage(),
     ),
     GoRoute(
-      // Path harus cocok: '/banner-detail' + '/:bannerId'
       path: '${InitialRoutes.bannerDetail}/:bannerId',
       builder: (context, state) {
-        // Ambil ID dari parameter URL
         final bannerId = state.pathParameters['bannerId']!;
         return BannerDetailPage(bannerId: bannerId);
       },
@@ -230,11 +336,7 @@ final GoRouter appRoute = GoRouter(
       path: InitialRoutes.myVoucherDetail,
       name: InitialRoutes.myVoucherDetail,
       builder: (context, state) {
-        print('🔍 Debug: myVoucherDetail route called');
-        print('🔍 Debug: path = ${InitialRoutes.myVoucherDetail}');
-        print('🔍 Debug: state.extra = ${state.extra}');
         final claimedVoucher = state.extra as ClaimedVoucherEntity;
-        print('🔍 Debug: claimedVoucher = ${claimedVoucher.voucher.code}');
         return profile_voucher_detail.VoucherDetailPage(
           claimedVoucher: claimedVoucher,
         );
@@ -246,6 +348,41 @@ final GoRouter appRoute = GoRouter(
       builder: (context, state) => const PointHistoryPage(),
     ),
     GoRoute(
+      path: '${InitialRoutes.eventDetail}/:eventId',
+      name: InitialRoutes.eventDetail,
+      builder: (context, state) {
+        final eventId = state.pathParameters['eventId']!;
+        return EventDetailPage(eventId: eventId);
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.nearbyShops,
+      name: InitialRoutes.nearbyShops,
+      builder: (context, state) {
+        final Map<String, dynamic> params = state.extra as Map<String, dynamic>;
+        return NearbyShopsPage(
+          lat: params['lat'] as double,
+          lng: params['lng'] as double,
+        );
+      },
+    ),
+    GoRoute(
+      path: InitialRoutes.shopDetail,
+      name: InitialRoutes.shopDetail,
+      builder: (context, state) {
+        final shop = state.extra as ShopEntity;
+        // ShopDetail di luar StatefulShellRoute, tapi BLoC sudah singleton
+        // Jadi pakai .value untuk reuse instance yang sama
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<CartBloc>.value(value: sl<CartBloc>()),
+            BlocProvider<FavoriteBloc>.value(value: sl<FavoriteBloc>()),
+          ],
+          child: ShopDetailPage(shop: shop),
+        );
+      },
+    ),
+    GoRoute(
       path: InitialRoutes.orderDetail,
       name: InitialRoutes.orderDetail,
       builder: (context, state) {
@@ -253,63 +390,31 @@ final GoRouter appRoute = GoRouter(
         return OrderDetailPage(orderId: orderId);
       },
     ),
-
-    // --- RUTE-RUTE DENGAN NAVBAR (DI DALAM SHELL) ---
-    ShellRoute(
-      navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) {
+    GoRoute(
+      path: InitialRoutes.cart,
+      name: InitialRoutes.cart,
+      builder: (context, state) {
+        // Provide CartBloc untuk halaman cart yang dibuka dari shop detail
         return BlocProvider.value(
-          value: sl<AuthBloc>(),
-          child: MainScreen(child: child),
+          value: sl<CartBloc>(),
+          child: const CartPage(),
         );
       },
-      routes: [
-        GoRoute(
-          path: InitialRoutes.home,
-          name: InitialRoutes.home,
-          builder: (context, state) => const HomePage(),
-        ),
-        GoRoute(
-          path: InitialRoutes.orders,
-          name: InitialRoutes.orders,
-          builder: (context, state) => const OrdersPage(),
-          routes: [
-            GoRoute(
-              path: 'detail/:orderId',
-              name: 'order-detail',
-              builder: (context, state) {
-                final orderId = state.pathParameters['orderId']!;
-                return OrderDetailPage(orderId: orderId);
-              },
-            ),
-          ],
-        ),
-        GoRoute(
-          path: InitialRoutes.favorites,
-          name: InitialRoutes.favorites,
-          builder: (context, state) => const FavoritesPage(),
-        ),
-        GoRoute(
-          path: InitialRoutes.vouchers,
-          name: InitialRoutes.vouchers,
-          builder: (context, state) => const VoucherPage(),
-          routes: [
-            GoRoute(
-              path: 'detail/:id',
-              name: InitialRoutes.voucherDetail,
-              builder: (context, state) {
-                final voucherId = state.pathParameters['id'] ?? '';
-                return VoucherDetailPage(voucherId: voucherId);
-              },
-            ),
-          ],
-        ),
-        GoRoute(
-          path: InitialRoutes.profile,
-          name: InitialRoutes.profile,
-          builder: (context, state) => const ProfilePage(),
-        ),
-      ],
+    ),
+    GoRoute(
+      path: InitialRoutes.checkout,
+      name: InitialRoutes.checkout,
+      builder: (context, state) => const CheckoutPage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.payment,
+      name: InitialRoutes.payment,
+      builder: (context, state) => const PaymentPage(),
+    ),
+    GoRoute(
+      path: InitialRoutes.tracking,
+      name: InitialRoutes.tracking,
+      builder: (context, state) => const TrackingPage(),
     ),
   ],
 );

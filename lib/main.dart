@@ -14,11 +14,14 @@ import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_e
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner_detail/banner_detail_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/event/event_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/event/event_event.dart';
 // --- TAMBAHKAN IMPORT UNTUK BLOC YANG BARU ---
 import 'package:nusantara_mobile/features/profile/presentation/bloc/profile/profile_bloc.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/change_pin/change_pin_bloc.dart';
 import 'package:nusantara_mobile/features/profile/presentation/bloc/change_phone/change_phone_bloc.dart';
 import 'package:nusantara_mobile/features/voucher/presentation/bloc/voucher/voucher_bloc.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/adress/address_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,15 +37,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) {
-            print("🏗️ Main: Creating AuthBloc instance");
-            final authBloc = di.sl<AuthBloc>();
-            print("🏗️ Main: AuthBloc instance hashCode: ${authBloc.hashCode}");
-            print("🏗️ Main: Adding AuthCheckStatusRequested event");
-            authBloc.add(AuthCheckStatusRequested());
-            return authBloc;
-          },
+        // Provide the singleton AuthBloc from DI without letting BlocProvider
+        // auto-close it. Using `value` prevents BlocProvider from calling
+        // `close()` on the singleton when the provider is disposed.
+        BlocProvider.value(
+          value: di.sl<AuthBloc>()..add(AuthCheckStatusRequested()),
         ),
         BlocProvider(create: (_) => di.sl<HomeBloc>()..add(FetchHomeData())),
         BlocProvider(create: (_) => di.sl<PinBloc>()),
@@ -58,10 +57,14 @@ class MyApp extends StatelessWidget {
           create: (_) => di.sl<CategoryBloc>()..add(GetAllCategoryEvent()),
         ),
         BlocProvider(
+          create: (_) => di.sl<EventBloc>()..add(GetAllEventsEvent()),
+        ),
+        BlocProvider(
           create: (_) =>
               di.sl<BannerDetailBloc>()..add(const FetchBannerDetail(id: '')),
         ),
         BlocProvider(create: (_) => di.sl<VoucherBloc>()),
+        BlocProvider(create: (_) => di.sl<AddressBloc>()..add(LoadAddresses())),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {

@@ -48,27 +48,41 @@ class _VoucherPageState extends State<VoucherPage> {
   Widget build(BuildContext context) {
     // --- PERUBAHAN: Bungkus seluruh konten dengan RefreshIndicator & Skeletonizer ---
     return RefreshIndicator(
-      onRefresh: _fetchVouchers, // Panggil fungsi fetch saat di-refresh
+      onRefresh: _fetchVouchers,
       child: Skeletonizer(
-        enabled: _isLoading, // Aktifkan skeleton berdasarkan state _isLoading
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildHeaderAndPointsCardStack(),
-            const SizedBox(height: 70),
-            _buildSectionHeader(
-              title: 'Tukarkan point Kamu',
-              onSeeAllTapped: () {
-                print('Tombol Lihat Semua ditekan!');
+        enabled: _isLoading,
+        child: Builder(
+          builder: (context) {
+            const int rewardCount = 4; // keep same number of sample rewards
+            const int totalItems =
+                4 +
+                rewardCount; // header, spacer70, sectionHeader, rewards..., bottom spacer
+
+            return ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: totalItems,
+              itemBuilder: (context, index) {
+                if (index == 0) return _buildHeaderAndPointsCardStack();
+                if (index == 1) return const SizedBox(height: 70);
+                if (index == 2) {
+                  return _buildSectionHeader(
+                    title: 'Tukarkan point Kamu',
+                    onSeeAllTapped:
+                        () {}, // intentionally empty; keep UI hook without logging
+                  );
+                }
+
+                if (index >= 3 && index < 3 + rewardCount) {
+                  final rewardIndex = index - 3;
+                  final hasEnough = rewardIndex == (rewardCount - 1);
+                  return _buildRewardCard(hasEnoughPoints: hasEnough);
+                }
+
+                // bottom spacer
+                return const SizedBox(height: 20);
               },
-            ),
-            // Kita render item yang sama, Skeletonizer akan mengubahnya menjadi skeleton
-            _buildRewardCard(hasEnoughPoints: false),
-            _buildRewardCard(hasEnoughPoints: false),
-            _buildRewardCard(hasEnoughPoints: false),
-            _buildRewardCard(hasEnoughPoints: true),
-            const SizedBox(height: 20),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -311,10 +325,12 @@ class _VoucherPageState extends State<VoucherPage> {
                 ElevatedButton(
                   onPressed: hasEnoughPoints ? () {} : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        hasEnoughPoints ? Colors.orange : Colors.grey[300],
-                    foregroundColor:
-                        hasEnoughPoints ? Colors.white : Colors.grey[600],
+                    backgroundColor: hasEnoughPoints
+                        ? Colors.orange
+                        : Colors.grey[300],
+                    foregroundColor: hasEnoughPoints
+                        ? Colors.white
+                        : Colors.grey[600],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

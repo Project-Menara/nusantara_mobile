@@ -23,7 +23,7 @@ void showAppFlashbar(
             ? Colors.green.shade50
             : Colors.red.shade50, // warna lembut
         indicatorColor: isSuccess ? Colors.green : Colors.red,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         elevation: 8,
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),

@@ -42,8 +42,8 @@ class PointHistoryModel extends PointHistoryEntity {
             : null,
       );
     } catch (e) {
-      print("❌ PointHistoryModel.fromJson error: $e");
-      print("📦 JSON data: $json");
+      // debug: ❌ PointHistoryModel.fromJson error: $e
+      // debug: 📦 JSON data: $json
       rethrow;
     }
   }

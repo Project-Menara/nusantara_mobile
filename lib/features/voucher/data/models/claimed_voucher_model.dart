@@ -16,29 +16,27 @@ class ClaimedVoucherModel extends ClaimedVoucherEntity {
   });
 
   factory ClaimedVoucherModel.fromJson(Map<String, dynamic> json) {
-    print("🔄 ClaimedVoucherModel: Parsing JSON: $json");
+    // debug: 🔄 ClaimedVoucherModel: Parsing JSON: $json
 
     try {
       final id = json['id'] as String? ?? '';
-      print("🆔 ClaimedVoucherModel: ID: $id");
+      // debug: 🆔 ClaimedVoucherModel: ID: $id
 
       // Parse user
       final userJson = json['user'] as Map<String, dynamic>? ?? {};
       final user = UserModel.fromJson(userJson);
-      print("👤 ClaimedVoucherModel: User parsed: ${user.name}");
+      // debug: 👤 ClaimedVoucherModel: User parsed: ${user.name}
 
       // Parse voucher
       final voucherJson = json['voucher'] as Map<String, dynamic>? ?? {};
       final voucher = VoucherModel.fromJson(voucherJson);
-      print("🎫 ClaimedVoucherModel: Voucher parsed: ${voucher.code}");
+      // debug: 🎫 ClaimedVoucherModel: Voucher parsed: ${voucher.code}
 
       // Parse voucher detail
       final voucherDetailJson =
           json['voucher_detail'] as Map<String, dynamic>? ?? {};
       final voucherDetail = VoucherDetailModel.fromJson(voucherDetailJson);
-      print(
-        "📋 ClaimedVoucherModel: Voucher detail parsed: ${voucherDetail.voucherCode}",
-      );
+      // debug: 📋 ClaimedVoucherModel: Voucher detail parsed: ${voucherDetail.voucherCode}
 
       // Parse boolean and dates
       final isUsed = json['is_used'] as bool? ?? false;
@@ -57,7 +55,7 @@ class ClaimedVoucherModel extends ClaimedVoucherEntity {
       final updatedAtStr = json['updated_at'] as String? ?? '';
       final updatedAt = DateTime.parse(updatedAtStr);
 
-      print("✅ ClaimedVoucherModel: Successfully parsed claimed voucher: $id");
+      // debug: ✅ ClaimedVoucherModel: Successfully parsed claimed voucher: $id
 
       return ClaimedVoucherModel(
         id: id,
@@ -71,8 +69,8 @@ class ClaimedVoucherModel extends ClaimedVoucherEntity {
         updatedAt: updatedAt,
       );
     } catch (e) {
-      print("❌ ClaimedVoucherModel: Error parsing JSON: $e");
-      print("❌ ClaimedVoucherModel: JSON was: $json");
+      // debug: ❌ ClaimedVoucherModel: Error parsing JSON: $e
+      // debug: ❌ ClaimedVoucherModel: JSON was: $json
       rethrow;
     }
   }
@@ -94,7 +92,7 @@ class VoucherDetailModel extends VoucherDetailEntity {
   });
 
   factory VoucherDetailModel.fromJson(Map<String, dynamic> json) {
-    print("🔄 VoucherDetailModel: Parsing JSON: $json");
+    // debug: 🔄 VoucherDetailModel: Parsing JSON: $json
 
     try {
       final id = json['id'] as String? ?? '';
@@ -119,9 +117,7 @@ class VoucherDetailModel extends VoucherDetailEntity {
       final updatedAtStr = json['updated_at'] as String? ?? '';
       final updatedAt = DateTime.parse(updatedAtStr);
 
-      print(
-        "✅ VoucherDetailModel: Successfully parsed voucher detail: $voucherCode",
-      );
+      // debug: ✅ VoucherDetailModel: Successfully parsed voucher detail: $voucherCode
 
       return VoucherDetailModel(
         id: id,
@@ -137,8 +133,8 @@ class VoucherDetailModel extends VoucherDetailEntity {
         updatedAt: updatedAt,
       );
     } catch (e) {
-      print("❌ VoucherDetailModel: Error parsing JSON: $e");
-      print("❌ VoucherDetailModel: JSON was: $json");
+      // debug: ❌ VoucherDetailModel: Error parsing JSON: $e
+      // debug: ❌ VoucherDetailModel: JSON was: $json
       rethrow;
     }
   }

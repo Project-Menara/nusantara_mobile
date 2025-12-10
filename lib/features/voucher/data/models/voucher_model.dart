@@ -21,7 +21,7 @@ class VoucherModel extends VoucherEntity {
   });
 
   factory VoucherModel.fromJson(Map<String, dynamic> json) {
-    print("🔍 Parsing voucher JSON: $json");
+    // debug: 🔍 Parsing voucher JSON: $json
 
     try {
       return VoucherModel(
@@ -47,15 +47,15 @@ class VoucherModel extends VoucherEntity {
             : null,
       );
     } catch (e) {
-      print("❌ Error parsing voucher: $e");
-      print("📄 JSON that failed: $json");
+      // debug: ❌ Error parsing voucher: $e
+      // debug: 📄 JSON that failed: $json
       rethrow;
     }
   }
 
   static int _parseToInt(dynamic value, String fieldName) {
     if (value == null) {
-      print("⚠️ Field '$fieldName' is null, using default 0");
+      // debug: ⚠️ Field '$fieldName' is null, using default 0
       return 0;
     }
     if (value is int) return value;
@@ -63,28 +63,24 @@ class VoucherModel extends VoucherEntity {
       final parsed = int.tryParse(value);
       if (parsed != null) return parsed;
     }
-    print(
-      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value, using default 0",
-    );
+    // debug: ⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value, using default 0
     return 0;
   }
 
   static DateTime _parseDateTime(dynamic value, String fieldName) {
     if (value == null) {
-      print("⚠️ Field '$fieldName' is null, using current time");
+      // debug: ⚠️ Field '$fieldName' is null, using current time
       return DateTime.now();
     }
     if (value is String) {
       try {
         return DateTime.parse(value);
       } catch (e) {
-        print("❌ Failed to parse '$fieldName' datetime: $value, error: $e");
+        // debug: ❌ Failed to parse '$fieldName' datetime: $value, error: $e
         return DateTime.now();
       }
     }
-    print(
-      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value",
-    );
+    // debug: ⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value
     return DateTime.now();
   }
 }

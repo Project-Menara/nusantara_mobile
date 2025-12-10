@@ -15,6 +15,5 @@ class CategoryEntity {
     required this.updatedAt,
   });
 
-  @override
   List<Object?> get props => [id, name, image, status];
 }

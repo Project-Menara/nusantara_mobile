@@ -24,9 +24,7 @@ class VoucherDetailPage extends StatefulWidget {
 class _VoucherDetailPageState extends State<VoucherDetailPage> {
   @override
   Widget build(BuildContext context) {
-    print(
-      "🎫 VoucherDetailPage: Creating FRESH VoucherBloc for ID: ${widget.voucherId}",
-    );
+    // debug: 🎫 VoucherDetailPage: Creating FRESH VoucherBloc for ID: ${widget.voucherId}
 
     return MultiBlocProvider(
       providers: [
@@ -35,34 +33,26 @@ class _VoucherDetailPageState extends State<VoucherDetailPage> {
             'voucher_detail_${widget.voucherId}_${DateTime.now().millisecondsSinceEpoch}',
           ),
           create: (context) {
-            print(
-              "🎫 VoucherDetailPage: Attempting to get FRESH VoucherBloc from service locator",
-            );
+            // debug: 🎫 VoucherDetailPage: Attempting to get FRESH VoucherBloc from service locator
             try {
               final bloc = sl<VoucherBloc>();
-              print(
-                "🎫 VoucherDetailPage: FRESH VoucherBloc created successfully: ${bloc.runtimeType}",
-              );
-              print(
-                "🎫 VoucherDetailPage: Current bloc state: ${bloc.state.runtimeType}",
-              );
+              // debug: 🎫 VoucherDetailPage: FRESH VoucherBloc created successfully: ${bloc.runtimeType}
+              // debug: 🎫 VoucherDetailPage: Current bloc state: ${bloc.state.runtimeType}
 
               // Trigger get voucher by id event
-              print(
-                "🎫 VoucherDetailPage: Adding GetVoucherByIdEvent with ID: ${widget.voucherId}",
-              );
+              // debug: 🎫 VoucherDetailPage: Adding GetVoucherByIdEvent with ID: ${widget.voucherId}
               bloc.add(GetVoucherByIdEvent(widget.voucherId));
               return bloc;
             } catch (e) {
-              print("❌ VoucherDetailPage: Error creating VoucherBloc: $e");
-              print("❌ VoucherDetailPage: Error type: ${e.runtimeType}");
+              // debug: ❌ VoucherDetailPage: Error creating VoucherBloc: $e
+              // debug: ❌ VoucherDetailPage: Error type: ${e.runtimeType}
               rethrow;
             }
           },
         ),
         BlocProvider(
           create: (context) {
-            print("📊 VoucherDetailPage: Creating PointBloc");
+            // debug: 📊 VoucherDetailPage: Creating PointBloc
             final bloc = sl<PointBloc>();
             bloc.add(const GetCustomerPointEvent());
             return bloc;
@@ -72,9 +62,7 @@ class _VoucherDetailPageState extends State<VoucherDetailPage> {
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, authState) {
           if (authState is AuthTokenExpiredState) {
-            print(
-              "🔐 VoucherDetailPage: Token expired detected, navigating to login",
-            );
+            // debug: 🔐 VoucherDetailPage: Token expired detected, navigating to login
 
             // Navigate to login immediately without showing snackbar to avoid context issues
             context.go('/login');
@@ -117,23 +105,19 @@ class VoucherDetailView extends StatelessWidget {
       ),
       body: BlocBuilder<VoucherBloc, VoucherState>(
         builder: (context, state) {
-          print("🎫 VoucherDetailView: Current state: ${state.runtimeType}");
+          // debug: 🎫 VoucherDetailView: Current state: ${state.runtimeType}
 
           if (state is VoucherByIdLoading) {
-            print("⏳ VoucherDetailView: Loading state detected");
+            // debug: ⏳ VoucherDetailView: Loading state detected
             return _buildLoadingState();
           } else if (state is VoucherByIdLoaded) {
-            print(
-              "✅ VoucherDetailView: Loaded state detected: ${state.voucher.code}",
-            );
+            // debug: ✅ VoucherDetailView: Loaded state detected: ${state.voucher.code}
             return _buildLoadedState(context, state.voucher);
           } else if (state is VoucherByIdError) {
-            print(
-              "❌ VoucherDetailView: Error state detected: ${state.message}",
-            );
+            // debug: ❌ VoucherDetailView: Error state detected: ${state.message}
             return _buildErrorState(context, state.message);
           } else {
-            print("🔄 VoucherDetailView: Initial state detected");
+            // debug: 🔄 VoucherDetailView: Initial state detected
             return _buildLoadingState();
           }
         },
@@ -212,11 +196,11 @@ class VoucherDetailView extends StatelessWidget {
 
         if (pointState is PointLoaded) {
           userPoints = pointState.point.totalPoints;
-          print("📊 VoucherDetailPage: Points loaded: $userPoints");
+          // debug: 📊 VoucherDetailPage: Points loaded: $userPoints
         } else if (pointState is PointLoading) {
-          print("📊 VoucherDetailPage: Points loading...");
+          // debug: 📊 VoucherDetailPage: Points loading...
         } else if (pointState is PointError) {
-          print("❌ VoucherDetailPage: Points error: ${pointState.message}");
+          // debug: ❌ VoucherDetailPage: Points error: ${pointState.message}
         }
 
         final hasEnoughPoints = userPoints >= voucher.pointCost;
@@ -564,7 +548,7 @@ class VoucherDetailView extends StatelessWidget {
               ? 'Sudah Diredem'
               : hasEnoughPoints
               ? 'Redeem Discount (${voucher.pointCost} Poin)'
-              : 'Poin Tidak Mencukupi (${userPoints}/${voucher.pointCost})',
+              : 'Poin Tidak Mencukupi ($userPoints/${voucher.pointCost})',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),

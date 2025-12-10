@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nusantara_mobile/core/injection_container.dart' as di;
 import 'package:nusantara_mobile/features/home/domain/entities/banner_entity.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner_detail/banner_detail_bloc.dart';
 
 class BannerDetailPage extends StatelessWidget {
@@ -14,8 +15,8 @@ class BannerDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => di.sl<BannerDetailBloc>()
-        ..add(FetchBannerDetail(id: bannerId)),
+      create: (context) =>
+          di.sl<BannerDetailBloc>()..add(FetchBannerDetail(id: bannerId)),
       child: const BannerDetailView(),
     );
   }
@@ -46,7 +47,10 @@ class BannerDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, {required BannerEntity bannerData}) {
+  Widget _buildContent(
+    BuildContext context, {
+    required BannerEntity bannerData,
+  }) {
     return CustomScrollView(
       slivers: [
         _buildSliverHeader(context, bannerData),
@@ -71,10 +75,10 @@ class BannerDetailView extends StatelessWidget {
               children: [
                 Text(
                   bannerData.name,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (bannerData.user?.name.isNotEmpty ?? false) ...[
@@ -88,38 +92,41 @@ class BannerDetailView extends StatelessWidget {
                 Text(
                   'Deskripsi Promo',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   bannerData.description,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.7,
-                        color: Colors.black54,
-                      ),
+                    height: 1.7,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
           ),
         ),
-         // Memberi sedikit ruang di bagian paling bawah halaman
+        // Memberi sedikit ruang di bagian paling bawah halaman
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
     );
   }
 
-  Widget _buildMetadataRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildMetadataRow(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+  }) {
     return Row(
       children: [
         Icon(icon, color: Colors.grey.shade600, size: 18),
         const SizedBox(width: 8),
         Text(
           text,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Colors.grey.shade700),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
         ),
       ],
     );
@@ -145,14 +152,26 @@ class BannerDetailView extends StatelessWidget {
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: 'banner_image_${bannerData.id}',
-          child: Image.network(
-            bannerData.photo,
+          child: CachedNetworkImage(
+            imageUrl: bannerData.photo,
             fit: BoxFit.cover,
-            frameBuilder: (context, child, frame, wasSync) {
+            placeholder: (context, url) => Container(color: Colors.grey[200]),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey[200],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+            imageBuilder: (context, imageProvider) {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  child,
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

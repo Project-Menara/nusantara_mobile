@@ -54,16 +54,14 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // Cek apakah token sudah expired atau akan expired dalam 5 menit
       if (JwtHelper.isTokenExpired(token) ||
           JwtHelper.isTokenNearExpiry(token, thresholdMinutes: 5)) {
-        // final remainingTime = JwtHelper.getTokenRemainingTime(token);
-        // print("⏰ Token expired or near expiry! Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+        // debug: Token expired or near expiry
         _handleTokenExpired();
         throw const ServerException(
           'Token autentikasi sudah kedaluwarsa atau akan expired. Silakan login kembali.',
         );
       }
 
-      // final remainingTime = JwtHelper.getTokenRemainingTime(token);
-      // print("⏰ Token is valid. Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+      // debug: Token is valid (remaining time available)
 
       final response = await client.get(
         uri,
@@ -113,7 +111,7 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // print("💥 Exception occurred: $e");
       // print("💥 Exception type: ${e.runtimeType}");
       if (e is ServerException) {
-        throw e;
+        rethrow;
       } else {
         throw ServerException(e.toString());
       }
@@ -139,16 +137,14 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // Cek apakah token sudah expired atau akan expired dalam 5 menit
       if (JwtHelper.isTokenExpired(token) ||
           JwtHelper.isTokenNearExpiry(token, thresholdMinutes: 5)) {
-        final remainingTime = JwtHelper.getTokenRemainingTime(token);
-        // print("⏰ Token expired or near expiry! Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+        // debug: Token expired or near expiry
         _handleTokenExpired();
         throw const ServerException(
           'Token autentikasi sudah kedaluwarsa atau akan expired. Silakan login kembali.',
         );
       }
 
-      final remainingTime = JwtHelper.getTokenRemainingTime(token);
-      // print("⏰ Token is valid. Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+      // debug: Token is valid (remaining time available)
 
       final response = await client.get(
         uri,
@@ -190,7 +186,7 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // print("💥 Exception occurred: $e");
       // print("💥 Exception type: ${e.runtimeType}");
       if (e is ServerException) {
-        throw e;
+        rethrow;
       } else {
         throw ServerException(e.toString());
       }
@@ -218,16 +214,14 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // Cek apakah token sudah expired atau akan expired dalam 5 menit
       if (JwtHelper.isTokenExpired(token) ||
           JwtHelper.isTokenNearExpiry(token, thresholdMinutes: 5)) {
-        final remainingTime = JwtHelper.getTokenRemainingTime(token);
-        // print("⏰ Token expired or near expiry! Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+        // debug: Token expired or near expiry
         _handleTokenExpired();
         throw const ServerException(
           'Token autentikasi sudah kedaluwarsa atau akan expired. Silakan login kembali.',
         );
       }
 
-      final remainingTime = JwtHelper.getTokenRemainingTime(token);
-      // print("⏰ Token is valid. Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+      // debug: Token is valid (remaining time available)
 
       final response = await client.post(
         uri,
@@ -266,7 +260,7 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // print("💥 Exception occurred: $e");
       // print("💥 Exception type: ${e.runtimeType}");
       if (e is ServerException) {
-        throw e;
+        rethrow;
       } else {
         throw ServerException(e.toString());
       }
@@ -292,16 +286,14 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // Cek apakah token sudah expired atau akan expired dalam 5 menit
       if (JwtHelper.isTokenExpired(token) ||
           JwtHelper.isTokenNearExpiry(token, thresholdMinutes: 5)) {
-        final remainingTime = JwtHelper.getTokenRemainingTime(token);
-        // print("⏰ Token expired or near expiry! Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+        // debug: Token expired or near expiry
         _handleTokenExpired();
         throw const ServerException(
           'Token autentikasi sudah kedaluwarsa atau akan expired. Silakan login kembali.',
         );
       }
 
-      final remainingTime = JwtHelper.getTokenRemainingTime(token);
-      // print("⏰ Token is valid. Remaining time: ${JwtHelper.formatRemainingTime(remainingTime)}");
+      // debug: Token is valid (remaining time available)
 
       final response = await client.get(
         uri,
@@ -351,7 +343,7 @@ class VoucherRemoteDataSourceImpl implements VoucherRemoteDataSource {
       // print("💥 Exception occurred: $e");
       // print("💥 Exception type: ${e.runtimeType}");
       if (e is ServerException) {
-        throw e;
+        rethrow;
       } else {
         throw ServerException(e.toString());
       }

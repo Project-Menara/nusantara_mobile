@@ -45,6 +45,16 @@ class InitialRoutes {
   // Rute Point History
   static const pointHistory = '/point-history';
 
+  // Rute Event
+  static const eventDetail = '/event-detail';
+
+  // Rute Shop
+  static const nearbyShops = '/nearby-shops';
+  static const shopDetail = '/shop-detail';
+
+  // Rute Cart
+  static const cart = '/cart';
+
   //Rute Profile
   static const personalData = '/personal-data';
 
@@ -60,4 +70,9 @@ class InitialRoutes {
   static const vouchers = '/vouchers';
   static const voucherDetail = '/voucher-detail';
   static const profile = '/profile';
+
+  // Rute Checkout & Payment
+  static const checkout = '/checkout';
+  static const payment = '/payment';
+  static const tracking = '/tracking';
 }

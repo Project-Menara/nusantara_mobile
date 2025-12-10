@@ -59,7 +59,7 @@ class _PersonalDataViewState extends State<PersonalDataView> {
   }
 
   void _populateControllers(UserEntity? user) {
-    if (user != null && user.id != 0) {
+    if (user != null && user.id.isNotEmpty) {
       _fullNameController.text = user.name;
       _emailController.text = user.email;
       _phoneController.text = user.phone;
@@ -258,6 +258,7 @@ class _PersonalDataViewState extends State<PersonalDataView> {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.orange,
+      foregroundColor: Colors.white,
       elevation: 0,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -287,7 +288,17 @@ class _PersonalDataViewState extends State<PersonalDataView> {
     } else if (photoUrl != null && photoUrl.isNotEmpty) {
       avatarChild = CircleAvatar(
         radius: avatarRadius,
-        backgroundImage: NetworkImage(photoUrl),
+        backgroundColor: Colors.transparent,
+        child: ClipOval(
+          child: Image.network(
+            photoUrl,
+            width: avatarRadius * 2,
+            height: avatarRadius * 2,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildInitialsAvatar(user.name),
+          ),
+        ),
       );
     } else {
       avatarChild = _buildInitialsAvatar(user.name);

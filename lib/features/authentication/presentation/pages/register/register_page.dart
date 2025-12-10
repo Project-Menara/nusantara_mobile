@@ -111,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             final extraData = RegisterExtra(
               phoneNumber: widget.phoneNumber,
-              ttl: state.user!.ttl ?? 60,
+              ttl: state.user.ttl,
               action: 'verify_otp_and_create_pin',
             );
 
@@ -398,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
-                      print('Navigasi ke Syarat & Ketentuan');
+                      // debug: Navigasi ke Syarat & Ketentuan
                     },
                 ),
               ],

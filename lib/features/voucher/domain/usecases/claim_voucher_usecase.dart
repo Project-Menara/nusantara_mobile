@@ -11,27 +11,23 @@ class ClaimVoucherUsecase implements Usecase<ClaimedVoucherEntity, String> {
 
   @override
   Future<Either<Failures, ClaimedVoucherEntity>> call(String voucherId) async {
-    print("🎫 ClaimVoucherUsecase: Claiming voucher with ID: $voucherId");
+    // debug: 🎫 ClaimVoucherUsecase: Claiming voucher with ID: $voucherId
 
     try {
       final result = await repository.claimVoucher(voucherId);
 
       return result.fold(
         (failure) {
-          print(
-            "❌ ClaimVoucherUsecase: Failed to claim voucher: ${failure.message}",
-          );
+          // debug: ❌ ClaimVoucherUsecase: Failed to claim voucher: ${failure.message}
           return Left(failure);
         },
         (claimedVoucher) {
-          print(
-            "✅ ClaimVoucherUsecase: Successfully claimed voucher: ${claimedVoucher.voucher.code}",
-          );
+          // debug: ✅ ClaimVoucherUsecase: Successfully claimed voucher: ${claimedVoucher.voucher.code}
           return Right(claimedVoucher);
         },
       );
     } catch (e) {
-      print("💥 ClaimVoucherUsecase: Exception occurred: $e");
+      // debug: 💥 ClaimVoucherUsecase: Exception occurred: $e
       return Left(ServerFailure('Failed to claim voucher: $e'));
     }
   }

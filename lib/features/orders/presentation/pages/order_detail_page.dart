@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nusantara_mobile/features/orders/presentation/widgets/order_tracking_widget.dart';
+import 'package:go_router/go_router.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final String orderId;
@@ -11,69 +12,106 @@ class OrderDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Mock data untuk demonstrasi
     final order = _getMockOrderDetail(orderId);
+    final topPad = MediaQuery.of(context).padding.top;
+    final headerHeight = 180.0;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Detail Pesanan #${order.orderNumber}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          // Header Background
+          Container(
+            height: headerHeight,
+            decoration: const BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(50)),
+            ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: () {
-              // TODO: Implement share functionality
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Order Tracking
-            if (order.status == OrderDetailStatus.shipped ||
-                order.status == OrderDetailStatus.delivered)
+
+          // Content
+          Column(
+            children: [
+              SizedBox(height: topPad),
+
+              // Custom App Bar
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: OrderTrackingWidget(
-                  orderNumber: order.orderNumber,
-                  currentStatus: _mapToTrackingStatus(order.status),
-                  trackingSteps: _generateTrackingSteps(order.status),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/orders');
+                        }
+                      },
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    Text(
+                      'Detail Pesanan #${order.orderNumber}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.share, color: Colors.white),
+                      onPressed: () {
+                        // TODO: Implement share functionality
+                      },
+                    ),
+                  ],
                 ),
               ),
 
-            // Order Info
-            _buildOrderInfoCard(order),
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Order Tracking
+                      if (order.status == OrderDetailStatus.shipped ||
+                          order.status == OrderDetailStatus.delivered)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: OrderTrackingWidget(
+                            orderNumber: order.orderNumber,
+                            currentStatus: _mapToTrackingStatus(order.status),
+                            trackingSteps: _generateTrackingSteps(order.status),
+                          ),
+                        ),
 
-            // Items
-            _buildItemsCard(order),
+                      // Order Info
+                      _buildOrderInfoCard(order),
 
-            // Payment Info
-            _buildPaymentCard(order),
+                      // Items
+                      _buildItemsCard(order),
 
-            // Delivery Info
-            _buildDeliveryCard(order),
+                      // Payment Info
+                      _buildPaymentCard(order),
 
-            // Actions
-            if (order.status != OrderDetailStatus.cancelled &&
-                order.status != OrderDetailStatus.delivered)
-              _buildActionsCard(order, context),
+                      // Delivery Info
+                      _buildDeliveryCard(order),
 
-            const SizedBox(height: 20),
-          ],
-        ),
+                      // Actions
+                      if (order.status != OrderDetailStatus.cancelled &&
+                          order.status != OrderDetailStatus.delivered)
+                        _buildActionsCard(order, context),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -208,7 +246,7 @@ class OrderDetailPage extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

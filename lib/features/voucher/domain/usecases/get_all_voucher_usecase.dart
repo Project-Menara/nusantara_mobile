@@ -11,13 +11,15 @@ class GetAllVoucherUsecase implements Usecase<List<VoucherEntity>, NoParams> {
 
   @override
   Future<Either<Failures, List<VoucherEntity>>> call(NoParams params) async {
-    print("🎯 GetAllVoucherUsecase: Calling repository.getVouchers()");
+    // debug: 🎯 GetAllVoucherUsecase: Calling repository.getVouchers()
     final result = await voucherRepository.getVouchers();
     result.fold(
-      (failure) => print("❌ GetAllVoucherUsecase: Failed with: $failure"),
-      (vouchers) => print(
-        "✅ GetAllVoucherUsecase: Success with ${vouchers.length} vouchers",
-      ),
+      (failure) => // debug: ❌ GetAllVoucherUsecase: Failed with: $failure
+          null,
+      (
+        vouchers,
+      ) => // debug: ✅ GetAllVoucherUsecase: Success with ${vouchers.length} vouchers
+          null,
     );
     return result;
   }

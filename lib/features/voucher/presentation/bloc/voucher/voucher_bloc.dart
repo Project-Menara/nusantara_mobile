@@ -25,91 +25,71 @@ class VoucherBloc extends Bloc<VoucherEvent, VoucherState> {
     required this.claimVoucherUsecase,
     required this.getClaimedVouchersUsecase,
   }) : super(VoucherInitial()) {
-    print("🎫 VoucherBloc: Constructor called");
-    print(
-      "🎫 VoucherBloc: getAllVoucherUsecase: ${getAllVoucherUsecase.runtimeType}",
-    );
-    print(
-      "🎫 VoucherBloc: getVoucherByIdUsecase: ${getVoucherByIdUsecase.runtimeType}",
-    );
-    print(
-      "🎫 VoucherBloc: claimVoucherUsecase: ${claimVoucherUsecase.runtimeType}",
-    );
-    print(
-      "🎫 VoucherBloc: getClaimedVouchersUsecase: ${getClaimedVouchersUsecase.runtimeType}",
-    );
+    // debug: VoucherBloc constructor called
+    // debug: getAllVoucherUsecase: ${getAllVoucherUsecase.runtimeType}
+    // debug: getVoucherByIdUsecase: ${getVoucherByIdUsecase.runtimeType}
+    // debug: claimVoucherUsecase: ${claimVoucherUsecase.runtimeType}
+    // debug: getClaimedVouchersUsecase: ${getClaimedVouchersUsecase.runtimeType}
 
     on<GetAllVoucherEvent>(_onGetAllVoucher);
     on<GetVoucherByIdEvent>(_onGetByIdVoucher);
     on<ClaimVoucherEvent>(_onClaimVoucher);
     on<GetClaimedVouchersEvent>(_onGetClaimedVouchers);
 
-    print("🎫 VoucherBloc: Event handlers registered");
+    // debug: VoucherBloc event handlers registered
   }
 
   Future<void> _onGetAllVoucher(
     GetAllVoucherEvent event,
     Emitter<VoucherState> emit,
   ) async {
-    print("🔄 VoucherBloc: _onGetAllVoucher called");
-    print("🔄 VoucherBloc: Event received: ${event.runtimeType}");
-    print(
-      "🔄 VoucherBloc: Current state before processing: ${state.runtimeType}",
-    );
+    // debug: _onGetAllVoucher called
+    // debug: Event received: ${event.runtimeType}
+    // debug: Current state before processing: ${state.runtimeType}
 
     try {
-      print("🔄 VoucherBloc: Emitting VoucherAllLoading state");
+      // debug: Emitting VoucherAllLoading state
       emit(VoucherAllLoading());
 
-      print("🔄 VoucherBloc: Calling getAllVoucherUsecase");
+      // debug: Calling getAllVoucherUsecase
       final voucherOrFailure = await getAllVoucherUsecase(NoParams());
 
       await voucherOrFailure.fold(
         (failures) {
-          print("❌ VoucherBloc: Voucher fetch failed: $failures");
-          print("❌ VoucherBloc: Failure type: ${failures.runtimeType}");
+          // debug: Voucher fetch failed: $failures
+          // debug: Failure type: ${failures.runtimeType}
           final errorMessage = MapFailureToMessage.map(failures);
-          print("❌ VoucherBloc: Mapped error message: $errorMessage");
+          // debug: Mapped error message: $errorMessage
           emit(VoucherAllError(errorMessage));
         },
         (vouchers) async {
-          print(
-            "✅ VoucherBloc: Voucher fetch successful: ${vouchers.length} vouchers loaded",
-          );
+          // debug: Voucher fetch successful: ${vouchers.length} vouchers loaded
 
           // Fetch claimed vouchers to determine which vouchers are already claimed
-          print(
-            "🔄 VoucherBloc: Fetching claimed vouchers to check claimed status",
-          );
+          // debug: Fetching claimed vouchers to check claimed status
           final claimedVouchersOrFailure = await getClaimedVouchersUsecase(
             NoParams(),
           );
 
           claimedVouchersOrFailure.fold(
             (failure) {
-              print(
-                "⚠️ VoucherBloc: Failed to fetch claimed vouchers, proceeding with unclaimed status",
-              );
+              // debug: Failed to fetch claimed vouchers, proceeding with unclaimed status
               // If we can't fetch claimed vouchers, proceed with all vouchers as unclaimed
               emit(VoucherAllLoaded(vouchers: vouchers));
             },
             (claimedVouchers) {
-              print(
-                "✅ VoucherBloc: Claimed vouchers fetched: ${claimedVouchers.length} claimed",
-              );
+              // debug: Claimed vouchers fetched: ${claimedVouchers.length} claimed
 
               // Create a set of claimed voucher IDs for fast lookup
               final claimedVoucherIds = claimedVouchers
                   .map((cv) => cv.voucher.id)
                   .toSet();
-              print("🔍 VoucherBloc: Claimed voucher IDs: $claimedVoucherIds");
+              // debug: Claimed voucher IDs: $claimedVoucherIds
 
               // Update vouchers with claimed status
               final updatedVouchers = vouchers.map((voucher) {
                 final isClaimed = claimedVoucherIds.contains(voucher.id);
-                print(
-                  "🎫 VoucherBloc: Voucher ${voucher.code} (${voucher.id}) - isClaimed: $isClaimed",
-                );
+                // debug: Voucher ${voucher.code} (${voucher.id}) - isClaimed: $isClaimed
 
                 // Create a new VoucherEntity with updated claimed status
                 return VoucherEntity(
@@ -131,81 +111,69 @@ class VoucherBloc extends Bloc<VoucherEvent, VoucherState> {
                 );
               }).toList();
 
-              print(
-                "✅ VoucherBloc: Updated ${updatedVouchers.length} vouchers with claimed status",
-              );
+              // debug: Updated ${updatedVouchers.length} vouchers with claimed status
               emit(VoucherAllLoaded(vouchers: updatedVouchers));
             },
           );
         },
       );
     } catch (e) {
-      print("💥 VoucherBloc: Exception in _onGetAllVoucher: $e");
-      print("💥 VoucherBloc: Exception type: ${e.runtimeType}");
+      // debug: Exception in _onGetAllVoucher: $e
+      // debug: Exception type: ${e.runtimeType}
       emit(VoucherAllError("Terjadi kesalahan yang tidak terduga: $e"));
     }
 
-    print("🔄 VoucherBloc: _onGetAllVoucher completed");
+    // debug: _onGetAllVoucher completed
   }
 
   Future<void> _onGetByIdVoucher(
     GetVoucherByIdEvent event,
     Emitter<VoucherState> emit,
   ) async {
-    print("🔄 VoucherBloc: _onGetByIdVoucher called with ID: ${event.id}");
-    print(
-      "🔄 VoucherBloc: Current state before processing: ${state.runtimeType}",
-    );
+    // debug: 🔄 VoucherBloc: _onGetByIdVoucher called with ID: ${event.id}
+    // debug: 🔄 VoucherBloc: Current state before processing: ${state.runtimeType}
 
     try {
-      print("🔄 VoucherBloc: Emitting VoucherByIdLoading state");
+      // debug: 🔄 VoucherBloc: Emitting VoucherByIdLoading state
       emit(VoucherByIdLoading());
 
-      print(
-        "🔄 VoucherBloc: Calling getVoucherByIdUsecase with ID: ${event.id}",
-      );
+      // debug: 🔄 VoucherBloc: Calling getVoucherByIdUsecase with ID: ${event.id}
       final voucherOrFailure = await getVoucherByIdUsecase(
         DetailParams(id: event.id),
       );
 
-      print("🔄 VoucherBloc: Use case completed, processing result");
+      // debug: 🔄 VoucherBloc: Use case completed, processing result
       await voucherOrFailure.fold(
         (failures) {
-          print("❌ VoucherBloc: Voucher by ID fetch failed: $failures");
-          print("❌ VoucherBloc: Failure type: ${failures.runtimeType}");
+          // debug: ❌ VoucherBloc: Voucher by ID fetch failed: $failures
+          // debug: ❌ VoucherBloc: Failure type: ${failures.runtimeType}
           final errorMessage = MapFailureToMessage.map(failures);
-          print("❌ VoucherBloc: Mapped error message: $errorMessage");
+          // debug: ❌ VoucherBloc: Mapped error message: $errorMessage
           emit(VoucherByIdError(errorMessage));
         },
         (voucher) async {
-          print("✅ VoucherBloc: Voucher by ID fetch successful");
-          print(
-            "✅ VoucherBloc: Voucher details: ${voucher.code} - ${voucher.description}",
-          );
+          // debug: ✅ VoucherBloc: Voucher by ID fetch successful
+          // debug: ✅ VoucherBloc: Voucher details: ${voucher.code} - ${voucher.description}
 
           // Fetch claimed vouchers to determine if this specific voucher is claimed
-          print("🔄 VoucherBloc: Checking if voucher ${voucher.id} is claimed");
+          // debug: 🔄 VoucherBloc: Checking if voucher ${voucher.id} is claimed
           final claimedVouchersOrFailure = await getClaimedVouchersUsecase(
             NoParams(),
           );
 
           claimedVouchersOrFailure.fold(
             (failure) {
-              print(
-                "⚠️ VoucherBloc: Failed to fetch claimed vouchers for detail, proceeding with unclaimed status",
-              );
+              // debug: ⚠️ VoucherBloc: Failed to fetch claimed vouchers for detail, proceeding with unclaimed status
               emit(VoucherByIdLoaded(voucher: voucher));
             },
             (claimedVouchers) {
-              print("✅ VoucherBloc: Claimed vouchers fetched for detail check");
+              // debug: ✅ VoucherBloc: Claimed vouchers fetched for detail check
 
               // Check if this voucher is in the claimed list
               final isClaimed = claimedVouchers.any(
                 (cv) => cv.voucher.id == voucher.id,
               );
-              print(
-                "🔍 VoucherBloc: Voucher ${voucher.code} (${voucher.id}) - isClaimed: $isClaimed",
-              );
+              // debug: 🔍 VoucherBloc: Voucher ${voucher.code} (${voucher.id}) - isClaimed: $isClaimed
 
               // Create updated voucher with claimed status
               final updatedVoucher = VoucherEntity(
@@ -232,103 +200,91 @@ class VoucherBloc extends Bloc<VoucherEvent, VoucherState> {
         },
       );
     } catch (e) {
-      print("💥 VoucherBloc: Exception in _onGetByIdVoucher: $e");
-      print("💥 VoucherBloc: Exception type: ${e.runtimeType}");
+      // debug: 💥 VoucherBloc: Exception in _onGetByIdVoucher: $e
+      // debug: 💥 VoucherBloc: Exception type: ${e.runtimeType}
       emit(VoucherByIdError("Terjadi kesalahan yang tidak terduga: $e"));
     }
 
-    print("🔄 VoucherBloc: _onGetByIdVoucher completed");
+    // debug: 🔄 VoucherBloc: _onGetByIdVoucher completed
   }
 
   Future<void> _onClaimVoucher(
     ClaimVoucherEvent event,
     Emitter<VoucherState> emit,
   ) async {
-    print(
-      "🎯 VoucherBloc: _onClaimVoucher called with voucher ID: ${event.voucherId}",
-    );
-    print(
-      "🎯 VoucherBloc: Current state before processing: ${state.runtimeType}",
-    );
+    // debug: 🎯 VoucherBloc: _onClaimVoucher called with voucher ID: ${event.voucherId}
+    // debug: 🎯 VoucherBloc: Current state before processing: ${state.runtimeType}
 
     try {
-      print("🎯 VoucherBloc: Emitting VoucherClaimLoading state");
+      // debug: 🎯 VoucherBloc: Emitting VoucherClaimLoading state
       emit(VoucherClaimLoading());
 
-      print(
-        "🎯 VoucherBloc: Calling claimVoucherUsecase with voucher ID: ${event.voucherId}",
-      );
+      // debug: 🎯 VoucherBloc: Calling claimVoucherUsecase with voucher ID: ${event.voucherId}
       final claimOrFailure = await claimVoucherUsecase(event.voucherId);
 
-      print("🎯 VoucherBloc: Use case completed, processing result");
+      // debug: 🎯 VoucherBloc: Use case completed, processing result
       claimOrFailure.fold(
         (failures) {
-          print("❌ VoucherBloc: Voucher claim failed: $failures");
-          print("❌ VoucherBloc: Failure type: ${failures.runtimeType}");
+          // debug: ❌ VoucherBloc: Voucher claim failed: $failures
+          // debug: ❌ VoucherBloc: Failure type: ${failures.runtimeType}
           final errorMessage = MapFailureToMessage.map(failures);
-          print("❌ VoucherBloc: Mapped error message: $errorMessage");
+          // debug: ❌ VoucherBloc: Mapped error message: $errorMessage
           emit(VoucherClaimError(errorMessage));
         },
         (claimedVoucher) {
-          print("✅ VoucherBloc: Voucher claim successful");
-          print("✅ VoucherBloc: Claimed voucher ID: ${claimedVoucher.id}");
+          // debug: ✅ VoucherBloc: Voucher claim successful
+          // debug: ✅ VoucherBloc: Claimed voucher ID: ${claimedVoucher.id}
           emit(VoucherClaimSuccess(claimedVoucher: claimedVoucher));
         },
       );
     } catch (e) {
-      print("💥 VoucherBloc: Exception in _onClaimVoucher: $e");
-      print("💥 VoucherBloc: Exception type: ${e.runtimeType}");
+      // debug: 💥 VoucherBloc: Exception in _onClaimVoucher: $e
+      // debug: 💥 VoucherBloc: Exception type: ${e.runtimeType}
       emit(VoucherClaimError("Terjadi kesalahan yang tidak terduga: $e"));
     }
 
-    print("🎯 VoucherBloc: _onClaimVoucher completed");
+    // debug: 🎯 VoucherBloc: _onClaimVoucher completed
   }
 
   Future<void> _onGetClaimedVouchers(
     GetClaimedVouchersEvent event,
     Emitter<VoucherState> emit,
   ) async {
-    print("🎟️ VoucherBloc: _onGetClaimedVouchers called");
-    print(
-      "🎟️ VoucherBloc: Current state before processing: ${state.runtimeType}",
-    );
+    // debug: 🎟️ VoucherBloc: _onGetClaimedVouchers called
+    // debug: 🎟️ VoucherBloc: Current state before processing: ${state.runtimeType}
 
     try {
-      print("🎟️ VoucherBloc: Emitting ClaimedVouchersLoading state");
+      // debug: 🎟️ VoucherBloc: Emitting ClaimedVouchersLoading state
       emit(ClaimedVouchersLoading());
 
-      print("🎟️ VoucherBloc: Calling getClaimedVouchersUsecase");
+      // debug: 🎟️ VoucherBloc: Calling getClaimedVouchersUsecase
       final claimedVouchersOrFailure = await getClaimedVouchersUsecase(
         NoParams(),
       );
 
-      print("🎟️ VoucherBloc: Use case completed, processing result");
+      // debug: 🎟️ VoucherBloc: Use case completed, processing result
       claimedVouchersOrFailure.fold(
         (failures) {
-          print("❌ VoucherBloc: Claimed vouchers fetch failed: $failures");
-          print("❌ VoucherBloc: Failure type: ${failures.runtimeType}");
+          // debug: ❌ VoucherBloc: Claimed vouchers fetch failed: $failures
+          // debug: ❌ VoucherBloc: Failure type: ${failures.runtimeType}
           final errorMessage = MapFailureToMessage.map(failures);
-          print("❌ VoucherBloc: Mapped error message: $errorMessage");
+          // debug: ❌ VoucherBloc: Mapped error message: $errorMessage
           emit(ClaimedVouchersError(errorMessage));
         },
         (claimedVouchers) {
-          print(
-            "✅ VoucherBloc: Claimed vouchers fetch successful: ${claimedVouchers.length} vouchers loaded",
-          );
-          for (int i = 0; i < claimedVouchers.length; i++) {
-            print(
-              "✅ VoucherBloc: Claimed voucher $i: ${claimedVouchers[i].id}",
-            );
-          }
+          // debug: ✅ VoucherBloc: Claimed vouchers fetch successful: ${claimedVouchers.length} vouchers loaded
+          // debug: for (int i = 0; i < claimedVouchers.length; i++) {
+          // debug:   // debug: ✅ VoucherBloc: Claimed voucher $i: ${claimedVouchers[i].id}
+          // debug: }
           emit(ClaimedVouchersLoaded(claimedVouchers: claimedVouchers));
         },
       );
     } catch (e) {
-      print("💥 VoucherBloc: Exception in _onGetClaimedVouchers: $e");
-      print("💥 VoucherBloc: Exception type: ${e.runtimeType}");
+      // debug: 💥 VoucherBloc: Exception in _onGetClaimedVouchers: $e
+      // debug: 💥 VoucherBloc: Exception type: ${e.runtimeType}
       emit(ClaimedVouchersError("Terjadi kesalahan yang tidak terduga: $e"));
     }
 
-    print("🎟️ VoucherBloc: _onGetClaimedVouchers completed");
+    // debug: 🎟️ VoucherBloc: _onGetClaimedVouchers completed
   }
 }

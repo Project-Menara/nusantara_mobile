@@ -9,7 +9,7 @@ class RoleModel extends RoleEntity {
   const RoleModel({required super.id, required super.name});
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
-    print("👑 Parsing role JSON: $json");
+    // debug: 👑 Parsing role JSON: $json
 
     try {
       return RoleModel(
@@ -17,8 +17,8 @@ class RoleModel extends RoleEntity {
         name: json['name']?.toString() ?? '',
       );
     } catch (e) {
-      print("❌ Error parsing role: $e");
-      print("📄 JSON that failed: $json");
+      // debug: ❌ Error parsing role: $e
+      // debug: 📄 JSON that failed: $json
       rethrow;
     }
   }

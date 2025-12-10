@@ -12,15 +12,15 @@ class GetVoucherByIdUsecase implements Usecase<VoucherEntity, DetailParams> {
 
   @override
   Future<Either<Failures, VoucherEntity>> call(DetailParams params) async {
-    print(
-      "🎯 GetVoucherByIdUsecase: Calling repository.getVoucherById() with ID: ${params.id}",
-    );
+    // debug: 🎯 GetVoucherByIdUsecase: Calling repository.getVoucherById() with ID: ${params.id}
     final result = await voucherRepository.getVoucherById(params.id);
     result.fold(
-      (failure) => print("❌ GetVoucherByIdUsecase: Failed with: $failure"),
-      (voucher) => print(
-        "✅ GetVoucherByIdUsecase: Success with voucher: ${voucher.code}",
-      ),
+      (failure) {
+        // debug: ❌ GetVoucherByIdUsecase: Failed with: $failure
+      },
+      (voucher) {
+        // debug: ✅ GetVoucherByIdUsecase: Success with voucher: ${voucher.code}
+      },
     );
     return result;
   }
@@ -30,6 +30,7 @@ class DetailParams extends Equatable {
   final String id;
 
   const DetailParams({required this.id});
+
   @override
   List<Object?> get props => [id];
 }

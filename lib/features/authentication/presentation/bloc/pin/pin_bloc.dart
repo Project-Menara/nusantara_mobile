@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'package:dartz/dartz.dart';
+// ...existing imports...
 import 'package:equatable/equatable.dart';
 import 'package:nusantara_mobile/core/error/failures.dart';
 import 'package:nusantara_mobile/features/authentication/data/models/user_model.dart';
-import 'package:nusantara_mobile/features/authentication/domain/repositories/auth_repository.dart';
+// removed unused imports
 import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin/confirm_pin_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/create_pin/create_pin_use_case.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_confirm_new_pin_forgot_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/set_new_pin_forgot_usecase.dart';
 import 'package:nusantara_mobile/features/authentication/domain/usecases/forgot_pin/validate_forgot_pin_token_usecase.dart';
-
 
 part 'pin_event.dart';
 part 'pin_state.dart';
@@ -21,7 +20,7 @@ class PinBloc extends Bloc<PinEvent, PinState> {
   final SetNewPinForgotUseCase setNewPinForgotUseCase;
   final ConfirmNewPinForgotUseCase confirmNewPinForgotUseCase;
   final ValidateForgotPinTokenUseCase validateForgotPinTokenUseCase;
-  
+
   PinBloc({
     required CreatePinUseCase createPinUseCase,
     required ConfirmPinUseCase confirmPinUseCase,
@@ -32,7 +31,7 @@ class PinBloc extends Bloc<PinEvent, PinState> {
        _confirmPinUseCase = confirmPinUseCase,
        super(PinInitial()) {
     on<ValidateForgotPinToken>(_onValidateForgotPinToken);
-    
+
     on<CreatePinSubmitted>(_onCreatePinSubmitted);
     on<ConfirmPinSubmitted>(_onConfirmPinSubmitted);
     on<SetNewPinForgotSubmitted>(_onSetNewPinForgotSubmitted);
@@ -48,7 +47,7 @@ class PinBloc extends Bloc<PinEvent, PinState> {
     // --- PERBAIKAN DI SINI ---
     // 1. Buat instance dari Params object terlebih dahulu
     final params = ValidateForgotPinTokenParams(token: event.token);
-    
+
     // 2. Panggil use case dengan params object tersebut
     final result = await validateForgotPinTokenUseCase(params);
 
@@ -102,16 +101,13 @@ class PinBloc extends Bloc<PinEvent, PinState> {
       pin: event.pin,
     );
     final result = await setNewPinForgotUseCase(params);
-    result.fold(
-      (failure) {
-        if (failure is TokenExpiredFailure) {
-          emit(SetNewPinForgotTokenExpired(failure.message));
-        } else {
-          emit(SetNewPinForgotError(failure.message));
-        }
-      },
-      (_) => emit(SetNewPinForgotSuccess()),
-    );
+    result.fold((failure) {
+      if (failure is TokenExpiredFailure) {
+        emit(SetNewPinForgotTokenExpired(failure.message));
+      } else {
+        emit(SetNewPinForgotError(failure.message));
+      }
+    }, (_) => emit(SetNewPinForgotSuccess()));
   }
 
   Future<void> _onConfirmNewPinForgotSubmitted(
@@ -125,15 +121,12 @@ class PinBloc extends Bloc<PinEvent, PinState> {
       confirmPin: event.pin,
     );
     final result = await confirmNewPinForgotUseCase(params);
-    result.fold(
-      (failure) {
-        if (failure is TokenExpiredFailure) {
-          emit(ConfirmNewPinForgotTokenExpired(failure.message));
-        } else {
-          emit(ConfirmNewPinForgotError(failure.message));
-        }
-      },
-      (user) => emit(ConfirmNewPinForgotSuccess(user as UserModel)),
-    );
+    result.fold((failure) {
+      if (failure is TokenExpiredFailure) {
+        emit(ConfirmNewPinForgotTokenExpired(failure.message));
+      } else {
+        emit(ConfirmNewPinForgotError(failure.message));
+      }
+    }, (user) => emit(ConfirmNewPinForgotSuccess(user as UserModel)));
   }
 }

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // PERBAIKAN: Import GoRouter
 import 'package:nusantara_mobile/features/home/domain/entities/banner_entity.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nusantara_mobile/routes/initial_routes.dart'; // PERBAIKAN: Import rute Anda
 
 class PromoBanner extends StatefulWidget {
@@ -25,7 +26,9 @@ class _PromoBannerState extends State<PromoBanner> {
     if (widget.banners.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
         if (!mounted) return;
-        int nextPage = _currentPage < widget.banners.length - 1 ? _currentPage + 1 : 0;
+        int nextPage = _currentPage < widget.banners.length - 1
+            ? _currentPage + 1
+            : 0;
         _pageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 350),
@@ -47,9 +50,7 @@ class _PromoBannerState extends State<PromoBanner> {
     // Cukup beri tahu router untuk pergi ke alamat detail dengan ID banner.
     // Tidak perlu mengirim bannerPhotoUrl lagi.
     context.push('${InitialRoutes.bannerDetail}/${banner.id}');
-    
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +77,19 @@ class _PromoBannerState extends State<PromoBanner> {
                     tag: 'banner_image_${banner.id}',
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.network(banner.photo, fit: BoxFit.cover),
+                      child: CachedNetworkImage(
+                        imageUrl: banner.photo,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -94,7 +107,9 @@ class _PromoBannerState extends State<PromoBanner> {
                 height: 8,
                 width: _currentPage == index ? 24 : 8,
                 decoration: BoxDecoration(
-                  color: _currentPage == index ? Colors.orange : Colors.grey.shade400,
+                  color: _currentPage == index
+                      ? Colors.orange
+                      : Colors.grey.shade400,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

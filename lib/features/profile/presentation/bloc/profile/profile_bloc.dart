@@ -38,7 +38,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       updatedUser,
     ) {
       // Jika sukses, keluarkan state sukses
-      emit(ProfileUpdateSuccess(updatedUser as UserEntity));
+      emit(ProfileUpdateSuccess(updatedUser));
       // Beri tahu AuthBloc bahwa data user telah diperbarui
       authBloc.add(AuthUserUpdated(updatedUser));
     });

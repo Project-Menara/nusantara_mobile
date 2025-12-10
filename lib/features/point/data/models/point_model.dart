@@ -16,18 +16,17 @@ class PointModel extends PointEntity {
 
   factory PointModel.fromJson(Map<String, dynamic> json) {
     try {
-      print("🔍 PointModel.fromJson: Processing JSON data");
-      print("📦 JSON data: $json");
-
+      // debug: 🔍 PointModel.fromJson: Processing JSON data
+      // debug: 📦 JSON data: $json
       // Safe parsing with detailed logging
       final userJson = json['user'];
-      print("👤 User data type: ${userJson.runtimeType}, value: $userJson");
+      // debug: 👤 User data type: ${userJson.runtimeType}, value: $userJson
 
       UserModel user;
       if (userJson != null && userJson is Map<String, dynamic>) {
         user = UserModel.fromJson(userJson);
       } else {
-        print("⚠️ Creating default user model due to null/invalid user data");
+        // debug: ⚠️ Creating default user model due to null/invalid user data
         user = UserModel(
           id: '',
           name: '',
@@ -60,8 +59,8 @@ class PointModel extends PointEntity {
             : null,
       );
     } catch (e) {
-      print("❌ PointModel.fromJson error: $e");
-      print("📦 JSON data: $json");
+      // debug: ❌ PointModel.fromJson error: $e
+      // debug: 📦 JSON data: $json
       rethrow;
     }
   }

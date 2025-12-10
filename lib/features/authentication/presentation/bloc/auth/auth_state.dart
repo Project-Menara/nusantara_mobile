@@ -36,22 +36,31 @@ class AuthCheckPhoneSuccess extends AuthState {
 }
 
 class AuthRegisterSuccess extends AuthState {
+  @override
   final RegisterResponseModel user;
+
   const AuthRegisterSuccess(this.user);
+
   @override
   List<Object?> get props => [user];
 }
 
 class AuthLoginSuccess extends AuthState {
+  @override
   final UserEntity user;
+
   const AuthLoginSuccess(this.user);
+
   @override
   List<Object?> get props => [user];
 }
 
 class AuthGetUserSuccess extends AuthState {
+  @override
   final UserEntity user;
+
   const AuthGetUserSuccess(this.user);
+
   @override
   List<Object?> get props => [user];
 }
@@ -117,6 +126,7 @@ class AuthForgotPinFailure extends AuthState {
 }
 
 class AuthUpdateSuccess extends AuthState {
+  @override
   final UserEntity user;
 
   const AuthUpdateSuccess(this.user);

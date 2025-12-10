@@ -21,7 +21,7 @@ class CreatedByModel extends UserEntity {
   });
 
   factory CreatedByModel.fromJson(Map<String, dynamic> json) {
-    print("👤 Parsing created_by JSON: $json");
+    // debug: 👤 Parsing created_by JSON: $json
 
     try {
       return CreatedByModel(
@@ -45,8 +45,8 @@ class CreatedByModel extends UserEntity {
         token: json['token']?.toString(),
       );
     } catch (e) {
-      print("❌ Error parsing created_by: $e");
-      print("📄 JSON that failed: $json");
+      // debug: ❌ Error parsing created_by: $e
+      // debug: 📄 JSON that failed: $json
       rethrow;
     }
   }
@@ -57,7 +57,7 @@ class CreatedByModel extends UserEntity {
     int defaultValue = 0,
   }) {
     if (value == null) {
-      print("⚠️ Field '$fieldName' is null, using default $defaultValue");
+      // debug: ⚠️ Field '$fieldName' is null, using default $defaultValue
       return defaultValue;
     }
     if (value is int) return value;
@@ -65,9 +65,7 @@ class CreatedByModel extends UserEntity {
       final parsed = int.tryParse(value);
       if (parsed != null) return parsed;
     }
-    print(
-      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value, using default $defaultValue",
-    );
+    // debug: ⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value, using default $defaultValue
     return defaultValue;
   }
 
@@ -77,13 +75,11 @@ class CreatedByModel extends UserEntity {
       try {
         return DateTime.parse(value);
       } catch (e) {
-        print("❌ Failed to parse '$fieldName' datetime: $value, error: $e");
+        // debug: ❌ Failed to parse '$fieldName' datetime: $value, error: $e
         return null;
       }
     }
-    print(
-      "⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value",
-    );
+    // debug: ⚠️ Field '$fieldName' has unexpected type: ${value.runtimeType}, value: $value
     return null;
   }
 }

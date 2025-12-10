@@ -1,17 +1,19 @@
+// Salin dan ganti seluruh isi file main_screen.dart dengan kode ini
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nusantara_mobile/routes/initial_routes.dart';
 
 class MainScreen extends StatelessWidget {
-  final Widget child;
-  const MainScreen({super.key, required this.child});
+  final StatefulNavigationShell navigationShell;
+
+  const MainScreen({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
-    final int activeIndex = _calculateSelectedIndex(context);
+    final int activeIndex = navigationShell.currentIndex;
 
     return Scaffold(
-      body: child,
+      body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -35,7 +37,7 @@ class MainScreen extends StatelessWidget {
               icon: Icons.home_outlined,
               activeIcon: Icons.home,
               label: "Beranda",
-              onTap: () => _onItemTapped(0, context),
+              onTap: () => _onItemTapped(0),
             ),
             _buildNavItem(
               context: context,
@@ -44,7 +46,7 @@ class MainScreen extends StatelessWidget {
               icon: Icons.list_alt_outlined,
               activeIcon: Icons.list_alt,
               label: "Pesanan",
-              onTap: () => _onItemTapped(1, context),
+              onTap: () => _onItemTapped(1),
             ),
             _buildNavItem(
               context: context,
@@ -53,7 +55,7 @@ class MainScreen extends StatelessWidget {
               icon: Icons.favorite_border,
               activeIcon: Icons.favorite,
               label: "Favorit",
-              onTap: () => _onItemTapped(2, context),
+              onTap: () => _onItemTapped(2),
             ),
             _buildNavItem(
               context: context,
@@ -62,7 +64,7 @@ class MainScreen extends StatelessWidget {
               icon: Icons.card_giftcard_outlined,
               activeIcon: Icons.card_giftcard,
               label: "Reward",
-              onTap: () => _onItemTapped(3, context),
+              onTap: () => _onItemTapped(3),
             ),
             _buildNavItem(
               context: context,
@@ -71,11 +73,18 @@ class MainScreen extends StatelessWidget {
               icon: Icons.person_outline,
               activeIcon: Icons.person,
               label: "Profil",
-              onTap: () => _onItemTapped(4, context),
+              onTap: () => _onItemTapped(4),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
     );
   }
 
@@ -97,7 +106,8 @@ class MainScreen extends StatelessWidget {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
           decoration: BoxDecoration(
-            color: isActive ? Colors.orange.withOpacity(0.12) : Colors.transparent,
+            color:
+                isActive ? Colors.orange.withOpacity(0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -122,35 +132,5 @@ class MainScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.toString();
-    if (location == InitialRoutes.home) return 0;
-    if (location == InitialRoutes.orders) return 1;
-    if (location == InitialRoutes.favorites) return 2;
-    if (location == InitialRoutes.vouchers) return 3;
-    if (location == InitialRoutes.profile) return 4;
-    return 0; // Default ke home
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        context.go(InitialRoutes.home);
-        break;
-      case 1:
-        context.go(InitialRoutes.orders);
-        break;
-      case 2:
-        context.go(InitialRoutes.favorites);
-        break;
-      case 3:
-        context.go(InitialRoutes.vouchers);
-        break;
-      case 4:
-        context.go(InitialRoutes.profile);
-        break;
-    }
   }
 }

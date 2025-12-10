@@ -14,27 +14,23 @@ class GetClaimedVouchersUsecase
   Future<Either<Failures, List<ClaimedVoucherEntity>>> call(
     NoParams params,
   ) async {
-    print("🎫 GetClaimedVouchersUsecase: Fetching claimed vouchers");
+    // debug: 🎫 GetClaimedVouchersUsecase: Fetching claimed vouchers
 
     try {
       final result = await repository.getClaimedVouchers();
 
       return result.fold(
         (failure) {
-          print(
-            "❌ GetClaimedVouchersUsecase: Failed to fetch claimed vouchers: ${failure.message}",
-          );
+          // debug: ❌ GetClaimedVouchersUsecase: Failed to fetch claimed vouchers: ${failure.message}
           return Left(failure);
         },
         (claimedVouchers) {
-          print(
-            "✅ GetClaimedVouchersUsecase: Successfully fetched ${claimedVouchers.length} claimed vouchers",
-          );
+          // debug: ✅ GetClaimedVouchersUsecase: Successfully fetched ${claimedVouchers.length} claimed vouchers
           return Right(claimedVouchers);
         },
       );
     } catch (e) {
-      print("💥 GetClaimedVouchersUsecase: Exception occurred: $e");
+      // debug: 💥 GetClaimedVouchersUsecase: Exception occurred: $e
       return Left(ServerFailure('Failed to fetch claimed vouchers: $e'));
     }
   }

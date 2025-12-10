@@ -19,13 +19,11 @@ class PointHistoryPage extends StatefulWidget {
 class _PointHistoryPageState extends State<PointHistoryPage> {
   @override
   Widget build(BuildContext context) {
-    print("📊 PointHistoryPage: Building with PointBloc");
+    // debug: 📊 PointHistoryPage: Building with PointBloc
 
     return BlocProvider(
       create: (context) {
-        print(
-          "📊 PointHistoryPage: Creating PointBloc and triggering GetCustomerPointHistoryEvent",
-        );
+        // debug: 📊 PointHistoryPage: Creating PointBloc and triggering GetCustomerPointHistoryEvent
         final bloc = sl<PointBloc>();
         bloc.add(const GetCustomerPointHistoryEvent());
         return bloc;
@@ -54,7 +52,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
         ),
         body: BlocBuilder<PointBloc, PointState>(
           builder: (context, state) {
-            print("📊 PointHistoryPage: Current state: ${state.runtimeType}");
+            // debug: 📊 PointHistoryPage: Current state: ${state.runtimeType}
 
             if (state is PointLoading) {
               return _buildLoadingState();

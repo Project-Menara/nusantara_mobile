@@ -27,9 +27,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   dynamic _processResponse(http.Response response) {
     final jsonResponse = json.decode(response.body);
-    print(
-      "API Response (${response.request?.url}): ${response.statusCode} -> $jsonResponse",
-    );
+    // debug: API Response (${response.request?.url}): ${response.statusCode} -> $jsonResponse
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonResponse;
@@ -154,8 +152,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await client.get(uri, headers: _headers());
       _processResponse(response);
-      final jsonResponse = json.decode(response.body);
-      print("API Response validateForgotPinToken: ({$jsonResponse})");
+      // debug: API Response validateForgotPinToken
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');
     }
@@ -176,8 +173,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: _headers(),
         body: jsonEncode({'phone': phoneNumber, 'pin': pin}),
       );
-      final jsonResponse = json.decode(response.body);
-      print("API Response setNewPinForgot :({$jsonResponse})");
+      _processResponse(response);
+      // debug: API Response setNewPinForgot
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');
     }
@@ -233,35 +230,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> getUserProfile({required String token}) async {
-    print("🌐 AuthRemoteDataSource: getUserProfile started");
+    // debug: 🌐 AuthRemoteDataSource: getUserProfile started
     final uri = Uri.parse('${ApiConstant.baseUrl}/customer/me');
-    print("🌐 AuthRemoteDataSource: Request URL: $uri");
-    print(
-      "🌐 AuthRemoteDataSource: Token (first 20 chars): ${token.substring(0, 20)}...",
-    );
+    // debug: 🌐 AuthRemoteDataSource: Request URL: $uri
+    // debug: 🌐 AuthRemoteDataSource: Token (first 20 chars): ${token.substring(0, 20)}...
 
     try {
-      print("🌐 AuthRemoteDataSource: Making GET request...");
+      // debug: 🌐 AuthRemoteDataSource: Making GET request...
       final response = await client.get(uri, headers: _headers(token: token));
-      print("🌐 AuthRemoteDataSource: Response status: ${response.statusCode}");
-      print("🌐 AuthRemoteDataSource: Response body: ${response.body}");
+      // debug: 🌐 AuthRemoteDataSource: Response status: ${response.statusCode}
+      // debug: 🌐 AuthRemoteDataSource: Response body: ${response.body}
 
-      print("🌐 AuthRemoteDataSource: Processing response...");
+      // debug: 🌐 AuthRemoteDataSource: Processing response...
       final jsonResponse = _processResponse(response);
 
-      print("🌐 AuthRemoteDataSource: Creating UserModel from JSON...");
+      // debug: 🌐 AuthRemoteDataSource: Creating UserModel from JSON...
       final userModel = UserModel.fromJson(jsonResponse['data'], token: token);
-      print(
-        "✅ AuthRemoteDataSource: UserModel created successfully: ${userModel.name}",
-      );
+      // debug: ✅ AuthRemoteDataSource: UserModel created successfully: ${userModel.name}
 
       return userModel;
-    } on SocketException catch (e) {
-      print("❌ AuthRemoteDataSource: SocketException: $e");
+    } on SocketException catch (_) {
+      // debug: ❌ AuthRemoteDataSource: SocketException
       throw const ServerException('Koneksi internet bermasalah');
-    } catch (e) {
-      print("💥 AuthRemoteDataSource: Unexpected exception: $e");
-      print("💥 AuthRemoteDataSource: Exception type: ${e.runtimeType}");
+    } catch (_) {
+      // debug: 💥 AuthRemoteDataSource: Unexpected exception
       rethrow;
     }
   }
@@ -276,8 +268,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         body: jsonEncode({'phone': phoneNumber}),
       );
       _processResponse(response);
-      final jsonResponse = json.decode(response.body);
-      print("API Response ({$jsonResponse})");
+      // debug: API Response
     } on SocketException {
       throw const ServerException('Koneksi internet bermasalah');
     }

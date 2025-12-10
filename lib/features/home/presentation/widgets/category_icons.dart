@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nusantara_mobile/features/home/domain/entities/category_entity.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 // Anda mungkin memerlukan package shimmer untuk efek loading yang lebih baik
 // import 'package:shimmer/shimmer.dart';
 
@@ -53,7 +54,7 @@ class CategoryIcons extends StatelessWidget {
                     context: context,
                     category: category,
                   );
-                }).toList(),
+                }),
                 _buildCategoryItem(context: context, isOther: true),
               ],
             ),
@@ -77,10 +78,8 @@ class CategoryIcons extends StatelessWidget {
         onTap: () {
           if (isOther) {
             // TODO: Navigasi ke halaman 'Semua Kategori'
-            print('Tombol Lainnya diklik');
           } else if (category != null) {
             // TODO: Navigasi ke halaman detail kategori
-            print('Kategori ${category.name} diklik dengan ID: ${category.id}');
           }
         },
         borderRadius: BorderRadius.circular(12),
@@ -104,22 +103,18 @@ class CategoryIcons extends StatelessWidget {
                   ? const Icon(Icons.more_horiz, color: Colors.orange)
                   // Menggunakan Image.network untuk memuat gambar dari URL
                   : ClipOval(
-                      child: Image.network(
-                        category!.image, // Menggunakan URL gambar dari entity
+                      child: CachedNetworkImage(
+                        imageUrl: category!.image,
                         fit: BoxFit.cover,
-                        // Menambahkan loading & error builder untuk user experience yang lebih baik
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
+                        placeholder: (context, url) => const Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.broken_image,
-                            color: Colors.grey,
-                          );
-                        },
+                          ),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
             ),

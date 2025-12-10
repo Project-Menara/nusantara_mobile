@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nusantara_mobile/features/home/presentation/bloc/adress/address_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_bloc.dart';
+import 'package:nusantara_mobile/features/authentication/presentation/bloc/auth/auth_state.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_event.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/banner/banner_state.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/category/category_bloc.dart';
 import 'package:nusantara_mobile/features/home/presentation/bloc/home_bloc.dart';
-import 'package:nusantara_mobile/features/home/presentation/pages/location/location_page.dart';
+import 'package:nusantara_mobile/features/home/presentation/pages/location/select_address_page.dart';
+import 'package:nusantara_mobile/features/cart/presentation/bloc/cart/cart_bloc.dart';
+import 'package:nusantara_mobile/routes/initial_routes.dart';
+
 import 'package:nusantara_mobile/features/home/presentation/widgets/category_icons.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/event_list.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/nearby_store_list.dart';
 import 'package:nusantara_mobile/features/home/presentation/widgets/promo_banner.dart';
-import 'package:nusantara_mobile/features/home/presentation/widgets/recent_orders.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -23,18 +28,153 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
-  
-  // Tambahkan state untuk menyimpan nama lokasi
-  String _currentLocation = "Pematang Siantar";
+  bool _isRequestingLocation = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<HomeBloc>().add(FetchHomeData());
-    context.read<BannerBloc>().add(GetAllBannerEvent());
-    context.read<CategoryBloc>().add(GetAllCategoryEvent());
-
     _scrollController.addListener(_scrollListener);
+    _requestLocationPermission();
+    _loadInitialData();
+  }
+
+  void _loadInitialData() {
+    // Dispatch events jika data belum ada
+    if (context.read<HomeBloc>().state is! HomeLoaded) {
+      context.read<HomeBloc>().add(FetchHomeData());
+    }
+    if (context.read<BannerBloc>().state is! BannerAllLoaded) {
+      context.read<BannerBloc>().add(GetAllBannerEvent());
+    }
+    if (context.read<CategoryBloc>().state is! CategoryAllLoaded) {
+      context.read<CategoryBloc>().add(GetAllCategoryEvent());
+    }
+    // Only load saved addresses for authenticated users (avoid leaking previous user's addresses to guests)
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthUnauthenticated) {
+      context.read<AddressBloc>().add(LoadAddresses());
+    }
+  }
+
+  Future<void> _requestLocationPermission() async {
+    if (_isRequestingLocation) return;
+
+    setState(() => _isRequestingLocation = true);
+
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        // Location services are not enabled, show dialog to enable
+        _showLocationServiceDialog();
+        return;
+      }
+
+      // Check permission status
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        // Request permission if denied
+        permission = await Geolocator.requestPermission();
+
+        if (permission == LocationPermission.denied) {
+          // Permission denied, show message
+          _showPermissionDeniedMessage();
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        // Permission denied forever, show dialog to open settings
+        _showPermissionPermanentlyDeniedDialog();
+        return;
+      }
+
+      // Permission granted, get current location
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        _getCurrentLocation();
+      }
+    } catch (e) {
+      // debug: Error requesting location permission: $e
+    } finally {
+      setState(() => _isRequestingLocation = false);
+    }
+  }
+
+  void _showLocationServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Layanan Lokasi Tidak Aktif'),
+          content: const Text(
+            'Aktifkan layanan lokasi untuk pengalaman yang lebih baik.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Nanti'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Geolocator.openLocationSettings();
+              },
+              child: const Text('Aktifkan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPermissionDeniedMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Izin lokasi ditolak. Beberapa fitur mungkin tidak berfungsi optimal.',
+        ),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showPermissionPermanentlyDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Izin Lokasi Ditolak Permanen'),
+          content: const Text('Buka pengaturan untuk memberikan izin lokasi.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Geolocator.openAppSettings();
+              },
+              child: const Text('Pengaturan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+
+      // debug: Current location retrieved
+    } catch (e) {
+      // debug: Error getting current location: $e
+    }
   }
 
   @override
@@ -45,129 +185,149 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onRefresh() async {
+    // Refresh data dengan BLoC
     context.read<BannerBloc>().add(GetAllBannerEvent());
     context.read<CategoryBloc>().add(GetAllCategoryEvent());
-    // context.read<HomeBloc>().add(FetchHomeData());
+    context.read<AddressBloc>().add(LoadAddresses());
+
+    // Request location permission again on refresh
+    _requestLocationPermission();
   }
 
   void _scrollListener() {
     if (_scrollController.offset > 200 - (kToolbarHeight * 2)) {
       if (!_isScrolled) {
-        setState(() {
-          _isScrolled = true;
-        });
+        if (mounted) setState(() => _isScrolled = true);
       }
     } else {
       if (_isScrolled) {
-        setState(() {
-          _isScrolled = false;
-        });
+        if (mounted) setState(() => _isScrolled = false);
       }
     }
   }
 
-  // Fungsi baru untuk menangani pemilihan lokasi
   void _selectLocation() async {
-    final newLocation = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const LocationPage()),
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const SelectAddressPage(),
+      ),
     );
-
-    // Jika user memilih lokasi baru, update state
-    if (newLocation != null && newLocation is String) {
-      setState(() {
-        _currentLocation = newLocation;
-      });
-      // Opsional: muat ulang data berdasarkan lokasi baru
-      _onRefresh();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: BlocBuilder<HomeBloc, HomeState>(
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            _buildSliverHeader(),
+            SliverToBoxAdapter(
+              child: BlocBuilder<BannerBloc, BannerState>(
+                builder: (context, state) {
+                  if (state is BannerAllLoaded) {
+                    return PromoBanner(banners: state.banners);
+                  }
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 7,
+                      child: Card(
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SliverToBoxAdapter(child: CategoryIcons()),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Text(
+                  "Event",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: EventList()),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "TOKO TERDEKAT",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: NearbyStoreList()),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
+      ),
+      floatingActionButton: BlocBuilder<CartBloc, CartState>(
         builder: (context, state) {
-          if (state is HomeLoading || state is HomeInitial) {
-            return const Center(child: CircularProgressIndicator());
+          int itemCount = 0;
+          if (state is CartLoaded) {
+            itemCount = state.items.length;
+          } else if (state is CartActionSuccess) {
+            itemCount = state.items.length;
           }
-          if (state is HomeLoaded) {
-            return RefreshIndicator(
-              onRefresh: _onRefresh,
-              child: _buildContentWithSlivers(context, state),
-            );
-          }
-          if (state is HomeError) {
-            return Center(child: Text('Gagal memuat data: ${state.message}'));
-          }
-          return const Center(child: Text("Terjadi sesuatu yang salah."));
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              FloatingActionButton(
+                onPressed: () {
+                  context.push(InitialRoutes.cart);
+                },
+                backgroundColor: Colors.orange,
+                shape: const CircleBorder(),
+                child: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Colors.white,
+                ),
+              ),
+              if (itemCount > 0)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    child: Text(
+                      itemCount > 99 ? '99+' : '$itemCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.orange,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildContentWithSlivers(BuildContext context, HomeLoaded state) {
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        _buildSliverHeader(),
-        BlocBuilder<BannerBloc, BannerState>(
-          builder: (context, state) {
-            if (state is BannerAllLoading) {
-              return const SliverToBoxAdapter(
-                child: Center(child: CircularProgressIndicator()),
-              );
-            } else if (state is BannerAllLoaded) {
-              return SliverToBoxAdapter(
-                child: PromoBanner(banners: state.banners),
-              );
-            } else if (state is BannerAllError) {
-              return SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(state.message, textAlign: TextAlign.center),
-                ),
-              );
-            }
-            return const SliverToBoxAdapter(child: SizedBox.shrink());
-          },
-        ),
-        const SliverToBoxAdapter(child: CategoryIcons()),
-        const SliverToBoxAdapter(child: RecentOrders()),
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              "Event",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: EventList()),
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "TOKO TERDEKAT",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: NearbyStoreList()),
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
-      ],
     );
   }
 
@@ -185,19 +345,80 @@ class _HomePageState extends State<HomePage> {
             )
           : null,
       title: GestureDetector(
-        onTap: _selectLocation, // Aksi ketika teks lokasi diklik
+        onTap: _selectLocation,
         child: Row(
           children: [
             const Icon(Icons.location_on, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text(
-              _currentLocation, // Menggunakan state dinamis
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+            // Only show saved addresses when authenticated; guests see a generic prompt
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (authState is AuthUnauthenticated) {
+                  return const Expanded(
+                    child: Text(
+                      'Pilih Lokasi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }
+
+                return BlocBuilder<AddressBloc, AddressState>(
+                  builder: (context, state) {
+                    String locationLabel = 'Pilih Lokasi';
+                    if (state is AddressLoaded &&
+                        state.selectedAddress != null) {
+                      locationLabel = state.selectedAddress!.label;
+                    }
+                    return Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            locationLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          // Show the full address or street if available
+                          if (state is AddressLoaded &&
+                              state.selectedAddress != null &&
+                              state.selectedAddress!.alamat.isNotEmpty)
+                            Text(
+                              state.selectedAddress!.alamat,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
+            if (_isRequestingLocation)
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

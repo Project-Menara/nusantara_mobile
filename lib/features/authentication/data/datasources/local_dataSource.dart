@@ -5,4 +5,7 @@ abstract class LocalDatasource {
   Future<void> saveRole(String role);
   Future<String?> getRole();
   Future<void> clearRole();
+  // Generic key/value helpers for local-only data
+  Future<void> saveLocalData(String key, String value);
+  Future<String?> getLocalData(String key);
 }

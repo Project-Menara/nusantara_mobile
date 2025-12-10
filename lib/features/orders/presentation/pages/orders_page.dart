@@ -13,7 +13,6 @@ class OrdersPage extends StatefulWidget {
 
 class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = false;
 
   final List<String> _tabs = [
     'Semua',
@@ -28,6 +27,9 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -38,282 +40,188 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final orders = _getMockOrders(_tabs[_tabController.index]);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.orange,
         elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
         centerTitle: true,
+        automaticallyImplyLeading: false,
         title: const Text(
-          'Pesanan Saya',
+          'My Order',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {
-              // TODO: Implement search functionality
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            color: Colors.orange,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorColor: Colors.white,
-              indicatorWeight: 3,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.normal,
-                fontSize: 14,
-              ),
-              tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-            ),
-          ),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          indicatorSize: TabBarIndicatorSize.label,
+          tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _tabs.map((tab) {
-          return _buildOrderList(tab);
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildOrderList(String status) {
-    // Simulate loading state
-    if (_isLoading) {
-      return const OrderSkeletonList();
-    }
-
-    // Mock data untuk demonstrasi
-    final orders = _getMockOrders(status);
-
-    if (orders.isEmpty) {
-      return _buildEmptyState(status);
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        setState(() {
-          _isLoading = true;
-        });
-        // TODO: Implement refresh functionality
-        await Future.delayed(const Duration(seconds: 1));
-        setState(() {
-          _isLoading = false;
-        });
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          return _buildOrderCard(orders[index]);
-        },
-      ),
+      body: orders.isEmpty
+          ? _buildEmptyState(_tabs[_tabController.index])
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                return _buildOrderCard(orders[index]);
+              },
+            ),
     );
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    return GestureDetector(
-      onTap: () {
-        context.push(InitialRoutes.orderDetail, extra: order.orderNumber);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.receipt_long,
-                        size: 20,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Order #${order.orderNumber}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      _buildStatusChip(order.status),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.grey[400],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+    final item = order.items.first;
+    final additionalItems = order.items.length - 1;
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DateFormat(
-                          'dd MMM yyyy, HH:mm',
-                        ).format(order.orderDate),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Items preview
-                  ...order.items.take(2).map((item) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              color: Colors.grey[200],
-                              child: Icon(
-                                Icons.fastfood,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${item.quantity}x • ${_formatCurrency(item.price)}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-
-                  if (order.items.length > 2)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        '+${order.items.length - 2} item lainnya',
-                        style: TextStyle(
-                          color: Colors.orange[600],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ambil di tempat',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('dd MMMM yyyy').format(order.orderDate),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ],
+                ),
+                _buildStatusChip(order.status),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
 
-                  const SizedBox(height: 16),
-
-                  // Total and actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+          // Content
+          InkWell(
+            onTap: () {
+              context.pushNamed(
+                'order-detail',
+                pathParameters: {'orderId': order.orderNumber},
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.blue[100],
+                      child: Image.asset(
+                        'assets/images/bolu_menara.png', // Placeholder
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.image),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${item.quantity}x ${formatter.format(item.price)}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (additionalItems > 0) ...[
+                          const SizedBox(height: 8),
                           Text(
-                            'Total Pembayaran',
-                            style: TextStyle(
-                              color: Colors.grey[600],
+                            '+$additionalItems menu lainnya',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatCurrency(order.totalAmount),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.orange,
-                            ),
-                          ),
                         ],
-                      ),
-                      _buildOrderActions(order),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          const Divider(height: 1),
+
+          // Footer
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Harga',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    Text(
+                      formatter.format(order.totalAmount),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                _buildOrderActions(order),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -383,17 +291,17 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             ),
             const SizedBox(width: 8),
             _buildActionButton('Bayar', Colors.white, Colors.orange, () {
-              // TODO: Implement payment
+              context.push(InitialRoutes.payment);
             }),
           ],
         );
       case OrderStatus.processing:
         return _buildActionButton('Lacak', Colors.white, Colors.blue, () {
-          // TODO: Implement tracking
+          context.push(InitialRoutes.tracking);
         });
       case OrderStatus.shipped:
         return _buildActionButton('Lacak', Colors.white, Colors.purple, () {
-          // TODO: Implement tracking
+          context.push(InitialRoutes.tracking);
         });
       case OrderStatus.completed:
         return Row(
@@ -516,15 +424,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     );
   }
 
-  String _formatCurrency(double amount) {
-    final formatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-    return formatter.format(amount);
-  }
-
   List<OrderModel> _getMockOrders(String status) {
     // Mock data untuk demonstrasi
     if (status == 'Semua') {
@@ -622,11 +521,13 @@ class OrderModel {
 
 class OrderItemModel {
   final String name;
+  final String? description;
   final int quantity;
   final double price;
 
   OrderItemModel({
     required this.name,
+    this.description,
     required this.quantity,
     required this.price,
   });

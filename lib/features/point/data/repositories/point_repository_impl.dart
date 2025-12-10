@@ -23,18 +23,13 @@ class PointRepositoryImpl implements PointRepository {
         final result = await remoteDatasource.getCustomerPoint();
         return Right(result);
       } on ServerException catch (e) {
-        print(
-          "❌ PointRepository: ServerException in getCustomerPoint: ${e.message}",
-        );
         return Left(ServerFailure(e.message));
       } catch (e) {
-        print("💥 PointRepository: Unexpected error in getCustomerPoint: $e");
         return Left(
           ServerFailure('Gagal mendapatkan data point: ${e.toString()}'),
         );
       }
     } else {
-      print("❌ PointRepository: No internet connection");
       return const Left(NetworkFailure('Tidak ada koneksi internet'));
     }
   }
@@ -47,20 +42,13 @@ class PointRepositoryImpl implements PointRepository {
         final result = await remoteDatasource.getCustomerPointHistory();
         return Right(result);
       } on ServerException catch (e) {
-        print(
-          "❌ PointRepository: ServerException in getCustomerPointHistory: ${e.message}",
-        );
         return Left(ServerFailure(e.message));
       } catch (e) {
-        print(
-          "💥 PointRepository: Unexpected error in getCustomerPointHistory: $e",
-        );
         return Left(
           ServerFailure('Gagal mendapatkan riwayat point: ${e.toString()}'),
         );
       }
     } else {
-      print("❌ PointRepository: No internet connection");
       return const Left(NetworkFailure('Tidak ada koneksi internet'));
     }
   }

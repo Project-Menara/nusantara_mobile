@@ -38,4 +38,14 @@ class LocalDatasourceImpl implements LocalDatasource {
   Future<void> clearRole() {
     return sharedPreferences.remove(roleKey);
   }
+
+  @override
+  Future<void> saveLocalData(String key, String value) {
+    return sharedPreferences.setString(key, value);
+  }
+
+  @override
+  Future<String?> getLocalData(String key) {
+    return Future.value(sharedPreferences.getString(key));
+  }
 }
